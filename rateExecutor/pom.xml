@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation
+		="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/maven-v4_0_0.xsd">
+	<description>
+		A rate executor.
+	</description>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>stinc.male.sandbox</groupId>
+	<artifactId>sandbox-rateExecutor</artifactId>
+	<packaging>jar</packaging>
+	<name>sandbox-rateExecutor</name>
+	<url>${url.sandbox}</url>
+	<parent>
+		<groupId>stinc.male.sandbox</groupId>
+		<artifactId>sandbox-build</artifactId>
+		<version>0.0.0-SNAPSHOT</version>
+		<relativePath>../build.xml</relativePath>
+	</parent>
+	<dependencies>
+		<dependency>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>jsr305</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>
