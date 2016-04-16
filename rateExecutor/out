@@ -1,0 +1,190 @@
+[INFO] Scanning for projects...
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building sandbox-rateExecutor 0.0.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ sandbox-rateExecutor ---
+[INFO] Deleting /Users/male/Documents/programming/projects/sandbox/rateExecutor/target
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ sandbox-rateExecutor ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 0 resource
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.2:compile (default-compile) @ sandbox-rateExecutor ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 12 source files to /Users/male/Documents/programming/projects/sandbox/rateExecutor/target/classes
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ sandbox-rateExecutor ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 1 resource
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.2:testCompile (default-testCompile) @ sandbox-rateExecutor ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 1 source file to /Users/male/Documents/programming/projects/sandbox/rateExecutor/target/test-classes
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.18.1:test (default-test) @ sandbox-rateExecutor ---
+[INFO] Surefire report directory: /Users/male/Documents/programming/projects/sandbox/rateExecutor/target/surefire-reports
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running stinc.male.sandbox.ratexecutor.TestDefaultRateExecutor
+[TRACE] [2015-03-15T18:09:20.660+0400] [main] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #0, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.660+0400] [main] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.661+0400] [main] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor] - Scheduling first Shot(instantNanos=1732518050831078, count=1)
+[TRACE] [2015-03-15T18:09:20.662+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518050831078, count=1)
+[TRACE] [2015-03-15T18:09:20.662+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #3, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.663+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=1, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.663+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518052878728, count=0)
+[TRACE] [2015-03-15T18:09:20.663+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518052878728, count=0)
+[TRACE] [2015-03-15T18:09:20.663+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #3, completedSincePeriodStartCounter=0
+TODO nanos=1732518052762777, #0
+[TRACE] [2015-03-15T18:09:20.663+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=1, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.663+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518053244398, count=0)
+[TRACE] [2015-03-15T18:09:20.663+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518053244398, count=0)
+[TRACE] [2015-03-15T18:09:20.663+0400] [pool-2-thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #4, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.663+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #4, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.663+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.664+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518053739359, count=0)
+[TRACE] [2015-03-15T18:09:20.664+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518053739359, count=0)
+[TRACE] [2015-03-15T18:09:20.664+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #4, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.664+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.664+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518054126150, count=0)
+[TRACE] [2015-03-15T18:09:20.664+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518054126150, count=0)
+[TRACE] [2015-03-15T18:09:20.664+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #4, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.664+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.664+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518054522555, count=0)
+[TRACE] [2015-03-15T18:09:20.664+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518054522555, count=0)
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #4, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518054954994, count=0)
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518054954994, count=0)
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #5, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518055267240, count=1)
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518055267240, count=1)
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #5, completedSincePeriodStartCounter=0
+TODO nanos=1732518055528897, #1
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=1, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.665+0400] [pool-2-thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #5, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.665+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518055612033, count=0)
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518055612033, count=0)
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #5, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518056028916, count=0)
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518056028916, count=0)
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #5, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518056398008, count=0)
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518056398008, count=0)
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #5, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.666+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.668+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518056748797, count=0)
+[TRACE] [2015-03-15T18:09:20.668+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518056748797, count=0)
+[TRACE] [2015-03-15T18:09:20.668+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #6, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.668+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.668+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518058476805, count=1)
+[TRACE] [2015-03-15T18:09:20.668+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518058476805, count=1)
+TODO nanos=1732518058660277, #2
+[TRACE] [2015-03-15T18:09:20.668+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #6, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.668+0400] [pool-2-thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #6, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.668+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=1, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518058773227, count=0)
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518058773227, count=0)
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #6, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518059167899, count=0)
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518059167899, count=0)
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #7, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518059459703, count=1)
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518059459703, count=1)
+TODO nanos=1732518059605340, #3
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #7, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.669+0400] [pool-2-thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #7, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.669+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=1, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518059720552, count=0)
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518059720552, count=0)
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #7, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518060122868, count=0)
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518060122868, count=0)
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #7, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518060350318, count=0)
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518060350318, count=0)
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #7, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518060589429, count=0)
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518060589429, count=0)
+[TRACE] [2015-03-15T18:09:20.670+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #7, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518060863312, count=0)
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518060863312, count=0)
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #7, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518061103884, count=0)
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518061103884, count=0)
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #8, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518061385922, count=1)
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518061385922, count=1)
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #8, completedSincePeriodStartCounter=0
+TODO nanos=1732518061557988, #4
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=1, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.671+0400] [pool-2-thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #8, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518061636107, count=0)
+[TRACE] [2015-03-15T18:09:20.671+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518061636107, count=0)
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #8, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518061907951, count=0)
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518061907951, count=0)
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #8, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518062126723, count=0)
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518062126723, count=0)
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #8, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518062337516, count=0)
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518062337516, count=0)
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #8, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518062549312, count=0)
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518062549312, count=0)
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #8, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.672+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.673+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518062760240, count=0)
+[TRACE] [2015-03-15T18:09:20.673+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518062760240, count=0)
+[TRACE] [2015-03-15T18:09:20.673+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #8, completedSincePeriodStartCounter=1
+[TRACE] [2015-03-15T18:09:20.673+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=1
+[TRACE] [2015-03-15T18:09:20.673+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518063022732, count=0)
+[TRACE] [2015-03-15T18:09:20.673+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518063022732, count=0)
+[TRACE] [2015-03-15T18:09:20.673+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.InternalActionCounter] - TODO #9, completedSincePeriodStartCounter=0
+[TRACE] [2015-03-15T18:09:20.673+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.BurstDistributionStrategy] - TODO actionsCountPerPeriod=1, activeActionsCount=0, completedActionsSincePeriodStartCount=0
+[TRACE] [2015-03-15T18:09:20.673+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Scheduling Shot(instantNanos=1732518063309723, count=1)
+[TRACE] [2015-03-15T18:09:20.673+0400] [Thread-1] [stinc.male.sandbox.ratexecutor.DefaultRateExecutor$ShotAction] - Firing Shot(instantNanos=1732518063309723, count=1)
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.275 sec - in stinc.male.sandbox.ratexecutor.TestDefaultRateExecutor
+
+Results :
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+[INFO] 
+[INFO] --- maven-jar-plugin:2.5:jar (default-jar) @ sandbox-rateExecutor ---
+[INFO] Building jar: /Users/male/Documents/programming/projects/sandbox/rateExecutor/target/sandbox-rateExecutor-0.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] --- maven-source-plugin:2.4:jar-no-fork (attach-sources) @ sandbox-rateExecutor ---
+[INFO] Building jar: /Users/male/Documents/programming/projects/sandbox/rateExecutor/target/sandbox-rateExecutor-0.0.0-SNAPSHOT-sources.jar
+[INFO] 
+[INFO] --- maven-install-plugin:2.4:install (default-install) @ sandbox-rateExecutor ---
+[INFO] Installing /Users/male/Documents/programming/projects/sandbox/rateExecutor/target/sandbox-rateExecutor-0.0.0-SNAPSHOT.jar to /Users/male/.m2/repository/stinc/male/sandbox/sandbox-rateExecutor/0.0.0-SNAPSHOT/sandbox-rateExecutor-0.0.0-SNAPSHOT.jar
+[INFO] Installing /Users/male/Documents/programming/projects/sandbox/rateExecutor/pom.xml to /Users/male/.m2/repository/stinc/male/sandbox/sandbox-rateExecutor/0.0.0-SNAPSHOT/sandbox-rateExecutor-0.0.0-SNAPSHOT.pom
+[INFO] Installing /Users/male/Documents/programming/projects/sandbox/rateExecutor/target/sandbox-rateExecutor-0.0.0-SNAPSHOT-sources.jar to /Users/male/.m2/repository/stinc/male/sandbox/sandbox-rateExecutor/0.0.0-SNAPSHOT/sandbox-rateExecutor-0.0.0-SNAPSHOT-sources.jar
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 2.033 s
+[INFO] Finished at: 2015-03-15T18:09:20+04:00
+[INFO] Final Memory: 21M/382M
+[INFO] ------------------------------------------------------------------------

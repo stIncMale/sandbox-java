@@ -1,5 +1,6 @@
 package stinc.male.sandbox.ratexecutor;
 
+<<<<<<< d39cbd0aa262fc78a8a7734a038ead42ad99e74a
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -45,4 +46,19 @@ final class ActionCounter {
 	public final long getCompletedSincePeriodStart() {
 		return completedSincePeriodStartCounter.sum();
 	}
+=======
+import javax.annotation.concurrent.ThreadSafe;
+
+@ThreadSafe
+public interface ActionCounter {
+	Rate getRate();
+
+	long getActiveCount();
+
+	long getCompletedSincePeriodStartCount();
+
+	long getPeriodIndex();
+
+	long getNanosTillNextPeriod();
+>>>>>>> Create sandbox-rateExecutor project
 }

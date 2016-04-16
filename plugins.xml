@@ -35,8 +35,18 @@
 						<showWarnings>true</showWarnings>
 						<showDeprecation>true</showDeprecation>
 						<compilerArguments>
+<<<<<<< d39cbd0aa262fc78a8a7734a038ead42ad99e74a
 							<parameters/>
 							<Xlint:all/>							
+=======
+							<Xlint:all/>
+							<!--
+							For some reason annotation processing causes a warning
+							"No processor claimed any of these annotations: org.junit.Test". So disable it.
+							TODO check if it's still not work (seems like a bug in Oracle JDK 8)
+							-->
+							<Xlint:-processing/>
+>>>>>>> Create sandbox-rateExecutor project
 							<Werror/>
 						</compilerArguments>
 					</configuration>
