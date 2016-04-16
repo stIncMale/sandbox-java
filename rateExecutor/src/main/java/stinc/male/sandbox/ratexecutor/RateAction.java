@@ -14,7 +14,7 @@ final class RateAction implements Runnable, RateActionInfo {
 		checkNotNull("second", rate, "rate");
 		this.action = action;
 		this.rate = rate;
-		this.counter = new ActionCounter(startNanos, rate.getPeriodNanos());
+		this.counter = new InternalActionCounter(startNanos, rate);
 	}
 
 	@Override

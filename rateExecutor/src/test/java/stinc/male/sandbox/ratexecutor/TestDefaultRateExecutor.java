@@ -1,26 +1,5 @@
 package stinc.male.sandbox.ratexecutor;
 
-<<<<<<< d39cbd0aa262fc78a8a7734a038ead42ad99e74a
-import java.time.Instant;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import org.junit.Test;
-
-public final class TestDefaultRateExecutor {
-	public TestDefaultRateExecutor() {
-	}
-
-	@Test
-	public final void test() throws InterruptedException {
-		final RateExecutor rateExecutor
-				= new DefaultRateExecutor(Executors.newFixedThreadPool(1), (runnable) -> new Thread(runnable));
-		rateExecutor.execute(this::action, new Rate(1, 2, TimeUnit.SECONDS));
-		TimeUnit.SECONDS.sleep(5);
-	}
-
-	private final void action() {
-		System.out.println(Instant.now().getEpochSecond());
-=======
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -102,6 +81,5 @@ final class DumbFibGen implements FibGen {
 			}
 		} while (!stateRef.compareAndSet(state, newState));
 		return result;
->>>>>>> Create sandbox-rateExecutor project
 	}
 }

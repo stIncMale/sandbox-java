@@ -1,9 +1,9 @@
 package stinc.male.sandbox.ratexecutor;
 
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.Immutable;
+import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
+import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
 /**
  * TODO

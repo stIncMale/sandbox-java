@@ -1,7 +1,7 @@
 package stinc.male.sandbox.ratexecutor;
 
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 import javax.annotation.concurrent.ThreadSafe;
+import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
 /**
  * TODO

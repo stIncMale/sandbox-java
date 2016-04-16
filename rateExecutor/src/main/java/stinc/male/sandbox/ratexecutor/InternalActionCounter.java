@@ -1,10 +1,10 @@
 package stinc.male.sandbox.ratexecutor;
 
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.concurrent.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
 @ThreadSafe
 final class InternalActionCounter implements ActionCounter {
