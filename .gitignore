@@ -1,7 +1,6 @@
-.gitignore
 *.class
 *.jar
 *.war
 *.ear
-*.netbeans_automatic_build
+.idea/
 target/
