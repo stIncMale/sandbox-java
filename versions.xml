@@ -13,7 +13,7 @@
 	<artifactId>sandbox-versions</artifactId>
 	<packaging>pom</packaging>
 	<name>sandbox-versions</name>
-	<url>${url.sandbox}</url>
+	<url>${sandbox.url}</url>
 	<parent>
 		<groupId>stinc.male.sandbox</groupId>
 		<artifactId>sandbox-root</artifactId>
@@ -68,14 +68,11 @@
 				<version>1.7.10</version>
 			</dependency>
 			<dependency>
-<<<<<<< d39cbd0aa262fc78a8a7734a038ead42ad99e74a
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-nop</artifactId>
 				<version>1.7.10</version>
 			</dependency>
 			<dependency>
-=======
->>>>>>> Create sandbox-rateExecutor project
 				<groupId>org.apache.logging.log4j</groupId>
 				<artifactId>log4j-slf4j-impl</artifactId>
 				<version>2.2</version>

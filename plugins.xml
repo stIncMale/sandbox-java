@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project
-	xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation
-		="http://maven.apache.org/POM/4.0.0
-		http://maven.apache.org/maven-v4_0_0.xsd">
+		xmlns = "http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation = "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<description>
 		Contains settings of plugins.
 	</description>
@@ -13,7 +11,7 @@
 	<artifactId>sandbox-plugins</artifactId>
 	<packaging>pom</packaging>
 	<name>sandbox-plugins</name>
-	<url>${url.sandbox}</url>
+	<url>${sandbox.url}</url>
 	<parent>
 		<groupId>stinc.male.sandbox</groupId>
 		<artifactId>sandbox-versions</artifactId>
@@ -35,18 +33,14 @@
 						<showWarnings>true</showWarnings>
 						<showDeprecation>true</showDeprecation>
 						<compilerArguments>
-<<<<<<< d39cbd0aa262fc78a8a7734a038ead42ad99e74a
 							<parameters/>
-							<Xlint:all/>							
-=======
-							<Xlint:all/>
+							<!--<Xlint:all/>-->
 							<!--
 							For some reason annotation processing causes a warning
 							"No processor claimed any of these annotations: org.junit.Test". So disable it.
 							TODO check if it's still not work (seems like a bug in Oracle JDK 8)
 							-->
 							<Xlint:-processing/>
->>>>>>> Create sandbox-rateExecutor project
 							<Werror/>
 						</compilerArguments>
 					</configuration>
