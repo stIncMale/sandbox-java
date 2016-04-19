@@ -15,7 +15,7 @@ final class Preconditions {
 		}
 	}
 
-	static final void checkNotNull(
+	static final void checkNotNull(//VAKOTODO remove
 			final String paramNumber,
 			final Object argument,
 			final String paramName) throws NullPointerException {
@@ -34,7 +34,7 @@ final class Preconditions {
 		}
 	}
 
-	static final void checkArgument(
+	static final void checkArgument(//VAKOTODO remove
 			final String paramNumber,
 			final boolean checkArgumentExpression,
 			final String paramName,
