@@ -1,7 +1,6 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
@@ -24,7 +23,7 @@ public final class ConcurrentRateSampler implements RateSampler {
 		this.startNanos = startNanos;
 		sampleIntervalNanos = sampleInterval.toNanos();
 		aTotalCount = new AtomicLong();
-		samples = new ConcurrentSkipListMap<>(NanosComparator.instance);
+		samples = new ConcurrentSkipListMap<>(NanosComparator.getInstance());
 		samples.put(startNanos, new AtomicLong());
 	}
 
@@ -115,32 +114,6 @@ public final class ConcurrentRateSampler implements RateSampler {
 				samples.subMap(samples.firstKey(), true , rightNanosToRemoveTo, true)
 						.clear();
 			}
-		}
-	}
-
-	@ThreadSafe
-	private static final class NanosComparator implements Comparator<Long> {
-		static final NanosComparator instance = new NanosComparator();
-
-		static final int compare(long l1, long l2) {
-			final long diff = l1 - l2;
-			final int result;
-			if (diff < 0) {
-				result = -1;
-			} else if (diff > 0) {
-				result = 1;
-			} else {
-				result = 0;
-			}
-			return result;
-		}
-
-		private NanosComparator() {
-		}
-
-		@Override
-		public final int compare(final Long o1, final Long o2) {
-			return compare(o1, o2);
 		}
 	}
 }
