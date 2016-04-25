@@ -32,17 +32,10 @@
 						<debuglevel>lines,vars,source</debuglevel>
 						<showWarnings>true</showWarnings>
 						<showDeprecation>true</showDeprecation>
-						<compilerArguments>
-							<parameters/>
-							<!--<Xlint:all/>-->
-							<!--
-							For some reason annotation processing causes a warning
-							"No processor claimed any of these annotations: org.junit.Test". So disable it.
-							TODO check if it's still not work (seems like a bug in Oracle JDK 8)
-							-->
-							<Xlint:-processing/>
-							<Werror/>
-						</compilerArguments>
+						<compilerArgs>
+							<arg>-Werror</arg>
+							<arg>-Xlint:all,-processing</arg>
+						</compilerArgs>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -63,8 +56,8 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<configuration>
-						<!--<parallel>classesAndMethods</parallel>TODO-->
-						<threadCount>10</threadCount>
+						<parallel>all</parallel>
+						<threadCount>5</threadCount>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -129,13 +122,15 @@
 						<links>
 							<link>http://docs.oracle.com/javase/8/docs/api/</link>
 							<link>http://docs.oracle.com/javaee/7/api/</link>
-							<link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link>
+							<link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link><!-- TODO use mine jsr-304 project-->
 							<link>http://google-guice.googlecode.com/git/javadoc/</link>
 							<link>http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/</link>
 						</links>
 						<validateLinks>true</validateLinks>
 						<includeDependencySources>false</includeDependencySources>
 						<includeTransitiveDependencySources>false</includeTransitiveDependencySources>
+						<serialwarn>true</serialwarn>
+						<additionalparam>-Xdoclint:all -Xdoclint:-missing</additionalparam>
 					</configuration>
 					<executions>
 						<execution>

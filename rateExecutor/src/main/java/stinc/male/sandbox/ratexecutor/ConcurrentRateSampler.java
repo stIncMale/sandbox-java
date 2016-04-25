@@ -11,6 +11,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 @ThreadSafe
 public final class ConcurrentRateSampler implements RateSampler {
 	private final long startNanos;
+	private final Duration sampleInterval;
 	private final long sampleIntervalNanos;
 	private AtomicLong aTotalCount;
 	private final ConcurrentSkipListMap<Long, AtomicLong> samples;//(rightNanos - sampleIntervalNanos; rightNanos]
@@ -21,10 +22,21 @@ public final class ConcurrentRateSampler implements RateSampler {
 		checkArgument(!sampleInterval.isZero(), "sampleInterval", "Must not be zero");
 		checkArgument(!sampleInterval.isNegative(), "sampleInterval", "Must be positive");
 		this.startNanos = startNanos;
+		this.sampleInterval = sampleInterval;
 		sampleIntervalNanos = sampleInterval.toNanos();
 		aTotalCount = new AtomicLong();
 		samples = new ConcurrentSkipListMap<>(NanosComparator.getInstance());
 		samples.put(startNanos, new AtomicLong());
+	}
+
+	@Override
+	public final long getStartNanos() {
+		return startNanos;
+	}
+
+	@Override
+	public final Duration getSampleInterval() {
+		return sampleInterval;
 	}
 
 	@Override
@@ -63,6 +75,12 @@ public final class ConcurrentRateSampler implements RateSampler {
 	}
 
 	@Override
+	public final synchronized long count() {
+		final long rightNanos = samples.lastKey();
+		return internalCount(rightNanos - sampleIntervalNanos, rightNanos);
+	}
+
+	@Override
 	public final synchronized String toString() {
 		return getClass().getSimpleName()
 				+ "(startNanos=" + startNanos
@@ -94,14 +112,18 @@ public final class ConcurrentRateSampler implements RateSampler {
 				result = internalRateAverage(tNanos);
 			} else {
 				final long effectiveRightNanos = Math.max(rightNanos, tNanos);
-				result = samples.subMap(effectiveRightNanos - sampleIntervalNanos, false, effectiveRightNanos, true)
-						.values()
-						.stream()
-						.mapToLong(AtomicLong::get)
-						.reduce(0, Math::addExact);
+				result = internalCount(effectiveRightNanos - sampleIntervalNanos, effectiveRightNanos);
 			}
 		}
 		return result;
+	}
+
+	private final synchronized long internalCount(final long fromExclusiveNanos, final long toInclusiveNanos) {
+		return samples.subMap(fromExclusiveNanos, false, toInclusiveNanos, true)
+				.values()
+				.stream()
+				.mapToLong(AtomicLong::get)
+				.reduce(0, Math::addExact);
 	}
 
 	private final synchronized void gc() {
