@@ -18,27 +18,25 @@ import java.time.Duration;
  * 	[startNanos; {@link Long#MAX_VALUE}]\u222a[{@link Long#MIN_VALUE}; {@link Long#MIN_VALUE} + startNanos - 1]<br>
  * (note that {@link Long#MIN_VALUE} is greater than {@link Long#MAX_VALUE} according to {@link System#nanoTime()}).
  * <p>
- * <i>Sample window</i> and <i>sample interval</i><br>
- * Sample window is a half-closed time interval (greatestScoredNanos - sampleInterval; greatestScoredNanos],
- * where {@linkplain #getSampleInterval() sample interval} is just a known fixed value that represents a size of the sample window,
- * and greatestScoredNanos is the bigger known instant scored via the {@link #tick(long, long)} method.
- * <p>
+ * <i>Sample window</i><br>
+ * Sample window is a half-closed time interval
+ * ({@linkplain #rightSampleWindowBoundary() rightmostScoredInstant} - {@linkplain #getSampleInterval() sampleInterval}; rightmostScoredInstant].
  * Current ticks are those inside the sample window.
- * Current rate is calculated from current ticks only and is measured in sampleInterval<sup>-1</sup>.
+ * Current rate is calculated from current ticks only and by default is measured in sampleInterval<sup>-1</sup>.
  * <p>
  * For example if sampleInterval is 3s,<br>
- * start is 1_000_000_000 ns,<br>
+ * startNanos is 1_000_000_000 ns,<br>
  * and the only scored ticks are<br>
  * 1 at 2_500_000_000 ns (this is just tNanos, not tNanos - startNanos),<br>
  * 1 at 3_000_000_000 ns,<br>
- * 4 at 5_000_000_000 ns,<br>
- * 2 at 6_000_000_000 ns,<br>
+ * 8 at 5_000_000_000 ns,<br>
+ * -2 at 6_000_000_000 ns,<br>
  * then the current rate is<br>
- * (4 + 2) / sampleInterval = 6 sampleInterval<sup>-1</sup> or 2 s<sup>-1</sup> because sampleInterval is 3s.
+ * (8 - 2) / sampleInterval = 6 sampleInterval<sup>-1</sup> = 2 s<sup>-1</sup> because sampleInterval is 3s.
  * <pre>
  *             2_500_000_000 ns                   5_000_000_000 ns
- *                    |                                  |
- * ----|---------|----1----1---------|---------4---------2---------|---------|---------|---------&gt;
+ *                    |                                  |                                       t
+ * ----|---------|----1----1---------|---------8--------(-2)------|---------|---------|---------&gt;
  *     |                   |                             |
  * startNanos       3_000_000_000 ns              6_000_000_000 ns
  *                         (--------sample window--------]
@@ -60,25 +58,55 @@ public interface RateSampler {
 	Duration getSampleInterval();
 
 	/**
+	 * Instant that corresponds to the right border of the sample window.
+	 * At the very beginning this is equal to {@link #getStartNanos()}.
+	 * @return
+	 * The rightmost {@linkplain #tick(long, long) scored} instant.
+	 */
+	long rightSampleWindowBoundary();
+
+	/**
+	 * Calculates number of ticks inside the sample window (current ticks).
+	 * @return
+	 * Number of current ticks.
+	 */
+	long numberOfCurrentTicks();
+
+	/**
 	 * Scores a sample of {@code count} ticks at {@code tNanos} instant.
+	 * If {@code tNanos} is bigger than current {@link #rightSampleWindowBoundary()}
+	 * then this method moves the sample window such that its right boundary is at {@code tNanos}.
 	 * @param count
-	 * Number of ticks.
+	 * Number of ticks. MAY be negative, zero, or positive.
+	 * If zero then the method does nothing,
+	 * otherwise adds {@code count} to the currently scored number of ticks at the specified instant,
+	 * or just remembers {@code count} ticks is no ticks were scored at the specified instant.
 	 * @param tNanos
-	 * Instant (see {@link System#nanoTime()}).
+	 * Instant at which {@code count} ticks need to be scored.
 	 */
 	void tick(final long count, final long tNanos);
 
+	/**
+	 * Calculates average rate of ticks (measured in sampleInterval<sup>-1</sup>)
+	 * from the {@linkplain #getStartNanos() start}
+	 * till the {@link #rightSampleWindowBoundary()}.
+	 * @return
+	 * The same value as {@link #rateAverage(long) rateAverage}{@code (}{@link #rightSampleWindowBoundary()}{@code )}.
+	 */
 	double rateAverage();
 
+	/**
+	 * Calculates average rate of ticks (measured in sampleInterval<sup>-1</sup>)
+	 * from the {@linkplain #getStartNanos() start} till the {@code tNanos}.
+	 * @param tNanos
+	 * MUST NOT be less than {@link #rightSampleWindowBoundary()}.
+	 * @return
+	 * Average rate of ticks.
+	 */
 	double rateAverage(long tNanos);
 
+	//TODO
 	double rate();
 
 	double rate(long tNanos);
-
-	/**
-	 * Calculates ticks
-	 * @return TODO
-	 */
-	long count();
 }

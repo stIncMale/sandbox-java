@@ -19,7 +19,7 @@
 		<relativePath>../build.xml</relativePath>
 	</parent>
 	<dependencies>
-		<dependency>
+		<dependency><!-- TODO check if dependent projects can be used without jsr305-->
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
 		</dependency>
