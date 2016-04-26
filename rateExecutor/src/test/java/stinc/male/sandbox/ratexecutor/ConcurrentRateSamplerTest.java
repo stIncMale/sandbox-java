@@ -12,8 +12,14 @@ public final class ConcurrentRateSamplerTest {
 
 	@Test
 	public final void getStartNanos() {
-		final long start = 314159;
-		assertEquals(start, new ConcurrentRateSampler(start, Duration.ZERO).getStartNanos());
+		final long startNanos = 123;
+		assertEquals(startNanos, new ConcurrentRateSampler(startNanos, Duration.ofSeconds(1)).getStartNanos());
+	}
+
+	@Test
+	public final void getSampleInterval() {
+		final Duration sampleInterval = Duration.ofSeconds(1);
+		assertEquals(sampleInterval, new ConcurrentRateSampler(123, sampleInterval).getSampleInterval());
 	}
 
 	@Test
