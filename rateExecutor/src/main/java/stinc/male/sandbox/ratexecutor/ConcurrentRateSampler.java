@@ -13,7 +13,7 @@ public final class ConcurrentRateSampler implements RateSampler {
 	private final Nanos startNanos;
 	private final Duration sampleInterval;
 	private final long sampleIntervalNanos;
-	private AtomicLong aTotalCount;
+	private final AtomicLong aTotalTicksCount;
 	private final ConcurrentSkipListMap<Long, AtomicLong> samples;
 
 	public ConcurrentRateSampler(final long startNanos, final Duration sampleInterval) {
@@ -24,14 +24,14 @@ public final class ConcurrentRateSampler implements RateSampler {
 		this.startNanos = new Nanos(startNanos);
 		this.sampleInterval = sampleInterval;
 		sampleIntervalNanos = sampleInterval.toNanos();
-		aTotalCount = new AtomicLong();
+		aTotalTicksCount = new AtomicLong();
 		samples = new ConcurrentSkipListMap<>(NanosComparator.getInstance());
 		samples.put(startNanos, new AtomicLong());
 	}
 
 	@Override
 	public final long getStartNanos() {
-		return startNanos.start;
+		return startNanos.value;
 	}
 
 	@Override
@@ -45,13 +45,19 @@ public final class ConcurrentRateSampler implements RateSampler {
 	}
 
 	@Override
-	public final synchronized long numberOfCurrentTicks() {
+	public final synchronized long ticksCount() {
 		final long rightNanos = samples.lastKey();
 		return internalCount(rightNanos - sampleIntervalNanos, rightNanos);
 	}
 
 	@Override
+	public final synchronized long ticksTotalCount() {
+		return aTotalTicksCount.get();
+	}
+
+	@Override
 	public final synchronized void tick(final long count, final long tNanos) {
+		checkArgument(NanosComparator.compare(tNanos, startNanos.value) > 0, "tNanos", "Must be greater than " + startNanos.value);
 		startNanos.check(tNanos, "tNanos");
 		if (count != 0) {
 			final AtomicLong newSample = new AtomicLong(count);
@@ -60,61 +66,62 @@ public final class ConcurrentRateSampler implements RateSampler {
 			if (existingSample != null) {//we need to merge samples
 				existingSample.addAndGet(count);
 			}
-			aTotalCount.addAndGet(count);
+			aTotalTicksCount.addAndGet(count);
 			gc();
 		}
 	}
 
 	@Override
 	public final synchronized double rateAverage() {
-		return internalRateAverage(samples.lastKey());
+		return internalRateAverage(samples.lastKey(), sampleIntervalNanos);
 	}
 
 	@Override
 	public final synchronized double rateAverage(final long tNanos) {
+		startNanos.check(tNanos, "tNanos");
 		final long rightNanos = samples.lastKey();
 		checkArgument(tNanos >= rightNanos, "tNanos", "Must not be less than " + rightNanos);
-		return internalRateAverage(tNanos);
+		return internalRateAverage(tNanos, sampleIntervalNanos);
 	}
 
 	@Override
 	public final synchronized double rate() {
-		return internalRate(samples.lastKey());
+		return internalRate(samples.lastKey(), sampleIntervalNanos);
 	}
 
 	@Override
 	public final synchronized double rate(final long tNanos) {
-		return internalRate(tNanos);
+		startNanos.check(tNanos, "tNanos");
+		return internalRate(tNanos, sampleIntervalNanos);
 	}
 
 	@Override
 	public final synchronized String toString() {
 		return getClass().getSimpleName()
-				+ "(startNanos=" + startNanos.start
-				+ ", sampleIntervalNanos" + sampleIntervalNanos
+				+ "(startNanos=" + startNanos.value
+				+ ", sampleIntervalNanos=" + sampleIntervalNanos
 				+ ')';
 	}
 
-	private final synchronized double internalRateAverage(final long tNanos) {
-		final long totalCount = aTotalCount.get();
-		final long totalNanos = tNanos - startNanos.start;
-		final double totalSampleIntervals = (double) totalNanos / sampleIntervalNanos;
-		return (double) totalCount / totalSampleIntervals;
+	private final synchronized double internalRateAverage(final long tNanos, final long unitSizeNanos) {
+		final long totalTicksCount = aTotalTicksCount.get();
+		final long totalNanos = tNanos - startNanos.value;
+		return totalNanos == 0
+				? 0
+				: (double) totalTicksCount / ((double) totalNanos / unitSizeNanos);
 	}
 
-	private final synchronized double internalRate(final long tNanos) {
+	private final synchronized double internalRate(final long tNanos, final long unitSizeNanos) {
 		final double result;
-		final long totalCount = aTotalCount.get();
-		if (NanosComparator.compare(tNanos, startNanos.start) < 0 || totalCount == 0) {
-			result = 0;
+		final long rightNanos = samples.lastKey();
+		if (NanosComparator.compare(tNanos, rightNanos) < 0) {
+			result = internalRateAverage(tNanos, unitSizeNanos);
 		} else {
-			final long rightNanos = samples.lastKey();
-			if (NanosComparator.compare(tNanos, rightNanos) < 0) {
-				result = internalRateAverage(tNanos);
-			} else {
-				final long effectiveRightNanos = Math.max(rightNanos, tNanos);
-				result = internalCount(effectiveRightNanos - sampleIntervalNanos, effectiveRightNanos);
-			}
+			final long effectiveRightNanos = NanosComparator.max(rightNanos, tNanos);
+			final long ticksCount = internalCount(effectiveRightNanos - sampleIntervalNanos, effectiveRightNanos);
+			result = (unitSizeNanos == sampleIntervalNanos)
+					? ticksCount
+					: (double) ticksCount / ((double) sampleIntervalNanos / unitSizeNanos);
 		}
 		return result;
 	}
@@ -128,50 +135,49 @@ public final class ConcurrentRateSampler implements RateSampler {
 	}
 
 	private final synchronized void gc() {
-		final long totalCount = aTotalCount.get();
-		if (totalCount % 1024 == 0) {
+		final long totalTicksCount = aTotalTicksCount.get();
+		if (totalTicksCount % 1024 == 0) {
 			final long rightNanos = samples.lastKey();
 			@Nullable
 			final Long rightNanosToRemoveTo = samples.floorKey(rightNanos - sampleIntervalNanos);
 			if (rightNanosToRemoveTo != null) {
-				samples.subMap(samples.firstKey(), true , rightNanosToRemoveTo, true)
+				samples.subMap(samples.firstKey(), true, rightNanosToRemoveTo, true)
 						.clear();
 			}
 		}
 	}
 
 	private static final class Nanos {
-		private final long start;
+		private final long value;
 		private final long l1;
 		private final long r1;
 		private final long l2;
 		private final long r2;
 
-		Nanos(final long start) {
-			this.start = start;
-			if (start <= 0) {
-				l1 = start;
-				r1 = start + Long.MAX_VALUE;
+		Nanos(final long value) {
+			this.value = value;
+			if (value <= 0) {
+				l1 = value;
+				r1 = value + Long.MAX_VALUE;
 				l2 = 0;
 				r2 = 0;
 			} else {
-				l1 = start;
+				l1 = value;
 				r1 = Long.MAX_VALUE;
 				l2 = Long.MIN_VALUE;
-				r2 = Long.MIN_VALUE + start - 1;
+				r2 = Long.MIN_VALUE + value - 1;
 			}
 		}
 
 		final void check(final long nanos, final String paramName) {
-			if (start <= 0) {
+			if (value <= 0) {
 				checkArgument(NanosComparator.compare(l1, nanos) <= 0 && NanosComparator.compare(nanos, r1) <= 0,
 						paramName, String.format("Must be in [%s; %s]", l1, r1));
 			} else {
 				checkArgument((NanosComparator.compare(l1, nanos) <= 0 && NanosComparator.compare(nanos, r1) <= 0)
-						|| (NanosComparator.compare(l2, nanos) <= 0 && NanosComparator.compare(nanos, r2) <= 0),
+								|| (NanosComparator.compare(l2, nanos) <= 0 && NanosComparator.compare(nanos, r2) <= 0),
 						paramName, String.format("Must be in [%s; %s]\u222a[%s; %s]", l1, r1, l2, r2));
 			}
-			return;
 		}
 	}
 }

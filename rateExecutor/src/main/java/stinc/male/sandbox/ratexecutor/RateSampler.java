@@ -14,13 +14,17 @@ import java.time.Duration;
  * <p>
  * If startNanos is negative or zero then allowed tNanos are in closed interval<br>
  * [startNanos; startNanos + {@link Long#MAX_VALUE}],<br>
- * if startNanos is positive then allowed tNanos are in the union of closed intervals<br>
+ * otherwise allowed tNanos are in the union of closed intervals<br>
  * 	[startNanos; {@link Long#MAX_VALUE}]\u222a[{@link Long#MIN_VALUE}; {@link Long#MIN_VALUE} + startNanos - 1]<br>
  * (note that {@link Long#MIN_VALUE} is greater than {@link Long#MAX_VALUE} according to {@link System#nanoTime()}).
  * <p>
  * <i>Sample window</i><br>
- * Sample window is a half-closed time interval
- * ({@linkplain #rightSampleWindowBoundary() rightmostScoredInstant} - {@linkplain #getSampleInterval() sampleInterval}; rightmostScoredInstant].
+ * Sample window is a half-closed time interval defined as:<br>
+ * if {@linkplain #rightSampleWindowBoundary() rightmostScoredInstant} - {@linkplain #getSampleInterval() sampleInterval}
+ * is less than startNanos then<br>
+ * (startNanos; sampleInterval]<br>
+ * otherwise<br>
+ * (rightmostScoredInstant - sampleInterval; rightmostScoredInstant].
  * Current ticks are those inside the sample window.
  * Current rate is calculated from current ticks only and by default is measured in sampleInterval<sup>-1</sup>.
  * <p>
@@ -70,11 +74,18 @@ public interface RateSampler {
 	 * @return
 	 * Number of current ticks.
 	 */
-	long numberOfCurrentTicks();
+	long ticksCount();
+
+	/**
+	 * Calculates total number of ticks since the {@linkplain #getStartNanos() start}.
+	 * @return
+	 * Total number of ticks.
+	 */
+	long ticksTotalCount();//TODO test
 
 	/**
 	 * Scores a sample of {@code count} ticks at {@code tNanos} instant.
-	 * If {@code tNanos} is bigger than current {@link #rightSampleWindowBoundary()}
+	 * If {@code tNanos} is greater than current {@link #rightSampleWindowBoundary()}
 	 * then this method moves the sample window such that its right boundary is at {@code tNanos}.
 	 * @param count
 	 * Number of ticks. MAY be negative, zero, or positive.
@@ -83,6 +94,7 @@ public interface RateSampler {
 	 * or just remembers {@code count} ticks is no ticks were scored at the specified instant.
 	 * @param tNanos
 	 * Instant at which {@code count} ticks need to be scored.
+	 * MUST be greater than {@link #getStartNanos()} because ticks at {@link #getStartNanos()} doesn't count.
 	 */
 	void tick(final long count, final long tNanos);
 
@@ -105,8 +117,26 @@ public interface RateSampler {
 	 */
 	double rateAverage(long tNanos);
 
-	//TODO
+	/**
+	 * Calculates current rate of ticks (measured in sampleInterval<sup>-1</sup>).
+	 * Current rate is the ratio of {@link #ticksCount()} to {@link #getSampleInterval()},
+	 * so essentially this method returns the same value as {@link #ticksCount()}.
+	 * @return
+	 * The same value as {@link #rate(long) rate}{@code (}{@link #rightSampleWindowBoundary()}{@code )}.
+	 */
 	double rate();
 
+	/**
+	 * Calculates rate of ticks (measured in sampleInterval<sup>-1</sup>)
+	 * as if {@code tNanos} were the right sample window boundary
+	 * (for cases when {@code tNanos} is greater than {@link #rightSampleWindowBoundary()}),
+	 * or returns {@link #rateAverage()}.
+	 * @param tNanos
+	 * The right sample window boundary.
+	 * @return
+	 *  If {@code tNanos} is greater than {@link #rightSampleWindowBoundary()} then returns
+	 * current rate of ticks as if {@code tNanos} were the right sample window boundary,
+	 * otherwise returns {@link #rateAverage()}.
+	 */
 	double rate(long tNanos);
 }

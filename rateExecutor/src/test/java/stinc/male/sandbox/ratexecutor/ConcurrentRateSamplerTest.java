@@ -37,24 +37,24 @@ public final class ConcurrentRateSamplerTest {
 	}
 
 	@Test
-	public final void numberOfCurrentTicks1() {
-		assertEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).numberOfCurrentTicks());
+	public final void ticksCount1() {
+		assertEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).ticksCount());
 	}
 
 	@Test
-	public final void numberOfCurrentTicks2() {
-		final ConcurrentRateSampler rs = new ConcurrentRateSampler(0, Duration.ofSeconds(5));
+	public final void ticksCount2() {
+		final ConcurrentRateSampler rs = new ConcurrentRateSampler(-5, Duration.ofSeconds(5));
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
 		rs.tick(4, TimeUnit.SECONDS.toNanos(1));
 		rs.tick(2, TimeUnit.SECONDS.toNanos(2));
 		rs.tick(3, TimeUnit.SECONDS.toNanos(3));
-		assertEquals(1 + 4 + 2 + 3, rs.numberOfCurrentTicks());
+		assertEquals(1 + 4 + 2 + 3, rs.ticksCount());
 		rs.tick(0, TimeUnit.SECONDS.toNanos(8));
-		assertEquals(1 + 4 + 2 + 3, rs.numberOfCurrentTicks());//right boundary of the sample window must be 3
+		assertEquals(1 + 4 + 2 + 3, rs.ticksCount());
 		rs.tick(-2, TimeUnit.SECONDS.toNanos(5));
 		rs.tick(1, TimeUnit.SECONDS.toNanos(3));
 		rs.tick(-1, TimeUnit.SECONDS.toNanos(6));
-		assertEquals(2 + 3 - 2 + 1 - 1, rs.numberOfCurrentTicks());
+		assertEquals(2 + 3 - 2 + 1 - 1, rs.ticksCount());
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -78,11 +78,21 @@ public final class ConcurrentRateSamplerTest {
 	@Test
 	public final void tick4() {
 		new ConcurrentRateSampler(0, Duration.ofSeconds(1))
-				.tick(1, 0);
+				.tick(1, 1);
 	}
 
 	@Test
-	public final void rateAverage() {
+	public final void rateAverage1() {
+		assertDoubleEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).rateAverage());
+	}
+
+	@Test
+	public final void rateAverage2() {
+		assertDoubleEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).rateAverage(0));
+	}
+
+	@Test
+	public final void rateAverage3() {
 		final ConcurrentRateSampler rs = new ConcurrentRateSampler(0, Duration.ofSeconds(5));
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1));
@@ -95,10 +105,11 @@ public final class ConcurrentRateSamplerTest {
 		assertDoubleEquals((1d + 1 + 2 + 3 - 2 + 1 - 1) / (6d / 5), rs.rateAverage());
 		rs.tick(1000, TimeUnit.SECONDS.toNanos(10));
 		assertDoubleEquals((1d + 1 + 2 + 3 - 2 + 1 - 1 + 1000) / (10d / 5), rs.rateAverage());
+		assertDoubleEquals(rs.rateAverage(rs.rightSampleWindowBoundary()), rs.rateAverage());
 	}
 
 	@Test
-	public final void rateAverage2() {
+	public final void rateAverage4() {
 		final ConcurrentRateSampler rs = new ConcurrentRateSampler(0, Duration.ofSeconds(5));
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
 		rs.tick(0, TimeUnit.SECONDS.toNanos(1));
@@ -109,6 +120,52 @@ public final class ConcurrentRateSamplerTest {
 		rs.tick(1, TimeUnit.SECONDS.toNanos(3));
 		rs.tick(-1, TimeUnit.SECONDS.toNanos(6));
 		assertDoubleEquals((1d + 2 + 3 - 2 + 1 - 1) / (10d / 5), rs.rateAverage(TimeUnit.SECONDS.toNanos(10)));
+	}
+
+	@Test
+	public final void rate1() {
+		assertDoubleEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).rate());
+	}
+
+	@Test
+	public final void rate2() {
+		assertDoubleEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).rate(0));
+	}
+
+	@Test
+	public final void rate3() {
+		final ConcurrentRateSampler rs = new ConcurrentRateSampler(TimeUnit.SECONDS.toNanos(-1), Duration.ofSeconds(3));
+		rs.tick(1, 0);
+		rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
+		assertDoubleEquals(1 + 1, rs.rate());
+		rs.tick(0, TimeUnit.SECONDS.toNanos(1));
+		rs.tick(2, TimeUnit.SECONDS.toNanos(2));
+		assertDoubleEquals(1 + 1 + 2, rs.rate());
+		rs.tick(3, TimeUnit.SECONDS.toNanos(3));
+		assertDoubleEquals(1 + 2 + 3, rs.rate());
+		rs.tick(-2, TimeUnit.SECONDS.toNanos(5));
+		rs.tick(1, TimeUnit.SECONDS.toNanos(3));
+		rs.tick(-1, TimeUnit.SECONDS.toNanos(6));
+		assertDoubleEquals(-2 - 1, rs.rate());
+		assertDoubleEquals(rs.ticksCount(), rs.rate());
+		assertDoubleEquals(rs.rate(rs.rightSampleWindowBoundary()), rs.rate());
+	}
+
+	@Test
+	public final void rate4() {
+		final ConcurrentRateSampler rs = new ConcurrentRateSampler(-2, Duration.ofSeconds(3));
+		rs.tick(1, -1);
+		rs.tick(3, 0);
+		rs.tick(1, TimeUnit.SECONDS.toNanos(1));
+		rs.tick(0, TimeUnit.SECONDS.toNanos(1));
+		rs.tick(2, TimeUnit.SECONDS.toNanos(2));
+		assertDoubleEquals((1d + 3 + 1 + 2), rs.rate(TimeUnit.SECONDS.toNanos(2)));
+		rs.tick(3, TimeUnit.SECONDS.toNanos(3));
+		assertDoubleEquals((1 + 2 + 3), rs.rate(TimeUnit.SECONDS.toNanos(3)));
+		rs.tick(-2, TimeUnit.SECONDS.toNanos(5));
+		rs.tick(1, TimeUnit.SECONDS.toNanos(3));
+		rs.tick(-1, TimeUnit.SECONDS.toNanos(6));
+		assertDoubleEquals((-2 - 1), rs.rate(TimeUnit.SECONDS.toNanos(7)));
 	}
 
 	private static final void assertDoubleEquals(final double extected, final double actual) {

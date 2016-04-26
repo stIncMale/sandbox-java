@@ -1,6 +1,7 @@
 package stinc.male.sandbox.ratexecutor;
 
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -9,6 +10,8 @@ public final class NanosComparatorTest {
 			new Sample(Long.MIN_VALUE, Long.MIN_VALUE, CompareResult.EQUAL),
 			new Sample(Long.MAX_VALUE, Long.MAX_VALUE, CompareResult.EQUAL),
 			new Sample(0, 0, CompareResult.EQUAL),
+			new Sample(Long.MIN_VALUE + 1, Long.MIN_VALUE, CompareResult.GREATER),
+			new Sample(Long.MAX_VALUE -1, Long.MAX_VALUE, CompareResult.LOWER),
 			new Sample(0, Long.MAX_VALUE, CompareResult.LOWER),//maxDelta
 			new Sample(-2, Long.MAX_VALUE, CompareResult.GREATER),//maxDelta
 			new Sample(0, Long.MAX_VALUE, CompareResult.LOWER),//maxDelta
@@ -31,6 +34,26 @@ public final class NanosComparatorTest {
 	public final void compare() {
 		for (final Sample sample : samples) {
 			assertCompare(sample.l1, sample.l2, sample.expected, NanosComparator.getInstance());
+		}
+	}
+
+	@Test
+	public final void min() {
+		for (final Sample sample : samples) {
+			if (sample.expected != CompareResult.UNSUPPORTED) {
+				final long expected = sample.expected == CompareResult.LOWER ? sample.l1 : sample.l2;
+				assertEquals(expected, NanosComparator.min(sample.l1, sample.l2));
+			}
+		}
+	}
+
+	@Test
+	public final void max() {
+		for (final Sample sample : samples) {
+			if (sample.expected != CompareResult.UNSUPPORTED) {
+				final long expected = sample.expected == CompareResult.LOWER ? sample.l2 : sample.l1;
+				assertEquals(expected, NanosComparator.max(sample.l1, sample.l2));
+			}
 		}
 	}
 
