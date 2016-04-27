@@ -45,6 +45,11 @@ import java.time.Duration;
  * startNanos       3_000_000_000 ns              6_000_000_000 ns
  *                         (--------sample window--------]
  * </pre>
+ * <b>Performance notes</b><br>
+ * This utility is primarily designed to measure current rate by using sample window.
+ * This approach introduces performance overhead and although {@link RateSampler} can also measure
+ * {@linkplain #rateAverage() average rate} and calculate the {@linkplain #ticksTotalCount() total number of ticks},
+ * you MAY want to use more lightweight techniques if you don't need to measure the current rate.
  */
 public interface RateSampler {
 	/**
@@ -94,7 +99,7 @@ public interface RateSampler {
 	 * or just remembers {@code count} ticks is no ticks were scored at the specified instant.
 	 * @param tNanos
 	 * Instant at which {@code count} ticks need to be scored.
-	 * MUST be greater than {@link #getStartNanos()} because ticks at {@link #getStartNanos()} doesn't count.
+	 * MUST be greater than {@link #getStartNanos()} because ticks at {@link #getStartNanos()} doesn't count. TODO
 	 */
 	void tick(final long count, final long tNanos);
 
@@ -105,7 +110,9 @@ public interface RateSampler {
 	 * @return
 	 * The same value as {@link #rateAverage(long) rateAverage}{@code (}{@link #rightSampleWindowBoundary()}{@code )}.
 	 */
-	double rateAverage();
+	default double rateAverage() {
+		return rateAverage(rightSampleWindowBoundary());
+	}
 
 	/**
 	 * Calculates average rate of ticks (measured in sampleInterval<sup>-1</sup>)
@@ -124,7 +131,9 @@ public interface RateSampler {
 	 * @return
 	 * The same value as {@link #rate(long) rate}{@code (}{@link #rightSampleWindowBoundary()}{@code )}.
 	 */
-	double rate();
+	default double rate() {
+		return rate(rightSampleWindowBoundary());
+	}
 
 	/**
 	 * Calculates rate of ticks (measured in sampleInterval<sup>-1</sup>)

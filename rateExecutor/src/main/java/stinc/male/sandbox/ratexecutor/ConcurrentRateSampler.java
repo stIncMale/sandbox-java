@@ -56,7 +56,7 @@ public final class ConcurrentRateSampler implements RateSampler {
 	}
 
 	@Override
-	public final synchronized void tick(final long count, final long tNanos) {
+	public final synchronized void tick(final long count, final long tNanos) {//TODO tick in the past
 		checkArgument(NanosComparator.compare(tNanos, startNanos.value) > 0, "tNanos", "Must be greater than " + startNanos.value);
 		startNanos.check(tNanos, "tNanos");
 		if (count != 0) {

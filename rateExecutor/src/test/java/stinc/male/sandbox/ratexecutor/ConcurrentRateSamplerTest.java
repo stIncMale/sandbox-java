@@ -57,6 +57,22 @@ public final class ConcurrentRateSamplerTest {
 		assertEquals(2 + 3 - 2 + 1 - 1, rs.ticksCount());
 	}
 
+	@Test
+	public final void ticksTotalCount1() {
+		assertEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).ticksTotalCount());
+	}
+
+	@Test
+	public final void ticksTotalCount2() {
+		final ConcurrentRateSampler rs = new ConcurrentRateSampler(Long.MAX_VALUE, Duration.ofSeconds(5));
+		rs.tick(1, Long.MIN_VALUE);
+		assertEquals(1, rs.ticksTotalCount());
+		assertEquals(rs.ticksCount(), rs.ticksTotalCount());
+		rs.tick(4, -1000);
+		rs.tick(2, -500);
+		assertEquals(1 + 4 + 2, rs.ticksTotalCount());
+	}
+
 	@Test(expected = IllegalArgumentException.class)
 	public final void tick1() {
 		new ConcurrentRateSampler(-1, Duration.ofSeconds(1))
