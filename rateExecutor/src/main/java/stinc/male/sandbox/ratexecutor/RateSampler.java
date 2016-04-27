@@ -88,7 +88,7 @@ public interface RateSampler {
 	 *
 	 * @return Total number of ticks.
 	 */
-	long ticksTotalCount();//TODO test
+	long ticksTotalCount();
 
 	/**
 	 * Scores a sample of {@code count} ticks at {@code tNanos} instant.
