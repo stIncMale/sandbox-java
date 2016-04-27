@@ -15,8 +15,7 @@ public final class NanosComparator implements Comparator<Long> {
 	/**
 	 * Always returns the same instance.
 	 *
-	 * @return
-	 * An instance of {@link NanosComparator}.
+	 * @return An instance of {@link NanosComparator}.
 	 */
 	public static final NanosComparator getInstance() {
 		return instance;
@@ -24,8 +23,8 @@ public final class NanosComparator implements Comparator<Long> {
 
 	/**
 	 * Acts like {@link #compare(Long, Long)} but for primitive values.
-	 * @throws IllegalArgumentException
-	 * If {@code l1} - {@code l2} == {@link Long#MIN_VALUE}.
+	 *
+	 * @throws IllegalArgumentException If {@code l1} - {@code l2} == {@link Long#MIN_VALUE}.
 	 */
 	public static final int compare(final long l1, final long l2) throws IllegalArgumentException {
 		final long diff = l1 - l2;
@@ -46,14 +45,11 @@ public final class NanosComparator implements Comparator<Long> {
 	/**
 	 * Returns the smaller (see {@link #compare(long, long)}) of two nanosecond values.
 	 * If the arguments have the same value, the result is that same value.
-	 * @param l1
-	 * An argument.
-	 * @param l2
-	 * Another argument.
-	 * @return
-	 * The smaller of two nanosecond values.
-	 * @throws IllegalArgumentException
-	 * If {@code l1} - {@code l2} == {@link Long#MIN_VALUE}.
+	 *
+	 * @param l1 An argument.
+	 * @param l2 Another argument.
+	 * @return The smaller of two nanosecond values.
+	 * @throws IllegalArgumentException If {@code l1} - {@code l2} == {@link Long#MIN_VALUE}.
 	 */
 	public static final long min(final long l1, final long l2) throws IllegalArgumentException {
 		return compare(l1, l2) <= 0 ? l1 : l2;
@@ -62,22 +58,18 @@ public final class NanosComparator implements Comparator<Long> {
 	/**
 	 * Returns the greater (see {@link #compare(long, long)}) of two nanosecond values.
 	 * If the arguments have the same value, the result is that same value.
-	 * @param l1
-	 * An argument.
-	 * @param l2
-	 * Another argument.
-	 * @return
-	 * The larger of two nanosecond values.
-	 * @throws IllegalArgumentException
-	 * If {@code l1} - {@code l2} == {@link Long#MIN_VALUE}.
+	 *
+	 * @param l1 An argument.
+	 * @param l2 Another argument.
+	 * @return The larger of two nanosecond values.
+	 * @throws IllegalArgumentException If {@code l1} - {@code l2} == {@link Long#MIN_VALUE}.
 	 */
 	public static final long max(final long l1, final long l2) throws IllegalArgumentException {
 		return compare(l1, l2) >= 0 ? l1 : l2;
 	}
 
 	/**
-	 * @throws IllegalArgumentException
-	 * If {@code l1} - {@code l2} == {@link Long#MIN_VALUE}.
+	 * @throws IllegalArgumentException If {@code l1} - {@code l2} == {@link Long#MIN_VALUE}.
 	 */
 	@Override
 	public final int compare(@Nonnull final Long l1, @Nonnull final Long l2) throws IllegalArgumentException {

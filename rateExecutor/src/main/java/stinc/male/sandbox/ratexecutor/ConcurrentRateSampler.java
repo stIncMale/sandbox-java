@@ -16,6 +16,12 @@ public final class ConcurrentRateSampler implements RateSampler {
 	private final AtomicLong aTotalTicksCount;
 	private final ConcurrentSkipListMap<Long, AtomicLong> samples;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param startNanos     Starting point that is used to calculate elapsed nanoseconds.
+	 * @param sampleInterval Size of the sample window.
+	 */
 	public ConcurrentRateSampler(final long startNanos, final Duration sampleInterval) {
 		checkArgument(startNanos != Double.NaN, "startNanos", "Must not be NaN");
 		checkNotNull(sampleInterval, "sampleInterval");
@@ -56,24 +62,32 @@ public final class ConcurrentRateSampler implements RateSampler {
 	}
 
 	@Override
-	public final synchronized void tick(final long count, final long tNanos) {//TODO tick in the past
-		checkArgument(NanosComparator.compare(tNanos, startNanos.value) > 0, "tNanos", "Must be greater than " + startNanos.value);
+	public final synchronized void tick(final long count, final long tNanos) {
+		checkArgument(NanosComparator.compare(tNanos, startNanos.value) >= 0, "tNanos", "Must not be less than " + startNanos.value);
 		startNanos.check(tNanos, "tNanos");
-		if (count != 0) {
+		if (count != 0 && tNanos != startNanos.value) {
 			final AtomicLong newSample = new AtomicLong(count);
 			@Nullable
 			final AtomicLong existingSample = samples.putIfAbsent(tNanos, newSample);
 			if (existingSample != null) {//we need to merge samples
 				existingSample.addAndGet(count);
 			}
-			aTotalTicksCount.addAndGet(count);
-			gc();
+			final long totalTicksCount = aTotalTicksCount.addAndGet(count);
+			gc(totalTicksCount);
 		}
 	}
 
 	@Override
 	public final synchronized double rateAverage() {
 		return internalRateAverage(samples.lastKey(), sampleIntervalNanos);
+	}
+
+	@Override
+	public final double rateAverage(final Duration unit) {
+		checkNotNull(unit, "unit");
+		checkArgument(!unit.isZero(), "sampleInterval", "Must not be zero");
+		checkArgument(!unit.isNegative(), "sampleInterval", "Must be positive");
+		return rateAverage() / ((double) sampleIntervalNanos / unit.toNanos());
 	}
 
 	@Override
@@ -85,8 +99,27 @@ public final class ConcurrentRateSampler implements RateSampler {
 	}
 
 	@Override
-	public final synchronized double rate() {
-		return internalRate(samples.lastKey(), sampleIntervalNanos);
+	public final double rateAverage(final long tNanos, final Duration unit) {
+		checkNotNull(unit, "unit");
+		checkArgument(!unit.isZero(), "sampleInterval", "Must not be zero");
+		checkArgument(!unit.isNegative(), "sampleInterval", "Must be positive");
+		return rateAverage(tNanos) / ((double) sampleIntervalNanos / unit.toNanos());
+	}
+
+	@Override
+	public final double rate(final Duration unit) {
+		checkNotNull(unit, "unit");
+		checkArgument(!unit.isZero(), "sampleInterval", "Must not be zero");
+		checkArgument(!unit.isNegative(), "sampleInterval", "Must be positive");
+		return rate() / ((double) sampleIntervalNanos / unit.toNanos());
+	}
+
+	@Override
+	public final double rate(final long tNanos, final Duration unit) {
+		checkNotNull(unit, "unit");
+		checkArgument(!unit.isZero(), "sampleInterval", "Must not be zero");
+		checkArgument(!unit.isNegative(), "sampleInterval", "Must be positive");
+		return rate(tNanos) / ((double) sampleIntervalNanos / unit.toNanos());
 	}
 
 	@Override
@@ -118,6 +151,9 @@ public final class ConcurrentRateSampler implements RateSampler {
 			result = internalRateAverage(tNanos, unitSizeNanos);
 		} else {
 			final long effectiveRightNanos = NanosComparator.max(rightNanos, tNanos);
+			final long effectiveLeftNanos = NanosComparator.compare(startNanos.value + sampleIntervalNanos, effectiveRightNanos) < 0
+					? effectiveRightNanos - sampleIntervalNanos
+					: startNanos.value;
 			final long ticksCount = internalCount(effectiveRightNanos - sampleIntervalNanos, effectiveRightNanos);
 			result = (unitSizeNanos == sampleIntervalNanos)
 					? ticksCount
@@ -134,12 +170,14 @@ public final class ConcurrentRateSampler implements RateSampler {
 				.reduce(0, Math::addExact);
 	}
 
-	private final synchronized void gc() {
-		final long totalTicksCount = aTotalTicksCount.get();
-		if (totalTicksCount % 1024 == 0) {
+	private final synchronized void gc(long counter) {//TODO test
+		if (counter % 1024 == 0) {//TODO compare bit operations with %
 			final long rightNanos = samples.lastKey();
+			final long effectiveLeftNanos = NanosComparator.compare(startNanos.value + sampleIntervalNanos, rightNanos) < 0
+					? rightNanos - sampleIntervalNanos
+					: startNanos.value;
 			@Nullable
-			final Long rightNanosToRemoveTo = samples.floorKey(rightNanos - sampleIntervalNanos);
+			final Long rightNanosToRemoveTo = samples.floorKey(effectiveLeftNanos);
 			if (rightNanosToRemoveTo != null) {
 				samples.subMap(samples.firstKey(), true, rightNanosToRemoveTo, true)
 						.clear();

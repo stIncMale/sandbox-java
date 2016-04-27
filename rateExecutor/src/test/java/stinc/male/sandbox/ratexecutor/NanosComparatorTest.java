@@ -11,7 +11,7 @@ public final class NanosComparatorTest {
 			new Sample(Long.MAX_VALUE, Long.MAX_VALUE, CompareResult.EQUAL),
 			new Sample(0, 0, CompareResult.EQUAL),
 			new Sample(Long.MIN_VALUE + 1, Long.MIN_VALUE, CompareResult.GREATER),
-			new Sample(Long.MAX_VALUE -1, Long.MAX_VALUE, CompareResult.LOWER),
+			new Sample(Long.MAX_VALUE - 1, Long.MAX_VALUE, CompareResult.LOWER),
 			new Sample(0, Long.MAX_VALUE, CompareResult.LOWER),//maxDelta
 			new Sample(-2, Long.MAX_VALUE, CompareResult.GREATER),//maxDelta
 			new Sample(0, Long.MAX_VALUE, CompareResult.LOWER),//maxDelta
