@@ -9,24 +9,15 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * <p>
  * <b>Glossary</b><br>
  * <i>Instant</i><br>
- * {@link RateSampler} treats instants
- * as the number of nanoseconds elapsed since the {@linkplain #getStartNanos() start}.
- * So instant is a pair (startNanos, tNanos), but because startNanos is known and fixed,
- * tNanos is enough to specify an instant. All nanosecond values are compared as specified by {@link System#nanoTime()}.
- * <p>
- * If startNanos is negative or zero then allowed tNanos are in closed interval<br>
- * [startNanos; startNanos + {@link Long#MAX_VALUE}],<br>
- * otherwise allowed tNanos are in the union of closed intervals<br>
- * [startNanos; {@link Long#MAX_VALUE}]\u222a[{@link Long#MIN_VALUE}; {@link Long#MIN_VALUE} + startNanos - 1]<br>
- * (note that {@link Long#MIN_VALUE} is greater than {@link Long#MAX_VALUE} according to {@link System#nanoTime()}).
+ * {@link RateSampler} treats instants as the number of nanoseconds elapsed since the {@linkplain #getStartNanos() start}.
+ * So instant is a pair (startNanos, elapsedNanos), but because startNanos is known and fixed,
+ * we can equivalently specify an instant via a single value tNanos = startNanos + elapsedNanos.
+ * This class uses tNanos notation instead of (startNanos, elapsedNanos) notation.
+ * All nanosecond values are compared as specified by {@link System#nanoTime()}.
  * <p>
  * <i>Sample window</i><br>
- * Sample window is a half-closed time interval defined as:<br>
- * if {@linkplain #rightSampleWindowBoundary() rightmostScoredInstant} - {@linkplain #getSampleInterval() sampleInterval}
- * is less than startNanos then<br>
- * (startNanos; sampleInterval]<br>
- * otherwise<br>
- * (rightmostScoredInstant - sampleInterval; rightmostScoredInstant].
+ * Sample window is a half-closed time interval
+ * ({@linkplain #rightSampleWindowBoundary() rightmostScoredInstant} - {@linkplain #getSampleInterval() sampleInterval}; rightmostScoredInstant].
  * Current ticks are those inside the sample window.
  * Current rate is calculated from current ticks only and by default is measured in sampleInterval<sup>-1</sup>.
  * <p>
@@ -47,6 +38,15 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * startNanos       3_000_000_000 ns              6_000_000_000 ns
  *                         (--------sample window--------]
  * </pre>
+ * <p>
+ * <b>Allowed time values</b><br>
+ * All methods with parameters that specify instants restrict possible values.
+ * If startNanos - sampleInterval is negative or zero then allowed tNanos are in closed interval<br>
+ * [startNanos; startNanos - sampleInterval + {@link Long#MAX_VALUE}],<br>
+ * otherwise allowed tNanos are in the union of closed intervals<br>
+ * [startNanos; {@link Long#MAX_VALUE}]\u222a[{@link Long#MIN_VALUE}; {@link Long#MIN_VALUE} + startNanos - sampleInterval - 1]<br>
+ * (note that {@link Long#MIN_VALUE} is greater than {@link Long#MAX_VALUE} according to {@link System#nanoTime()}).<br>
+ * <p>
  * <b>Performance notes</b><br>
  * This utility is primarily designed to measure current rate by using sample window.
  * This approach introduces performance overhead and although {@link RateSampler} can also measure
@@ -64,7 +64,8 @@ public interface RateSampler {
 	/**
 	 * A size of the sample window.
 	 *
-	 * @return {@link Duration} which is not {@linkplain Duration#isZero() zero} and not {@linkplain Duration#isNegative() negative}.
+	 * @return {@link Duration} which is not {@linkplain Duration#isZero() zero}
+	 * and not {@linkplain Duration#isNegative() negative}.
 	 */
 	Duration getSampleInterval();
 
@@ -96,7 +97,7 @@ public interface RateSampler {
 	 * then this method moves the sample window such that its right boundary is at {@code tNanos}.
 	 *
 	 * @param count  Number of ticks. MAY be negative, zero, or positive.
-	 *               If zero or {@link #getStartNanos()} then the method does nothing,
+	 *               If zero then the method does nothing,
 	 *               otherwise adds {@code count} to the currently scored number of ticks at the specified instant,
 	 *               or just remembers {@code count} ticks is no ticks were scored at the specified instant.
 	 * @param tNanos Instant at which {@code count} ticks need to be scored.

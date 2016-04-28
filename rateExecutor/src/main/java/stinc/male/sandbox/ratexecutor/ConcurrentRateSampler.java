@@ -27,9 +27,9 @@ public final class ConcurrentRateSampler implements RateSampler {
 		checkNotNull(sampleInterval, "sampleInterval");
 		checkArgument(!sampleInterval.isZero(), "sampleInterval", "Must not be zero");
 		checkArgument(!sampleInterval.isNegative(), "sampleInterval", "Must be positive");
-		this.startNanos = new Nanos(startNanos);
 		this.sampleInterval = sampleInterval;
 		sampleIntervalNanos = sampleInterval.toNanos();
+		this.startNanos = new Nanos(startNanos, sampleIntervalNanos);
 		aTotalTicksCount = new AtomicLong();
 		samples = new ConcurrentSkipListMap<>(NanosComparator.getInstance());
 		samples.put(startNanos, new AtomicLong());
@@ -65,7 +65,7 @@ public final class ConcurrentRateSampler implements RateSampler {
 	public final synchronized void tick(final long count, final long tNanos) {
 		checkArgument(NanosComparator.compare(tNanos, startNanos.value) >= 0, "tNanos", "Must not be less than " + startNanos.value);
 		startNanos.check(tNanos, "tNanos");
-		if (count != 0 && tNanos != startNanos.value) {
+		if (count != 0) {
 			final AtomicLong newSample = new AtomicLong(count);
 			@Nullable
 			final AtomicLong existingSample = samples.putIfAbsent(tNanos, newSample);
@@ -151,10 +151,8 @@ public final class ConcurrentRateSampler implements RateSampler {
 			result = internalRateAverage(tNanos, unitSizeNanos);
 		} else {
 			final long effectiveRightNanos = NanosComparator.max(rightNanos, tNanos);
-			final long effectiveLeftNanos = NanosComparator.compare(startNanos.value + sampleIntervalNanos, effectiveRightNanos) < 0
-					? effectiveRightNanos - sampleIntervalNanos
-					: startNanos.value;
-			final long ticksCount = internalCount(effectiveRightNanos - sampleIntervalNanos, effectiveRightNanos);
+			final long effectiveLeftNanos = effectiveRightNanos - sampleIntervalNanos;
+			final long ticksCount = internalCount(effectiveLeftNanos, effectiveRightNanos);
 			result = (unitSizeNanos == sampleIntervalNanos)
 					? ticksCount
 					: (double) ticksCount / ((double) sampleIntervalNanos / unitSizeNanos);
@@ -173,11 +171,9 @@ public final class ConcurrentRateSampler implements RateSampler {
 	private final synchronized void gc(long counter) {//TODO test
 		if (counter % 1024 == 0) {//TODO compare bit operations with %
 			final long rightNanos = samples.lastKey();
-			final long effectiveLeftNanos = NanosComparator.compare(startNanos.value + sampleIntervalNanos, rightNanos) < 0
-					? rightNanos - sampleIntervalNanos
-					: startNanos.value;
+			final long leftNanos = rightNanos - sampleIntervalNanos;
 			@Nullable
-			final Long rightNanosToRemoveTo = samples.floorKey(effectiveLeftNanos);
+			final Long rightNanosToRemoveTo = samples.floorKey(leftNanos);
 			if (rightNanosToRemoveTo != null) {
 				samples.subMap(samples.firstKey(), true, rightNanosToRemoveTo, true)
 						.clear();
@@ -192,18 +188,18 @@ public final class ConcurrentRateSampler implements RateSampler {
 		private final long l2;
 		private final long r2;
 
-		Nanos(final long value) {
+		Nanos(final long value, final long sampleIntervalNanos) {
 			this.value = value;
-			if (value <= 0) {
+			if ((value - sampleIntervalNanos) <= 0) {
 				l1 = value;
-				r1 = value + Long.MAX_VALUE;
+				r1 = value - sampleIntervalNanos + Long.MAX_VALUE;
 				l2 = 0;
 				r2 = 0;
 			} else {
 				l1 = value;
 				r1 = Long.MAX_VALUE;
 				l2 = Long.MIN_VALUE;
-				r2 = Long.MIN_VALUE + value - 1;
+				r2 = Long.MIN_VALUE + value - sampleIntervalNanos - 1;
 			}
 		}
 

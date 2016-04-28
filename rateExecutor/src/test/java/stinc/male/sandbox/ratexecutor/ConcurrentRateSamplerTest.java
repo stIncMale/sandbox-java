@@ -68,8 +68,8 @@ public final class ConcurrentRateSamplerTest {
 		rs.tick(1, Long.MIN_VALUE);
 		assertEquals(1, rs.ticksTotalCount());
 		assertEquals(rs.ticksCount(), rs.ticksTotalCount());
-		rs.tick(4, -1000);
-		rs.tick(2, -500);
+		rs.tick(4, -6_000_000_000L);
+		rs.tick(2, -5_500_000_000L);
 		assertEquals(1 + 4 + 2, rs.ticksTotalCount());
 	}
 
@@ -135,14 +135,14 @@ public final class ConcurrentRateSamplerTest {
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
 		rs.tick(0, TimeUnit.SECONDS.toNanos(1));
 		rs.tick(2, TimeUnit.SECONDS.toNanos(2));
-		assertDoubleEquals((1d + 2) / (2d / 5), rs.rateAverage(TimeUnit.SECONDS.toNanos(2)));
-		assertDoubleEquals((1d + 2) / (2d / 3), rs.rateAverage(TimeUnit.SECONDS.toNanos(2), Duration.ofSeconds(3)));
+		assertDoubleEquals((4d + 1 + 2) / (2d / 5), rs.rateAverage(TimeUnit.SECONDS.toNanos(2)));
+		assertDoubleEquals((4d + 1 + 2) / (2d / 3), rs.rateAverage(TimeUnit.SECONDS.toNanos(2), Duration.ofSeconds(3)));
 		rs.tick(3, TimeUnit.SECONDS.toNanos(3));
 		rs.tick(-2, TimeUnit.SECONDS.toNanos(5));
 		rs.tick(1, TimeUnit.SECONDS.toNanos(3));
 		rs.tick(-1, TimeUnit.SECONDS.toNanos(6));
-		assertDoubleEquals((1d + 2 + 3 - 2 + 1 - 1) / (10d / 5), rs.rateAverage(TimeUnit.SECONDS.toNanos(10)));
-		assertDoubleEquals((1d + 2 + 3 - 2 + 1 - 1) / (10d / 3), rs.rateAverage(TimeUnit.SECONDS.toNanos(10), Duration.ofSeconds(3)));
+		assertDoubleEquals((4d + 1 + 2 + 3 - 2 + 1 - 1) / (10d / 5), rs.rateAverage(TimeUnit.SECONDS.toNanos(10)));
+		assertDoubleEquals((4d + 1 + 2 + 3 - 2 + 1 - 1) / (10d / 3), rs.rateAverage(TimeUnit.SECONDS.toNanos(10), Duration.ofSeconds(3)));
 	}
 
 	@Test
