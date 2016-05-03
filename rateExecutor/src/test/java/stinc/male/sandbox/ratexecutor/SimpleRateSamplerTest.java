@@ -6,31 +6,31 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public final class ConcurrentRateSamplerTest {
-	public ConcurrentRateSamplerTest() {
+public final class SimpleRateSamplerTest {
+	public SimpleRateSamplerTest() {
 	}
 
 	@Test
 	public final void getStartNanos() {
 		final long startNanos = 123;
-		assertEquals(startNanos, new ConcurrentRateSampler(startNanos, Duration.ofSeconds(1)).getStartNanos());
+		assertEquals(startNanos, new SimpleRateSampler(startNanos, Duration.ofSeconds(1)).getStartNanos());
 	}
 
 	@Test
 	public final void getSampleInterval() {
 		final Duration sampleInterval = Duration.ofSeconds(1);
-		assertEquals(sampleInterval, new ConcurrentRateSampler(123, sampleInterval).getSampleInterval());
+		assertEquals(sampleInterval, new SimpleRateSampler(123, sampleInterval).getSampleInterval());
 	}
 
 	@Test
 	public final void rightSampleWindowBoundary1() {
 		final long startNanos = 123;
-		assertEquals(startNanos, new ConcurrentRateSampler(startNanos, Duration.ofSeconds(1)).rightSampleWindowBoundary());
+		assertEquals(startNanos, new SimpleRateSampler(startNanos, Duration.ofSeconds(1)).rightSampleWindowBoundary());
 	}
 
 	@Test
 	public final void rightSampleWindowBoundary2() {
-		final ConcurrentRateSampler rs = new ConcurrentRateSampler(0, Duration.ofSeconds(1));
+		final SimpleRateSampler rs = new SimpleRateSampler(0, Duration.ofSeconds(1));
 		final long rightmost = 123;
 		rs.tick(1, rightmost);
 		assertEquals(rightmost, rs.rightSampleWindowBoundary());
@@ -38,12 +38,12 @@ public final class ConcurrentRateSamplerTest {
 
 	@Test
 	public final void ticksCount1() {
-		assertEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).ticksCount());
+		assertEquals(0, new SimpleRateSampler(0, Duration.ofSeconds(1)).ticksCount());
 	}
 
 	@Test
 	public final void ticksCount2() {
-		final ConcurrentRateSampler rs = new ConcurrentRateSampler(-5, Duration.ofSeconds(5));
+		final SimpleRateSampler rs = new SimpleRateSampler(-5, Duration.ofSeconds(5));
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
 		rs.tick(4, TimeUnit.SECONDS.toNanos(1));
 		rs.tick(2, TimeUnit.SECONDS.toNanos(2));
@@ -59,12 +59,12 @@ public final class ConcurrentRateSamplerTest {
 
 	@Test
 	public final void ticksTotalCount1() {
-		assertEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).ticksTotalCount());
+		assertEquals(0, new SimpleRateSampler(0, Duration.ofSeconds(1)).ticksTotalCount());
 	}
 
 	@Test
 	public final void ticksTotalCount2() {
-		final ConcurrentRateSampler rs = new ConcurrentRateSampler(Long.MAX_VALUE, Duration.ofSeconds(5));
+		final SimpleRateSampler rs = new SimpleRateSampler(Long.MAX_VALUE, Duration.ofSeconds(5));
 		rs.tick(1, Long.MIN_VALUE);
 		assertEquals(1, rs.ticksTotalCount());
 		assertEquals(rs.ticksCount(), rs.ticksTotalCount());
@@ -75,41 +75,41 @@ public final class ConcurrentRateSamplerTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public final void tick1() {
-		new ConcurrentRateSampler(-1, Duration.ofSeconds(1))
+		new SimpleRateSampler(-1, Duration.ofSeconds(1))
 				.tick(-1, Long.MAX_VALUE);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public final void tick2() {
-		new ConcurrentRateSampler(0, Duration.ofSeconds(1))
+		new SimpleRateSampler(0, Duration.ofSeconds(1))
 				.tick(0, Long.MIN_VALUE);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public final void tick3() {
-		new ConcurrentRateSampler(1, Duration.ofSeconds(1))
+		new SimpleRateSampler(1, Duration.ofSeconds(1))
 				.tick(1, 0);
 	}
 
 	@Test
 	public final void tick4() {
-		new ConcurrentRateSampler(0, Duration.ofSeconds(1))
+		new SimpleRateSampler(0, Duration.ofSeconds(1))
 				.tick(1, 1);
 	}
 
 	@Test
 	public final void rateAverage1() {
-		assertDoubleEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).rateAverage());
+		assertDoubleEquals(0, new SimpleRateSampler(0, Duration.ofSeconds(1)).rateAverage());
 	}
 
 	@Test
 	public final void rateAverage2() {
-		assertDoubleEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).rateAverage(0));
+		assertDoubleEquals(0, new SimpleRateSampler(0, Duration.ofSeconds(1)).rateAverage(0));
 	}
 
 	@Test
 	public final void rateAverage3() {
-		final ConcurrentRateSampler rs = new ConcurrentRateSampler(0, Duration.ofSeconds(5));
+		final SimpleRateSampler rs = new SimpleRateSampler(0, Duration.ofSeconds(5));
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1));
 		rs.tick(2, TimeUnit.SECONDS.toNanos(2));
@@ -130,7 +130,7 @@ public final class ConcurrentRateSamplerTest {
 
 	@Test
 	public final void rateAverage4() {
-		final ConcurrentRateSampler rs = new ConcurrentRateSampler(0, Duration.ofSeconds(5));
+		final SimpleRateSampler rs = new SimpleRateSampler(0, Duration.ofSeconds(5));
 		rs.tick(4, 0);
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
 		rs.tick(0, TimeUnit.SECONDS.toNanos(1));
@@ -147,17 +147,17 @@ public final class ConcurrentRateSamplerTest {
 
 	@Test
 	public final void rate1() {
-		assertDoubleEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).rate());
+		assertDoubleEquals(0, new SimpleRateSampler(0, Duration.ofSeconds(1)).rate());
 	}
 
 	@Test
 	public final void rate2() {
-		assertDoubleEquals(0, new ConcurrentRateSampler(0, Duration.ofSeconds(1)).rate(0));
+		assertDoubleEquals(0, new SimpleRateSampler(0, Duration.ofSeconds(1)).rate(0));
 	}
 
 	@Test
 	public final void rate3() {
-		final ConcurrentRateSampler rs = new ConcurrentRateSampler(TimeUnit.SECONDS.toNanos(-1), Duration.ofSeconds(3));
+		final SimpleRateSampler rs = new SimpleRateSampler(TimeUnit.SECONDS.toNanos(-1), Duration.ofSeconds(3));
 		rs.tick(1, 0);
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
 		assertDoubleEquals(1 + 1, rs.rate());
@@ -183,7 +183,7 @@ public final class ConcurrentRateSamplerTest {
 
 	@Test
 	public final void rate4() {
-		final ConcurrentRateSampler rs = new ConcurrentRateSampler(-2, Duration.ofSeconds(3));
+		final SimpleRateSampler rs = new SimpleRateSampler(-2, Duration.ofSeconds(3));
 		rs.tick(1, -1);
 		rs.tick(3, 0);
 		rs.tick(1, TimeUnit.SECONDS.toNanos(1));

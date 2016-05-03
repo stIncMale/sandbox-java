@@ -1,6 +1,7 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.util.Locale;
+import java.util.function.Supplier;
 
 final class Preconditions {
 	private static final String format(final String format, final Object... args) {
@@ -22,6 +23,16 @@ final class Preconditions {
 		if (!checkArgumentExpression) {
 			throw new IllegalArgumentException(
 					format("The argument %s is illegal. %s", paramName, paramRestrictionDescription));
+		}
+	}
+
+	static final void checkArgument(
+			final boolean checkArgumentExpression,
+			final String paramName,
+			final Supplier<String> paramRestrictionDescriptionSupplier) throws IllegalArgumentException {
+		if (!checkArgumentExpression) {
+			throw new IllegalArgumentException(
+					format("The argument %s is illegal. %s", paramName, paramRestrictionDescriptionSupplier.get()));
 		}
 	}
 
