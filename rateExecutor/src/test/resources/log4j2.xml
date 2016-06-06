@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration name = "Logging Config" status = "warn" monitorInterval = "10" strict = "true">
-	<Properties>
-		<Property name = "sandbox.charset">UTF-8</Property>
-		<Property name = "sandbox.layoutPattern">
-			[%-5level] [%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}] [%t] [%logger] - %msg%n
-		</Property>
-	</Properties>
-	<Appenders>
-		<Appender type = "Console" name = "stdout" target = "SYSTEM_OUT">
-			<Layout type = "PatternLayout" charset = "${sandbox.charset}">
-				<Pattern>${sandbox.layoutPattern}</Pattern>
-			</Layout>
-		</Appender>
-	</Appenders>
-	<Loggers>
-		<Root level = "off">
-		</Root>
-		<Logger name = "stinc.male.sandbox.ratexecutor" level = "trace">
-			<AppenderRef ref = "stdout"/>
-		</Logger>
-	</Loggers>
+<Configuration name="Logging Config" status="warn" monitorInterval="10" strict="true">
+  <Properties>
+    <Property name="sandbox.charset">UTF-8</Property>
+    <Property name="sandbox.layoutPattern">
+      [%-5level] [%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}] [%t] [%logger] - %msg%n
+    </Property>
+  </Properties>
+  <Appenders>
+    <Appender type="Console" name="stdout" target="SYSTEM_OUT">
+      <Layout type="PatternLayout" charset="${sandbox.charset}">
+        <Pattern>${sandbox.layoutPattern}</Pattern>
+      </Layout>
+    </Appender>
+  </Appenders>
+  <Loggers>
+    <Root level="off">
+    </Root>
+    <Logger name="stinc.male.sandbox.ratexecutor" level="trace">
+      <AppenderRef ref="stdout"/>
+    </Logger>
+  </Loggers>
 </Configuration>

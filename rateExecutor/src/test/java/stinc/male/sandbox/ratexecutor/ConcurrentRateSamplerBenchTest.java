@@ -14,43 +14,44 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 public class ConcurrentRateSamplerBenchTest {
-	public ConcurrentRateSamplerBenchTest() {
-	}
+  public ConcurrentRateSamplerBenchTest() {
+  }
 
-	@Test
-	public void launchBenchmark() throws Exception {
-		Options opt = new OptionsBuilder()
-				.include(getClass().getName())
-				.mode (Mode.Throughput)
-				.timeUnit(TimeUnit.MILLISECONDS)
-				.warmupTime(TimeValue.seconds(2))
-				.warmupIterations(3)
-				.measurementTime(TimeValue.seconds(2))
-				.measurementIterations(3)
-				.threads(4)
-				.forks(2)
-				.shouldFailOnError(true)
-				.shouldDoGC(true)
-				.build();
-		new Runner(opt).run();
-	}
+  @Test
+  public void launchBenchmark() throws Exception {
+    Options opt = new OptionsBuilder()
+        .include(getClass().getName())
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MICROSECONDS)
+        .warmupTime(TimeValue.seconds(2))
+        .warmupIterations(3)
+        .measurementTime(TimeValue.seconds(2))
+        .measurementIterations(3)
+        .syncIterations(true)
+        .threads(4)
+        .forks(2)
+        .shouldFailOnError(true)
+        .shouldDoGC(true)
+        .build();
+    new Runner(opt).run();
+  }
 
-	@Benchmark
-	public void tick(final RateSamplerContainer rateSamplerContainer) throws Exception {
-		final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-		rateSamplerContainer.value.tick(1, tNanos);
-	}
+  @Benchmark
+  public void tick(final RateSamplerContainer rateSamplerContainer) throws Exception {
+    final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
+    rateSamplerContainer.value.tick(1, tNanos);
+  }
 
-	@State(Scope.Benchmark)
-	public static class RateSamplerContainer {
-		volatile RateSampler value;
+  @State(Scope.Benchmark)
+  public static class RateSamplerContainer {
+    volatile RateSampler value;
 
-		public RateSamplerContainer() {
-		}
+    public RateSamplerContainer() {
+    }
 
-		@Setup
-		public final void setup() {
-			value = new ConcurrentRateSampler(System.nanoTime(), Duration.ofSeconds(1));
-		}
-	}
+    @Setup
+    public final void setup() {
+      value = new ConcurrentRateSampler(System.nanoTime(), Duration.ofSeconds(1));
+    }
+  }
 }
