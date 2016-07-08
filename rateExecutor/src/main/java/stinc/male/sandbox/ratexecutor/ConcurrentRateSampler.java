@@ -3,6 +3,7 @@ package stinc.male.sandbox.ratexecutor;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -16,6 +17,7 @@ public final class ConcurrentRateSampler implements RateSampler {
   private final long sampleIntervalNanos;
   private final AtomicLong aTotalTicksCount;
   private final ConcurrentNavigableMap<Long, AtomicLong> samples;
+  private final AtomicBoolean aGcFlag;
 
   /**
    * Constructor.
@@ -34,6 +36,7 @@ public final class ConcurrentRateSampler implements RateSampler {
     aTotalTicksCount = new AtomicLong();
     samples = new ConcurrentSkipListMap<>(NanosComparator.getInstance());
     samples.put(startNanos, new AtomicLong());
+    aGcFlag = new AtomicBoolean();
   }
 
   @Override
@@ -47,23 +50,23 @@ public final class ConcurrentRateSampler implements RateSampler {
   }
 
   @Override
-  public final synchronized long rightSampleWindowBoundary() {
+  public final long rightSampleWindowBoundary() {
     return samples.lastKey();
   }
 
   @Override
-  public final synchronized long ticksCount() {
+  public final long ticksCount() {
     final long rightNanos = samples.lastKey();
     return internalCount(rightNanos - sampleIntervalNanos, rightNanos);
   }
 
   @Override
-  public final synchronized long ticksTotalCount() {
+  public final long ticksTotalCount() {
     return aTotalTicksCount.get();
   }
 
   @Override
-  public final synchronized void tick(final long count, final long tNanos) {
+  public final void tick(final long count, final long tNanos) {
     checkArgument(NanosComparator.compare(tNanos, startNanos.value) >= 0, "tNanos", () -> "Must not be less than " + startNanos.value);
     startNanos.check(tNanos, "tNanos");
     if (count != 0) {
@@ -79,7 +82,7 @@ public final class ConcurrentRateSampler implements RateSampler {
   }
 
   @Override
-  public final synchronized double rateAverage() {
+  public final double rateAverage() {
     return internalRateAverage(samples.lastKey(), sampleIntervalNanos);
   }
 
@@ -92,7 +95,7 @@ public final class ConcurrentRateSampler implements RateSampler {
   }
 
   @Override
-  public final synchronized double rateAverage(final long tNanos) {
+  public final double rateAverage(final long tNanos) {
     startNanos.check(tNanos, "tNanos");
     final long rightNanos = samples.lastKey();
     checkArgument(tNanos >= rightNanos, "tNanos", () -> "Must not be less than " + rightNanos);
@@ -124,20 +127,20 @@ public final class ConcurrentRateSampler implements RateSampler {
   }
 
   @Override
-  public final synchronized double rate(final long tNanos) {
+  public final double rate(final long tNanos) {
     startNanos.check(tNanos, "tNanos");
     return internalRate(tNanos, sampleIntervalNanos);
   }
 
   @Override
-  public final synchronized String toString() {
+  public final String toString() {
     return getClass().getSimpleName()
         + "(startNanos=" + startNanos.value
         + ", sampleIntervalNanos=" + sampleIntervalNanos
         + ')';
   }
 
-  private final synchronized double internalRateAverage(final long tNanos, final long unitSizeNanos) {
+  private final double internalRateAverage(final long tNanos, final long unitSizeNanos) {
     final long totalTicksCount = aTotalTicksCount.get();
     final long totalNanos = tNanos - startNanos.value;
     return totalNanos == 0
@@ -145,7 +148,7 @@ public final class ConcurrentRateSampler implements RateSampler {
         : (double) totalTicksCount / ((double) totalNanos / unitSizeNanos);
   }
 
-  private final synchronized double internalRate(final long tNanos, final long unitSizeNanos) {
+  private final double internalRate(final long tNanos, final long unitSizeNanos) {
     final double result;
     final long rightNanos = samples.lastKey();
     if (NanosComparator.compare(tNanos, rightNanos) < 0) {
@@ -161,7 +164,7 @@ public final class ConcurrentRateSampler implements RateSampler {
     return result;
   }
 
-  private final synchronized long internalCount(final long fromExclusiveNanos, final long toInclusiveNanos) {
+  private final long internalCount(final long fromExclusiveNanos, final long toInclusiveNanos) {
     return samples.subMap(fromExclusiveNanos, false, toInclusiveNanos, true)
         .values()
         .stream()
@@ -169,15 +172,21 @@ public final class ConcurrentRateSampler implements RateSampler {
         .reduce(0, Math::addExact);
   }
 
-  private final synchronized void gc(long counter) {//TODO test
+  private final void gc(long counter) {//TODO test
     if (counter % 1024 == 0) {
-      final long rightNanos = samples.lastKey();
-      final long leftNanos = rightNanos - sampleIntervalNanos;
-      @Nullable
-      final Long rightNanosToRemoveTo = samples.floorKey(leftNanos);
-      if (rightNanosToRemoveTo != null) {
-        samples.subMap(samples.firstKey(), true, rightNanosToRemoveTo, true)
-            .clear();
+      if (aGcFlag.compareAndSet(false, true)) {
+        try {
+          final long rightNanos = samples.lastKey();
+          final long leftNanos = rightNanos - sampleIntervalNanos;
+          @Nullable
+          final Long rightNanosToRemoveTo = samples.floorKey(leftNanos);
+          if (rightNanosToRemoveTo != null) {
+            samples.subMap(samples.firstKey(), true, rightNanosToRemoveTo, true)
+                .clear();
+          }
+        } finally {
+          aGcFlag.set(false);
+        }
       }
     }
   }

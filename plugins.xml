@@ -53,7 +53,7 @@
 					</configuration>
 				</plugin>
 				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
+					<groupId>org.apache.maven.plugins</groupId><!-- TODO differentiate performance and unit tests. performance should must only be run manually (e.g. from IDE)-->
 					<artifactId>maven-surefire-plugin</artifactId>
 					<configuration>
 						<parallel>all</parallel>

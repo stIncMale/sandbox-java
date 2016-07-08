@@ -1,4 +1,4 @@
-package stinc.male.sandbox.ratexecutor;
+package stinc.male.sandbox.ratexecutor.performance;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -8,13 +8,16 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
+import stinc.male.sandbox.ratexecutor.ConcurrentRateSampler;
+import stinc.male.sandbox.ratexecutor.RateSampler;
 
-public class ConcurrentRateSamplerBenchTest {
-  public ConcurrentRateSamplerBenchTest() {
+public class SimpleRateSamplerTickTest {
+  public SimpleRateSamplerTickTest() {
   }
 
   @Test
@@ -22,7 +25,7 @@ public class ConcurrentRateSamplerBenchTest {
     Options opt = new OptionsBuilder()
         .include(getClass().getName())
         .mode(Mode.Throughput)
-        .timeUnit(TimeUnit.MICROSECONDS)
+        .timeUnit(TimeUnit.MILLISECONDS)
         .warmupTime(TimeValue.seconds(2))
         .warmupIterations(3)
         .measurementTime(TimeValue.seconds(2))
@@ -32,17 +35,24 @@ public class ConcurrentRateSamplerBenchTest {
         .forks(2)
         .shouldFailOnError(true)
         .shouldDoGC(true)
+        .timeout(TimeValue.seconds(3))
         .build();
     new Runner(opt).run();
   }
 
   @Benchmark
-  public void tick(final RateSamplerContainer rateSamplerContainer) throws Exception {
-    final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
+  public void tickBaseline(final Blackhole bh) throws Exception {
+    bh.consume(TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()));
+  }
+
+  @Benchmark
+  public void tick(final RateSamplerContainer rateSamplerContainer, final Blackhole bh) throws Exception {
+    final long tNanos;
+    bh.consume(tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()));
     rateSamplerContainer.value.tick(1, tNanos);
   }
 
-  @State(Scope.Benchmark)
+  @State(Scope.Thread)
   public static class RateSamplerContainer {
     volatile RateSampler value;
 
@@ -51,7 +61,7 @@ public class ConcurrentRateSamplerBenchTest {
 
     @Setup
     public final void setup() {
-      value = new ConcurrentRateSampler(System.nanoTime(), Duration.ofSeconds(1));
+      value = new ConcurrentRateSampler(System.nanoTime(), Duration.ofMillis(150));
     }
   }
 }

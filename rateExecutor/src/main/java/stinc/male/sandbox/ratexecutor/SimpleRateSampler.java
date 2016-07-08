@@ -167,7 +167,7 @@ public final class SimpleRateSampler implements RateSampler {//TODO abstract cla
         .reduce(0, Math::addExact);
   }
 
-  private final void gc(long counter) {//TODO test
+  private final void gc(long counter) {//TODO test; add GC strategies?
     if (counter % 1024 == 0) {
       final long rightNanos = samples.lastKey();
       final long leftNanos = rightNanos - sampleIntervalNanos;
