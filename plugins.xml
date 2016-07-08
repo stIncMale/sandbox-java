@@ -122,7 +122,7 @@
 						<links>
 							<link>http://docs.oracle.com/javase/8/docs/api/</link>
 							<link>http://docs.oracle.com/javaee/7/api/</link>
-							<link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link><!-- TODO use mine jsr-304 project-->
+							<link>http://stincmale.github.io/jsr-305/javadoc/</link>
 							<link>http://google-guice.googlecode.com/git/javadoc/</link>
 							<link>http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/</link>
 						</links>
