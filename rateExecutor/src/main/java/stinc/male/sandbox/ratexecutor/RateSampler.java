@@ -17,7 +17,8 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * <p>
  * <i>Sample window</i><br>
  * Sample window is a half-closed time interval
- * ({@linkplain #rightSampleWindowBoundary() rightmostScoredInstant} - {@linkplain #getSampleInterval() sampleInterval}; rightmostScoredInstant].
+ * ({@linkplain #rightSampleWindowBoundary() rightmostScoredInstant} - {@linkplain #getSampleInterval() sampleInterval}; rightmostScoredInstant]
+ * (considering potential numerial overflow and comparison according to {@link System#nanoTime()}).
  * Current ticks are those inside the sample window.
  * Current rate is calculated from current ticks only and by default is measured in sampleInterval<sup>-1</sup>.
  * <p>
@@ -31,8 +32,8 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * then the current rate is<br>
  * (8 - 2) / sampleInterval = 6 sampleInterval<sup>-1</sup> = 2 s<sup>-1</sup> because sampleInterval is 3s.
  * <pre>
- *             2_500_000_000 ns                   5_000_000_000 ns
- *                    |                                  |                                       t
+ *             2_500_000_000 ns         5_000_000_000 ns
+ *                    |                        |                                                 t
  * ----|---------|----1----1---------|---------8--------(-2)------|---------|---------|---------&gt;
  *     |                   |                             |
  * startNanos       3_000_000_000 ns              6_000_000_000 ns
@@ -41,7 +42,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * <p>
  * <b>Allowed time values</b><br>
  * All methods with parameters that specify instants restrict possible values.
- * If startNanos - sampleInterval is negative or zero then allowed tNanos are in closed interval<br>
+ * If startNanos - sampleInterval (the left border of the initial sample window) is negative or zero then allowed tNanos are in closed interval<br>
  * [startNanos; startNanos - sampleInterval + {@link Long#MAX_VALUE}],<br>
  * otherwise allowed tNanos are in the union of closed intervals<br>
  * [startNanos; {@link Long#MAX_VALUE}]\u222a[{@link Long#MIN_VALUE}; {@link Long#MIN_VALUE} + startNanos - sampleInterval - 1]<br>
@@ -51,7 +52,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * This utility is primarily designed to measure current rate by using sample window.
  * This approach introduces performance overhead and although {@link RateSampler} can also measure
  * {@linkplain #rateAverage() average rate} and calculate the {@linkplain #ticksTotalCount() total number of ticks},
- * you MAY want to use more lightweight techniques if you don't need to measure the current rate.
+ * you MAY want to use more lightweight techniques if you don't need to measure the exact current rate.
  */
 public interface RateSampler {
   /**
