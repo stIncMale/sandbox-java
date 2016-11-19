@@ -13,8 +13,8 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
-import stinc.male.sandbox.ratexecutor.ConcurrentRateSampler;
 import stinc.male.sandbox.ratexecutor.RateSampler;
+import stinc.male.sandbox.ratexecutor.SimpleRateSampler;
 
 public class SimpleRateSamplerTickTest {
   public SimpleRateSamplerTickTest() {
@@ -61,7 +61,7 @@ public class SimpleRateSamplerTickTest {
 
     @Setup
     public final void setup() {
-      value = new ConcurrentRateSampler(System.nanoTime(), Duration.ofMillis(150));
+      value = new SimpleRateSampler(System.nanoTime(), Duration.ofMillis(150));
     }
   }
 }

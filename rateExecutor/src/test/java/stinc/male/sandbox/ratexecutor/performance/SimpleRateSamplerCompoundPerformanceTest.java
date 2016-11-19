@@ -13,8 +13,8 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
-import stinc.male.sandbox.ratexecutor.ConcurrentRateSampler;
 import stinc.male.sandbox.ratexecutor.RateSampler;
+import stinc.male.sandbox.ratexecutor.SimpleRateSampler;
 
 public class SimpleRateSamplerCompoundPerformanceTest {
   public SimpleRateSamplerCompoundPerformanceTest() {
@@ -44,7 +44,7 @@ public class SimpleRateSamplerCompoundPerformanceTest {
   public void tickRateBaseline(final Blackhole blackhole) throws Exception {
     final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
     blackhole.consume(tNanos);
-    blackhole.consume(0);
+    blackhole.consume(tNanos);
   }
 
   @Benchmark
@@ -64,7 +64,7 @@ public class SimpleRateSamplerCompoundPerformanceTest {
 
     @Setup
     public final void setup() {
-      value = new ConcurrentRateSampler(System.nanoTime(), Duration.ofMillis(150));
+      value = new SimpleRateSampler(System.nanoTime(), Duration.ofMillis(150));
     }
   }
 }
