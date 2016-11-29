@@ -178,7 +178,7 @@
 			</activation>
 		</profile>
 		<profile>
-			<id>test</id>
+			<id>unitTest</id>
 			<properties>
 				<maven.test.skip>false</maven.test.skip>
 				<sandbox.maven-surefire-plugin.parallel>all</sandbox.maven-surefire-plugin.parallel>

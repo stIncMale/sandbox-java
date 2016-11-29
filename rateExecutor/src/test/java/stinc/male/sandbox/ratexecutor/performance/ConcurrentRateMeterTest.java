@@ -18,12 +18,12 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 import stinc.male.PerformanceTest;
-import stinc.male.sandbox.ratexecutor.ConcurrentRateSampler;
-import stinc.male.sandbox.ratexecutor.RateSampler;
+import stinc.male.sandbox.ratexecutor.ConcurrentRateMeter;
+import stinc.male.sandbox.ratexecutor.RateMeter;
 
 @Category(PerformanceTest.class)
-public class ConcurrentRateSamplerTest {
-  public ConcurrentRateSamplerTest() {
+public class ConcurrentRateMeterTest {
+  public ConcurrentRateMeterTest() {
   }
 
   @Test
@@ -64,69 +64,69 @@ public class ConcurrentRateSamplerTest {
   @Group("tick_1")
   @GroupThreads(1)
   @Benchmark
-  public void tick_1(final ConcurrentRateSamplerContainer rateSamplerContainer, final Blackhole bh) {
+  public void tick_1(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) {
     final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateSamplerContainer.value.tick(1, tNanos);
+    rateMeterContainer.value.tick(1, tNanos);
   }
 
   @Group("tick_2")
   @GroupThreads(2)
   @Benchmark
-  public void tick_2(final ConcurrentRateSamplerContainer rateSamplerContainer, final Blackhole bh) {
+  public void tick_2(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) {
     final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateSamplerContainer.value.tick(1, tNanos);
+    rateMeterContainer.value.tick(1, tNanos);
   }
 
   @Group("tick_4")
   @GroupThreads(4)
   @Benchmark
-  public void tick_4(final ConcurrentRateSamplerContainer rateSamplerContainer, final Blackhole bh) {
+  public void tick_4(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) {
     final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateSamplerContainer.value.tick(1, tNanos);
+    rateMeterContainer.value.tick(1, tNanos);
   }
 
   @Group("compound_3_1")
   @GroupThreads(3)
   @Benchmark
-  public void compoundTick_3_1(final ConcurrentRateSamplerContainer rateSamplerContainer, final Blackhole bh) {
+  public void compoundTick_3_1(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) {
     final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
     bh.consume(tNanos);
-    rateSamplerContainer.value.tick(1, tNanos);
+    rateMeterContainer.value.tick(1, tNanos);
   }
 
   @Group("compound_3_1")
   @GroupThreads(1)
   @Benchmark
-  public void compoundRate_3_1(final ConcurrentRateSamplerContainer rateSamplerContainer, final Blackhole bh) {
-    bh.consume(rateSamplerContainer.value.rate());
+  public void compoundRate_3_1(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) {
+    bh.consume(rateMeterContainer.value.rate());
   }
 
   @Group("compound_2_2")
   @GroupThreads(2)
   @Benchmark
-  public void compoundTick_2_2(final ConcurrentRateSamplerContainer rateSamplerContainer, final Blackhole bh) {
+  public void compoundTick_2_2(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) {
     final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
     bh.consume(tNanos);
-    rateSamplerContainer.value.tick(1, tNanos);
+    rateMeterContainer.value.tick(1, tNanos);
   }
 
   @Group("compound_2_2")
   @GroupThreads(2)
   @Benchmark
-  public void compoundRate_2_2(final ConcurrentRateSamplerContainer rateSamplerContainer, final Blackhole bh) {
-    bh.consume(rateSamplerContainer.value.rate());
+  public void compoundRate_2_2(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) {
+    bh.consume(rateMeterContainer.value.rate());
   }
 
   @State(Scope.Group)
-  public static class ConcurrentRateSamplerContainer {
-    volatile RateSampler value;
+  public static class ConcurrentRateMeterContainer {
+    volatile RateMeter value;
 
-    public ConcurrentRateSamplerContainer() {
+    public ConcurrentRateMeterContainer() {
     }
 
     @Setup
     public final void setup() {
-      value = new ConcurrentRateSampler(System.nanoTime(), Duration.ofMillis(150));
+      value = new ConcurrentRateMeter(System.nanoTime(), Duration.ofMillis(150));
     }
   }
 }

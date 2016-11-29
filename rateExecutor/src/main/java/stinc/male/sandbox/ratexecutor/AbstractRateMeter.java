@@ -4,7 +4,7 @@ import java.time.Duration;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
-abstract class AbstractRateSampler implements RateSampler {
+abstract class AbstractRateMeter implements RateMeter {
   private final StartNanos startNanos;
   private final Duration sampleInterval;
   private final long sampleIntervalNanos;
@@ -16,7 +16,7 @@ abstract class AbstractRateSampler implements RateSampler {
    * @param config See {@link #checkTNanos(long, String)}.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
    */
-  AbstractRateSampler(final long startNanos, final Duration sampleInterval, final RateSamplerConfig config) {
+  AbstractRateMeter(final long startNanos, final Duration sampleInterval, final RateMeterConfig config) {
     checkNotNull(sampleInterval, "sampleInterval");
     checkArgument(!sampleInterval.isZero(), "sampleInterval", "Must not be zero");
     checkArgument(!sampleInterval.isNegative(), "sampleInterval", "Must be positive");
@@ -53,8 +53,8 @@ abstract class AbstractRateSampler implements RateSampler {
   }
 
   /**
-   * Checks if {@code nanos} is a valid tNanos value for the startNanos and sampleInterval given in the {@link AbstractRateSampler}'s constructor,
-   * or does nothing if {@link RateSamplerConfig#isCheckTNanos()} is {@code false}.
+   * Checks if {@code nanos} is a valid tNanos value for the startNanos and sampleInterval given in the {@link AbstractRateMeter}'s constructor,
+   * or does nothing if {@link RateMeterConfig#isCheckTNanos()} is {@code false}.
    *
    * @param nanos Value to check.
    * @param paramName Name of the method parameter with value {@code nanos} which will be used to generate error if {@code nanos} is not a valid value.
@@ -99,7 +99,7 @@ abstract class AbstractRateSampler implements RateSampler {
      *
      * @throws IllegalArgumentException
      */
-    final void check(final long nanos, final String paramName) throws IllegalArgumentException {//TODO fix this this and the one in the RateSampler interface. Something is wrong here
+    final void check(final long nanos, final String paramName) throws IllegalArgumentException {//TODO fix this this and the one in the RateMeter interface. Something is wrong here
       if (l2 == 0) {//(value - sampleIntervalNanos) <= 0
         checkArgument(NanosComparator.compare(l1, nanos) <= 0 && NanosComparator.compare(nanos, r1) <= 0,
             paramName, () -> String.format("Must be in [%s; %s]", l1, r1));

@@ -1,19 +1,16 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import java.util.concurrent.ConcurrentNavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
+import javax.annotation.concurrent.NotThreadSafe;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
 
-@ThreadSafe
-public final class ConcurrentRateSampler extends AbstractRateSampler {
-  private final AtomicLong aTicksTotalCount;
-  private final ConcurrentNavigableMap<Long, AtomicLong> samples;
-  private final AtomicBoolean aGcFlag;
+@NotThreadSafe
+public final class SimpleRateMeter extends AbstractRateMeter {
+  private long ticksTotalCount;
+  private final NavigableMap<Long, ModifiableLong> samples;
 
   /**
    * Constructor.
@@ -22,20 +19,19 @@ public final class ConcurrentRateSampler extends AbstractRateSampler {
    * @param sampleInterval Size of the sample window.
    * @param config Additional configuration parameters.
    */
-  public ConcurrentRateSampler(final long startNanos, final Duration sampleInterval, final RateSamplerConfig config) {
+  public SimpleRateMeter(final long startNanos, final Duration sampleInterval, final RateMeterConfig config) {
     super(startNanos, sampleInterval, config);
-    aTicksTotalCount = new AtomicLong();
-    samples = new ConcurrentSkipListMap<>(NanosComparator.getInstance());
-    samples.put(startNanos, new AtomicLong());
-    aGcFlag = new AtomicBoolean();
+    ticksTotalCount = 0;
+    samples = new TreeMap<>(NanosComparator.getInstance());
+    samples.put(startNanos, new ModifiableLong(0));
   }
 
   /**
-   * Acts like {@link #ConcurrentRateSampler(long, Duration, RateSamplerConfig)} with {@link RateSamplerConfig#defaultInstance}
+   * Acts like {@link #SimpleRateMeter(long, Duration, RateMeterConfig)} with {@link RateMeterConfig#defaultInstance}
    * as the third argument.
    */
-  public ConcurrentRateSampler(final long startNanos, final Duration sampleInterval) {
-    this(startNanos, sampleInterval, RateSamplerConfig.defaultInstance());
+  public SimpleRateMeter(final long startNanos, final Duration sampleInterval) {
+    this(startNanos, sampleInterval, RateMeterConfig.defaultInstance());
   }
 
   @Override
@@ -51,7 +47,7 @@ public final class ConcurrentRateSampler extends AbstractRateSampler {
 
   @Override
   public final long ticksTotalCount() {
-    return aTicksTotalCount.get();
+    return ticksTotalCount;
   }
 
   @Override
@@ -63,15 +59,15 @@ public final class ConcurrentRateSampler extends AbstractRateSampler {
       final long rightNanos = rightSampleWindowBoundary();
       final long leftNanos = rightNanos - getSampleIntervalNanos();
       if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within the sample window
-        final AtomicLong newSample = new AtomicLong(count);
+        final ModifiableLong newSample = new ModifiableLong(count);
         @Nullable
-        final AtomicLong existingSample = samples.putIfAbsent(tNanos, newSample);
+        final ModifiableLong existingSample = samples.putIfAbsent(tNanos, newSample);
         if (existingSample != null) {//we need to merge samples
-          existingSample.addAndGet(count);
+          existingSample.value += count;
         }
       }
-      final long totalTicksCount = aTicksTotalCount.addAndGet(count);
-      gc(totalTicksCount);
+      ticksTotalCount += count;
+      gc(ticksTotalCount);
     }
   }
 
@@ -95,11 +91,10 @@ public final class ConcurrentRateSampler extends AbstractRateSampler {
   }
 
   private final double internalRateAverage(final long tNanos, final long unitSizeNanos) {
-    final long totalTicksCount = aTicksTotalCount.get();
     final long totalNanos = tNanos - getStartNanos();
     return totalNanos == 0
         ? 0
-        : (double) totalTicksCount / ((double) totalNanos / unitSizeNanos);
+        : (double) ticksTotalCount / ((double) totalNanos / unitSizeNanos);
   }
 
   private final double internalRate(final long tNanos, final long unitSizeNanos) {
@@ -123,26 +118,28 @@ public final class ConcurrentRateSampler extends AbstractRateSampler {
     return samples.subMap(fromExclusiveNanos, false, toInclusiveNanos, true)
         .values()
         .stream()
-        .mapToLong(AtomicLong::get)
+        .mapToLong(sample -> sample.value)
         .sum();
   }
 
-  private final void gc(long counter) {//TODO test; adaptive 1024
+  private final void gc(long counter) {//TODO test; add GC strategies?
     if (counter % 1024 == 0) {
-      if (aGcFlag.compareAndSet(false, true)) {
-        try {
-          final long rightNanos = rightSampleWindowBoundary();
-          final long leftNanos = rightNanos - getSampleIntervalNanos();
-          @Nullable
-          final Long rightNanosToRemoveTo = samples.floorKey(leftNanos);
-          if (rightNanosToRemoveTo != null) {
-            samples.subMap(samples.firstKey(), true, rightNanosToRemoveTo, true)
-                .clear();
-          }
-        } finally {
-          aGcFlag.set(false);
-        }
+      final long rightNanos = rightSampleWindowBoundary();
+      final long leftNanos = rightNanos - getSampleIntervalNanos();
+      @Nullable
+      final Long rightNanosToRemoveTo = samples.floorKey(leftNanos);
+      if (rightNanosToRemoveTo != null) {
+        samples.subMap(samples.firstKey(), true, rightNanosToRemoveTo, true)
+            .clear();
       }
+    }
+  }
+
+  private static final class ModifiableLong {
+    long value;
+
+    ModifiableLong(final long value) {
+      this.value = value;
     }
   }
 }

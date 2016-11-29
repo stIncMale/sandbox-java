@@ -4,19 +4,19 @@ import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @Immutable
-public final class RateSamplerConfig {
-  private static final RateSamplerConfig defaultInstance = new Builder().build();
+public final class RateMeterConfig {
+  private static final RateMeterConfig defaultInstance = new Builder().build();
 
   private boolean checkTNanos;
 
-  private RateSamplerConfig(final boolean checkTNanos) {
+  private RateMeterConfig(final boolean checkTNanos) {
     this.checkTNanos = checkTNanos;
   }
 
   /**
    * @return A reasonable configuration.
    */
-  public static final RateSamplerConfig defaultInstance() {
+  public static final RateMeterConfig defaultInstance() {
     return defaultInstance;
   }
 
@@ -24,12 +24,12 @@ public final class RateSamplerConfig {
     return new Builder();
   }
 
-  public static final Builder newBuilder(final RateSamplerConfig config) {
+  public static final Builder newBuilder(final RateMeterConfig config) {
     return new Builder(config);
   }
 
   /**
-   * Specifies if {@link AbstractRateSampler} must check that tNanos is withing the allowed range.
+   * Specifies if {@link AbstractRateMeter} must check that tNanos is withing the allowed range.
    * @return {@code false} by default.
    */
   public final boolean isCheckTNanos() {
@@ -51,20 +51,20 @@ public final class RateSamplerConfig {
       checkTNanos = false;
     }
 
-    private Builder(final RateSamplerConfig config) {
+    private Builder(final RateMeterConfig config) {
       checkTNanos = config.checkTNanos;
     }
 
     /**
-     * @see RateSamplerConfig#isCheckTNanos()
+     * @see RateMeterConfig#isCheckTNanos()
      */
     public final Builder setCheckTNanos(final boolean checkTNanos) {
       this.checkTNanos = checkTNanos;
       return this;
     }
 
-    public final RateSamplerConfig build() {
-      return new RateSamplerConfig(checkTNanos);
+    public final RateMeterConfig build() {
+      return new RateMeterConfig(checkTNanos);
     }
   }
 }

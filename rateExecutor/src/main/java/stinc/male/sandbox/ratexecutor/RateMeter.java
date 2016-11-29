@@ -9,10 +9,10 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * <p>
  * <b>Glossary</b><br>
  * <i>Instant</i><br>
- * {@link RateSampler} treats instants as the number of nanoseconds elapsed since the {@linkplain #getStartNanos() start}.
+ * {@link RateMeter} treats instants as the number of nanoseconds elapsed since the {@linkplain #getStartNanos() start}.
  * So instant is a pair (startNanos, elapsedNanos), but because startNanos is known and fixed,
  * we can equivalently specify an instant via a single value tNanos = startNanos + elapsedNanos.
- * {@link RateSampler} uses tNanos notation instead of (startNanos, elapsedNanos) notation.
+ * {@link RateMeter} uses tNanos notation instead of (startNanos, elapsedNanos) notation.
  * All nanosecond values are compared as specified by {@link System#nanoTime()}.
  * <p>
  * <i>Sample window</i><br>
@@ -46,7 +46,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * (comparison according to {@link System#nanoTime()}).
  */
 //TODO rename Sample window to samples window
-public interface RateSampler {//TODO rename to RateMeter
+public interface RateMeter {//TODO rename to RateMeter
   /**
    * @return A starting point that is used to calculate elapsed nanoseconds.
    * @see System#nanoTime()

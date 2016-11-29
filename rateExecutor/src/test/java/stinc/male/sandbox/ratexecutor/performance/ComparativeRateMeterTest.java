@@ -16,13 +16,13 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 import stinc.male.PerformanceTest;
-import stinc.male.sandbox.ratexecutor.ConcurrentRateSampler;
-import stinc.male.sandbox.ratexecutor.RateSampler;
-import stinc.male.sandbox.ratexecutor.SimpleRateSampler;
+import stinc.male.sandbox.ratexecutor.ConcurrentRateMeter;
+import stinc.male.sandbox.ratexecutor.RateMeter;
+import stinc.male.sandbox.ratexecutor.SimpleRateMeter;
 
 @Category(PerformanceTest.class)
-public class ComparativeRateSamplerTest {
-  public ComparativeRateSamplerTest() {
+public class ComparativeRateMeterTest {
+  public ComparativeRateMeterTest() {
   }
 
   @Test
@@ -56,54 +56,54 @@ public class ComparativeRateSamplerTest {
 //  }
 
   @Benchmark
-  public void simpleTick(final SimpleRateSamplerContainer rateSamplerContainer, final Blackhole bh) throws Exception {
+  public void simpleTick(final SimpleRateMeterContainer rateMeterContainer, final Blackhole bh) throws Exception {
     final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateSamplerContainer.value.tick(1, tNanos);
+    rateMeterContainer.value.tick(1, tNanos);
   }
 
   @Benchmark
-  public void concurrentTick(final ConcurrentRateSamplerContainer rateSamplerContainer, final Blackhole bh) throws Exception {
+  public void concurrentTick(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) throws Exception {
     final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateSamplerContainer.value.tick(1, tNanos);
+    rateMeterContainer.value.tick(1, tNanos);
   }
 
   @Benchmark
-  public void simpleCompound(final SimpleRateSamplerContainer rateSamplerContainer, final Blackhole bh) throws Exception {
+  public void simpleCompound(final SimpleRateMeterContainer rateMeterContainer, final Blackhole bh) throws Exception {
     final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateSamplerContainer.value.tick(1, tNanos);
-    bh.consume(rateSamplerContainer.value.rate());
+    rateMeterContainer.value.tick(1, tNanos);
+    bh.consume(rateMeterContainer.value.rate());
   }
 
   @Benchmark
-  public void concurrentCompound(final ConcurrentRateSamplerContainer rateSamplerContainer, final Blackhole bh) throws Exception {
+  public void concurrentCompound(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) throws Exception {
     final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateSamplerContainer.value.tick(1, tNanos);
-    bh.consume(rateSamplerContainer.value.rate());
+    rateMeterContainer.value.tick(1, tNanos);
+    bh.consume(rateMeterContainer.value.rate());
   }
 
   @State(Scope.Thread)
-  public static class SimpleRateSamplerContainer {
-    volatile RateSampler value;
+  public static class SimpleRateMeterContainer {
+    volatile RateMeter value;
 
-    public SimpleRateSamplerContainer() {
+    public SimpleRateMeterContainer() {
     }
 
     @Setup
     public final void setup() {
-      value = new SimpleRateSampler(System.nanoTime(), Duration.ofMillis(150));
+      value = new SimpleRateMeter(System.nanoTime(), Duration.ofMillis(150));
     }
   }
 
   @State(Scope.Thread)
-  public static class ConcurrentRateSamplerContainer {
-    volatile RateSampler value;
+  public static class ConcurrentRateMeterContainer {
+    volatile RateMeter value;
 
-    public ConcurrentRateSamplerContainer() {
+    public ConcurrentRateMeterContainer() {
     }
 
     @Setup
     public final void setup() {
-      value = new ConcurrentRateSampler(System.nanoTime(), Duration.ofMillis(150));
+      value = new ConcurrentRateMeter(System.nanoTime(), Duration.ofMillis(150));
     }
   }
 }

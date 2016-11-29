@@ -6,34 +6,34 @@ import java.util.function.BiFunction;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractRateSamplerTest {
-  private final BiFunction<Long, Duration, RateSampler> rateSamplerCreator;
+public abstract class AbstractRateMeterTest {
+  private final BiFunction<Long, Duration, RateMeter> rateMeterCreator;
 
-  AbstractRateSamplerTest(final BiFunction<Long, Duration, RateSampler> rateSamplerCreator) {
-    this.rateSamplerCreator = rateSamplerCreator;
+  AbstractRateMeterTest(final BiFunction<Long, Duration, RateMeter> rateMeterCreator) {
+    this.rateMeterCreator = rateMeterCreator;
   }
 
   @Test
   public final void getStartNanos() {
     final long startNanos = 123;
-    assertEquals(startNanos, newRateSampler(startNanos, Duration.ofSeconds(1)).getStartNanos());
+    assertEquals(startNanos, newRateMeter(startNanos, Duration.ofSeconds(1)).getStartNanos());
   }
 
   @Test
   public final void getSampleInterval() {
     final Duration sampleInterval = Duration.ofSeconds(1);
-    assertEquals(sampleInterval, newRateSampler(123, sampleInterval).getSampleInterval());
+    assertEquals(sampleInterval, newRateMeter(123, sampleInterval).getSampleInterval());
   }
 
   @Test
   public final void rightSampleWindowBoundary1() {
     final long startNanos = 123;
-    assertEquals(startNanos, newRateSampler(startNanos, Duration.ofSeconds(1)).rightSampleWindowBoundary());
+    assertEquals(startNanos, newRateMeter(startNanos, Duration.ofSeconds(1)).rightSampleWindowBoundary());
   }
 
   @Test
   public final void rightSampleWindowBoundary2() {
-    final RateSampler rs = newRateSampler(0, Duration.ofSeconds(1));
+    final RateMeter rs = newRateMeter(0, Duration.ofSeconds(1));
     final long rightmost = 123;
     rs.tick(1, rightmost);
     assertEquals(rightmost, rs.rightSampleWindowBoundary());
@@ -41,12 +41,12 @@ public abstract class AbstractRateSamplerTest {
 
   @Test
   public final void ticksCount1() {
-    assertEquals(0, newRateSampler(0, Duration.ofSeconds(1)).ticksCount());
+    assertEquals(0, newRateMeter(0, Duration.ofSeconds(1)).ticksCount());
   }
 
   @Test
   public final void ticksCount2() {
-    final RateSampler rs = newRateSampler(-5, Duration.ofSeconds(5));
+    final RateMeter rs = newRateMeter(-5, Duration.ofSeconds(5));
     rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
     rs.tick(4, TimeUnit.SECONDS.toNanos(1));
     rs.tick(2, TimeUnit.SECONDS.toNanos(2));
@@ -63,12 +63,12 @@ public abstract class AbstractRateSamplerTest {
 
   @Test
   public final void ticksTotalCount1() {
-    assertEquals(0, newRateSampler(0, Duration.ofSeconds(1)).ticksTotalCount());
+    assertEquals(0, newRateMeter(0, Duration.ofSeconds(1)).ticksTotalCount());
   }
 
   @Test
   public final void ticksTotalCount2() {
-    final RateSampler rs = newRateSampler(Long.MAX_VALUE, Duration.ofSeconds(5));
+    final RateMeter rs = newRateMeter(Long.MAX_VALUE, Duration.ofSeconds(5));
     rs.tick(1, Long.MIN_VALUE);
     assertEquals(1, rs.ticksTotalCount());
     assertEquals(rs.ticksCount(), rs.ticksTotalCount());
@@ -79,41 +79,41 @@ public abstract class AbstractRateSamplerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public final void tick1() {
-    newRateSampler(-1, Duration.ofSeconds(1))
+    newRateMeter(-1, Duration.ofSeconds(1))
         .tick(-1, Long.MAX_VALUE);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public final void tick2() {
-    newRateSampler(0, Duration.ofSeconds(1))
+    newRateMeter(0, Duration.ofSeconds(1))
         .tick(0, Long.MIN_VALUE);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public final void tick3() {
-    newRateSampler(1, Duration.ofSeconds(1))
+    newRateMeter(1, Duration.ofSeconds(1))
         .tick(1, 0);
   }
 
   @Test
   public final void tick4() {
-    newRateSampler(0, Duration.ofSeconds(1))
+    newRateMeter(0, Duration.ofSeconds(1))
         .tick(1, 1);
   }
 
   @Test
   public final void rateAverage1() {
-    assertDoubleEquals(0, newRateSampler(0, Duration.ofSeconds(1)).rateAverage());
+    assertDoubleEquals(0, newRateMeter(0, Duration.ofSeconds(1)).rateAverage());
   }
 
   @Test
   public final void rateAverage2() {
-    assertDoubleEquals(0, newRateSampler(0, Duration.ofSeconds(1)).rateAverage(0));
+    assertDoubleEquals(0, newRateMeter(0, Duration.ofSeconds(1)).rateAverage(0));
   }
 
   @Test
   public final void rateAverage3() {
-    final RateSampler rs = newRateSampler(0, Duration.ofSeconds(5));
+    final RateMeter rs = newRateMeter(0, Duration.ofSeconds(5));
     rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
     rs.tick(1, TimeUnit.SECONDS.toNanos(1));
     rs.tick(2, TimeUnit.SECONDS.toNanos(2));
@@ -134,7 +134,7 @@ public abstract class AbstractRateSamplerTest {
 
   @Test
   public final void rateAverage4() {
-    final RateSampler rs = newRateSampler(0, Duration.ofSeconds(5));
+    final RateMeter rs = newRateMeter(0, Duration.ofSeconds(5));
     rs.tick(4, 0);
     rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
     rs.tick(0, TimeUnit.SECONDS.toNanos(1));
@@ -151,17 +151,17 @@ public abstract class AbstractRateSamplerTest {
 
   @Test
   public final void rate1() {
-    assertDoubleEquals(0, newRateSampler(0, Duration.ofSeconds(1)).rate());
+    assertDoubleEquals(0, newRateMeter(0, Duration.ofSeconds(1)).rate());
   }
 
   @Test
   public final void rate2() {
-    assertDoubleEquals(0, newRateSampler(0, Duration.ofSeconds(1)).rate(0));
+    assertDoubleEquals(0, newRateMeter(0, Duration.ofSeconds(1)).rate(0));
   }
 
   @Test
   public final void rate3() {
-    final RateSampler rs = newRateSampler(TimeUnit.SECONDS.toNanos(-1), Duration.ofSeconds(3));
+    final RateMeter rs = newRateMeter(TimeUnit.SECONDS.toNanos(-1), Duration.ofSeconds(3));
     rs.tick(1, 0);
     rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
     assertDoubleEquals(1 + 1, rs.rate());
@@ -184,7 +184,7 @@ public abstract class AbstractRateSamplerTest {
 
   @Test
   public final void rate4() {
-    final RateSampler rs = newRateSampler(-2, Duration.ofSeconds(3));
+    final RateMeter rs = newRateMeter(-2, Duration.ofSeconds(3));
     rs.tick(1, -1);
     rs.tick(3, 0);
     rs.tick(1, TimeUnit.SECONDS.toNanos(1));
@@ -202,8 +202,8 @@ public abstract class AbstractRateSamplerTest {
     assertDoubleEquals((-2 - 1) / (3 / 1.5), rs.rate(TimeUnit.SECONDS.toNanos(7), Duration.ofMillis(1500)));
   }
 
-  private final RateSampler newRateSampler(final long startNanos, final Duration sampleInterval) {
-    return rateSamplerCreator.apply(startNanos, sampleInterval);
+  private final RateMeter newRateMeter(final long startNanos, final Duration sampleInterval) {
+    return rateMeterCreator.apply(startNanos, sampleInterval);
   }
 
   private static final void assertDoubleEquals(final double extected, final double actual) {
