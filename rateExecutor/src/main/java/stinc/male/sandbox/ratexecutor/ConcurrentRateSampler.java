@@ -26,7 +26,7 @@ public final class ConcurrentRateSampler extends AbstractRateSampler {
     super(startNanos, sampleInterval, config);
     aTicksTotalCount = new AtomicLong();
     samples = new ConcurrentSkipListMap<>(NanosComparator.getInstance());
-    samples.put(startNanos, new AtomicLong());//TODO why?
+    samples.put(startNanos, new AtomicLong());
     aGcFlag = new AtomicBoolean();
   }
 

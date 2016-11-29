@@ -23,7 +23,7 @@ public final class SimpleRateSampler extends AbstractRateSampler {
     super(startNanos, sampleInterval, config);
     ticksTotalCount = 0;
     samples = new TreeMap<>(NanosComparator.getInstance());
-    samples.put(startNanos, new ModifiableLong(0));//TODO why?
+    samples.put(startNanos, new ModifiableLong(0));
   }
 
   /**
