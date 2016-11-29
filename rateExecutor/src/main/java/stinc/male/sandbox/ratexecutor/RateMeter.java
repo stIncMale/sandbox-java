@@ -46,7 +46,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * (comparison according to {@link System#nanoTime()}).
  */
 //TODO rename Sample window to samples window
-public interface RateMeter {//TODO rename to RateMeter
+public interface RateMeter {
   /**
    * @return A starting point that is used to calculate elapsed nanoseconds.
    * @see System#nanoTime()
