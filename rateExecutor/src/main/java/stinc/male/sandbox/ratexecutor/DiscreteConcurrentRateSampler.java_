@@ -19,16 +19,16 @@ public final class DiscreteConcurrentRateSampler extends AbstractRateSampler {
    * Constructor.
    *
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
-   * @param sampleInterval Size of the sample window.
+   * @param samplesInterval Size of the samples window.
    */
-  public DiscreteConcurrentRateSampler(final long startNanos, final Duration sampleInterval, final RateSamplerConfig config) {
-    super(startNanos, sampleInterval, config);
+  public DiscreteConcurrentRateSampler(final long startNanos, final Duration samplesInterval, final RateSamplerConfig config) {
+    super(startNanos, samplesInterval, config);
     aTicksTotalCount = new AtomicLong();
     this.sampleStepNanos = config.getSampleStep().toNanos();
-    final long sampleIntervalNanos = getSampleIntervalNanos();
-    final int sampleStepsCountInSampleInterval = (int)(sampleIntervalNanos / sampleStepNanos);
-    checkArgument(sampleStepNanos * sampleStepsCountInSampleInterval == sampleIntervalNanos, "config", "Sample interval (%s nanos) must be multiple of sample step (%s nanos)");
-    samples = new AtomicLong[sampleStepsCountInSampleInterval];
+    final long samplesIntervalNanos = getSamplesIntervalNanos();
+    final int sampleStepsCountInSamplesInterval = (int)(samplesIntervalNanos / sampleStepNanos);
+    checkArgument(sampleStepNanos * sampleStepsCountInSamplesInterval == samplesIntervalNanos, "config", "Samples interval (%s nanos) must be multiple of samples window step (%s nanos)");
+    samples = new AtomicLong[sampleStepsCountInSamplesInterval];
     for (int idx = 0; idx < samples.length; idx++) {
       samples[idx] = new AtomicLong();
     }
@@ -37,17 +37,17 @@ public final class DiscreteConcurrentRateSampler extends AbstractRateSampler {
   }
 
   @Override
-  public final long rightSampleWindowBoundary() {
+  public final long rightSamplesWindowBoundary() {
     final long rightIdx = this.rightIdx;
-    final long shiftSampleIntervalCount = rightIdx / samples.length;
+    final long shiftSamplesIntervalCount = rightIdx / samples.length;
     final long shiftSampleStepCount = rightIdx % samples.length;
-    return getSampleIntervalNanos() * shiftSampleIntervalCount + sampleStepNanos * shiftSampleStepCount;
+    return getSamplesIntervalNanos() * shiftSamplesIntervalCount + sampleStepNanos * shiftSampleStepCount;
   }
 
   @Override
   public final long ticksCount() {
-    final long rightNanos = rightSampleWindowBoundary();
-    return internalCount(rightNanos - getSampleIntervalNanos(), rightNanos);
+    final long rightNanos = rightSamplesWindowBoundary();
+    return internalCount(rightNanos - getSamplesIntervalNanos(), rightNanos);
   }
 
   @Override
@@ -61,8 +61,8 @@ public final class DiscreteConcurrentRateSampler extends AbstractRateSampler {
     checkArgument(NanosComparator.compare(tNanos, startNanos) >= 0, "tNanos", () -> "Must not be less than " + startNanos);
     checkTNanos(tNanos, "tNanos");
     if (count != 0) {
-      final long rightNanos = rightSampleWindowBoundary();
-      final long leftNanos = rightNanos - getSampleIntervalNanos();
+      final long rightNanos = rightSamplesWindowBoundary();
+      final long leftNanos = rightNanos - getSamplesIntervalNanos();
       if (NanosComparator.compare(leftNanos, tNanos) < 0 && NanosComparator.compare(tNanos, rightNanos) <= 0) {//step is not needed
         final long shiftNanos = tNanos - leftNanos;
         final long shiftSampleStepCount = shiftNanos / sampleStepNanos + 1;
@@ -80,7 +80,7 @@ public final class DiscreteConcurrentRateSampler extends AbstractRateSampler {
 
   @Override
   public final double rateAverage() {
-    return internalRateAverage(samples.lastKey(), getSampleIntervalNanos());
+    return internalRateAverage(samples.lastKey(), getSamplesIntervalNanos());
   }
 
   @Override
@@ -88,13 +88,13 @@ public final class DiscreteConcurrentRateSampler extends AbstractRateSampler {
     checkTNanos(tNanos, "tNanos");
     final long rightNanos = samples.lastKey();
     checkArgument(tNanos >= rightNanos, "tNanos", () -> "Must not be less than " + rightNanos);
-    return internalRateAverage(tNanos, getSampleIntervalNanos());
+    return internalRateAverage(tNanos, getSamplesIntervalNanos());
   }
 
   @Override
   public final double rate(final long tNanos) {
     checkTNanos(tNanos, "tNanos");
-    return internalRate(tNanos, getSampleIntervalNanos());
+    return internalRate(tNanos, getSamplesIntervalNanos());
   }
 
   private final double internalRateAverage(final long tNanos, final long unitSizeNanos) {
@@ -111,13 +111,13 @@ public final class DiscreteConcurrentRateSampler extends AbstractRateSampler {
     if (NanosComparator.compare(tNanos, rightNanos) < 0) {
       result = internalRateAverage(tNanos, unitSizeNanos);
     } else {
-      final long sampleIntervalNanos = getSampleIntervalNanos();
+      final long samplesIntervalNanos = getSamplesIntervalNanos();
       final long effectiveRightNanos = NanosComparator.max(rightNanos, tNanos);
-      final long effectiveLeftNanos = effectiveRightNanos - sampleIntervalNanos;
+      final long effectiveLeftNanos = effectiveRightNanos - samplesIntervalNanos;
       final long ticksCount = internalCount(effectiveLeftNanos, effectiveRightNanos);
-      result = (unitSizeNanos == sampleIntervalNanos)
+      result = (unitSizeNanos == samplesIntervalNanos)
           ? ticksCount
-          : (double) ticksCount / ((double) sampleIntervalNanos / unitSizeNanos);
+          : (double) ticksCount / ((double) samplesIntervalNanos / unitSizeNanos);
     }
     return result;
   }

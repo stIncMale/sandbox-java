@@ -24,8 +24,8 @@ public final class RateMeterConfig {
     return new Builder();
   }
 
-  public static final Builder newBuilder(final RateMeterConfig config) {
-    return new Builder(config);
+  public final Builder toBuilder() {
+    return new Builder(this);
   }
 
   /**

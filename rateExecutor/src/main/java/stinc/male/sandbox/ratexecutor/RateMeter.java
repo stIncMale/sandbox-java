@@ -15,14 +15,14 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * {@link RateMeter} uses tNanos notation instead of (startNanos, elapsedNanos) notation.
  * All nanosecond values are compared as specified by {@link System#nanoTime()}.
  * <p>
- * <i>Sample window</i><br>
- * Sample window is a half-closed time interval
- * ({@linkplain #rightSampleWindowBoundary() rightmostScoredInstant} - {@linkplain #getSampleInterval() sampleInterval}; rightmostScoredInstant]
+ * <i>Samples window</i><br>
+ * Samples window is a half-closed time interval
+ * ({@linkplain #rightSamplesWindowBoundary() rightmostScoredInstant} - {@linkplain #getSamplesInterval() samplesInterval}; rightmostScoredInstant]
  * (comparison according to {@link System#nanoTime()}).
- * Current ticks are those inside the sample window.
- * Current rate is calculated base on current ticks only and by default is measured in sampleInterval<sup>-1</sup>.
+ * Current ticks are those inside the samples window.
+ * Current rate is calculated base on current ticks only and by default is measured in samplesInterval<sup>-1</sup>.
  * <p>
- * For example if sampleInterval is 3s,<br>
+ * For example if samplesInterval is 3s,<br>
  * startNanos is 1_000_000_000 ns,<br>
  * and the only scored ticks are<br>
  * 1 at 2_500_000_000 ns (this is tNanos, not tNanos - startNanos),<br>
@@ -30,22 +30,21 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * 8 at 5_000_000_000 ns,<br>
  * -2 at 6_000_000_000 ns,<br>
  * then the current rate is<br>
- * (8 - 2) / sampleInterval = 6sampleInterval<sup>-1</sup> = 2s<sup>-1</sup> because sampleInterval is 3s.
+ * (8 - 2) / samplesInterval = 6samplesInterval<sup>-1</sup> = 2s<sup>-1</sup> because samplesInterval is 3s.
  * <pre>
  *             2_500_000_000 ns         5_000_000_000 ns
  *                    |                        |                                                 t
  * ----|---------|----1----1---------|---------8--------(-2)------|---------|---------|---------&gt;
  *     |                   |                             |
  * startNanos       3_000_000_000 ns              6_000_000_000 ns
- *                         (--------sample window--------]
+ *                         (--------samples window-------]
  * </pre>
  * <p>
  * <b>Allowed values</b><br>
- * sampleInterval \u2208 [1, {@link Long#MAX_VALUE} - 1],<br>
- * tNanos \u2208 [startNanos, startNanos - sampleInterval + {@link Long#MAX_VALUE}]
+ * samplesInterval \u2208 [1, {@link Long#MAX_VALUE} - 1],<br>
+ * tNanos \u2208 [startNanos, startNanos - samplesInterval + {@link Long#MAX_VALUE}]
  * (comparison according to {@link System#nanoTime()}).
  */
-//TODO rename Sample window to samples window
 public interface RateMeter {
   /**
    * @return A starting point that is used to calculate elapsed nanoseconds.
@@ -54,24 +53,24 @@ public interface RateMeter {
   long getStartNanos();
 
   /**
-   * A size of the sample window.
+   * A size of the samples window.
    *
    * @return {@link Duration} which is not {@linkplain Duration#isZero() zero}
    * and not {@linkplain Duration#isNegative() negative}.
    */
-  Duration getSampleInterval();
+  Duration getSamplesInterval();
 
   /**
-   * Instant that corresponds to the right border of the sample window.
+   * Instant that corresponds to the right border of the samples window.
    * At the very beginning this is equal to {@link #getStartNanos()}.
    * This border can be moved to the right by the {@link #tick(long, long)} method.
    *
    * @return The rightmost {@linkplain #tick(long, long) scored} instant.
    */
-  long rightSampleWindowBoundary();
+  long rightSamplesWindowBoundary();
 
   /**
-   * Calculates number of ticks inside the sample window (current ticks).
+   * Calculates number of ticks inside the samples window (current ticks).
    *
    * @return Number of current ticks.
    */
@@ -86,8 +85,8 @@ public interface RateMeter {
 
   /**
    * Scores a sample of {@code count} ticks at {@code tNanos} instant.
-   * If {@code tNanos} is greater than current {@link #rightSampleWindowBoundary()}
-   * then this method moves the sample window such that its right boundary is at {@code tNanos}.
+   * If {@code tNanos} is greater than current {@link #rightSamplesWindowBoundary()}
+   * then this method moves the samples window such that its right boundary is at {@code tNanos}.
    *
    * @param count Number of ticks. MAY be negative, zero, or positive.
    * If zero then the method does nothing,
@@ -99,19 +98,19 @@ public interface RateMeter {
   void tick(final long count, final long tNanos);
 
   /**
-   * Calculates average rate of ticks (measured in sampleInterval<sup>-1</sup>)
+   * Calculates average rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * from the {@linkplain #getStartNanos() start}
-   * till the {@link #rightSampleWindowBoundary()}.
+   * till the {@link #rightSamplesWindowBoundary()}.
    *
-   * @return The same value as {@link #rateAverage(long) rateAverage}{@code (}{@link #rightSampleWindowBoundary()}{@code )}.
+   * @return The same value as {@link #rateAverage(long) rateAverage}{@code (}{@link #rightSamplesWindowBoundary()}{@code )}.
    */
   default double rateAverage() {
-    return rateAverage(rightSampleWindowBoundary());
+    return rateAverage(rightSamplesWindowBoundary());
   }
 
   /**
    * Acts just like {@link #rateAverage()} but the result is measured in {@code unit}<sup>-1</sup>
-   * instead of sampleInterval<sup>-1</sup>.
+   * instead of samplesInterval<sup>-1</sup>.
    *
    * @param unit A time interval to use as a unit.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
@@ -119,44 +118,44 @@ public interface RateMeter {
    */
   default double rateAverage(final Duration unit) {
     checkNotNull(unit, "unit");
-    checkArgument(!unit.isZero(), "sampleInterval", "Must not be zero");
-    checkArgument(!unit.isNegative(), "sampleInterval", "Must be positive");
-    return rateAverage() / ((double) getSampleInterval().toNanos() / unit.toNanos());
+    checkArgument(!unit.isZero(), "unit", "Must not be zero");
+    checkArgument(!unit.isNegative(), "unit", "Must be positive");
+    return rateAverage() / ((double) getSamplesInterval().toNanos() / unit.toNanos());
   }
 
   /**
-   * Calculates average rate of ticks (measured in sampleInterval<sup>-1</sup>)
+   * Calculates average rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * from the {@linkplain #getStartNanos() start} till the {@code tNanos}.
    *
-   * @param tNanos MUST NOT be less than {@link #rightSampleWindowBoundary()}.
+   * @param tNanos MUST NOT be less than {@link #rightSamplesWindowBoundary()}.
    * @return Average rate of ticks.
    */
   double rateAverage(long tNanos);
 
   /**
    * Acts just like {@link #rateAverage(long)} but the result is measured in {@code unit}<sup>-1</sup>
-   * instead of sampleInterval<sup>-1</sup>.
+   * instead of samplesInterval<sup>-1</sup>.
    *
-   * @param tNanos MUST NOT be less than {@link #rightSampleWindowBoundary()}.
+   * @param tNanos MUST NOT be less than {@link #rightSamplesWindowBoundary()}.
    * @param unit A time interval to use as a unit.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
    * @return Average rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
   default double rateAverage(final long tNanos, final Duration unit) {
     checkNotNull(unit, "unit");
-    checkArgument(!unit.isZero(), "sampleInterval", "Must not be zero");
-    checkArgument(!unit.isNegative(), "sampleInterval", "Must be positive");
-    return rateAverage(tNanos) / ((double) getSampleInterval().toNanos() / unit.toNanos());
+    checkArgument(!unit.isZero(), "unit", "Must not be zero");
+    checkArgument(!unit.isNegative(), "unit", "Must be positive");
+    return rateAverage(tNanos) / ((double) getSamplesInterval().toNanos() / unit.toNanos());
   }
 
   /**
    * Calculates current rate of ticks.
-   * Current rate is the ratio of {@link #ticksCount()} to {@link #getSampleInterval()}
-   * measured in sampleInterval<sup>-1</sup>,
+   * Current rate is the ratio of {@link #ticksCount()} to {@link #getSamplesInterval()}
+   * measured in samplesInterval<sup>-1</sup>,
    * so essentially this method returns the same value as {@link #ticksCount()}.
    *
    * @return The same value as {@link #ticksCount()} and the same value as
-   * {@link #rate(long) rate}{@code (}{@link #rightSampleWindowBoundary()}{@code )}.
+   * {@link #rate(long) rate}{@code (}{@link #rightSamplesWindowBoundary()}{@code )}.
    */
   default double rate() {
     return ticksCount();
@@ -164,7 +163,7 @@ public interface RateMeter {
 
   /**
    * Acts just like {@link #rate()} but the result is measured in {@code unit}<sup>-1</sup>
-   * instead of sampleInterval<sup>-1</sup>.
+   * instead of samplesInterval<sup>-1</sup>.
    *
    * @param unit A time interval to use as a unit.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
@@ -172,37 +171,37 @@ public interface RateMeter {
    */
   default double rate(final Duration unit) {
     checkNotNull(unit, "unit");
-    checkArgument(!unit.isZero(), "sampleInterval", "Must not be zero");
-    checkArgument(!unit.isNegative(), "sampleInterval", "Must be positive");
-    return rate() / ((double) getSampleInterval().toNanos() / unit.toNanos());
+    checkArgument(!unit.isZero(), "unit", "Must not be zero");
+    checkArgument(!unit.isNegative(), "unit", "Must be positive");
+    return rate() / ((double) getSamplesInterval().toNanos() / unit.toNanos());
   }
 
   /**
-   * Calculates rate of ticks (measured in sampleInterval<sup>-1</sup>)
-   * as if {@code tNanos} were the right sample window boundary
-   * (for cases when {@code tNanos} is greater than {@link #rightSampleWindowBoundary()}),
+   * Calculates rate of ticks (measured in samplesInterval<sup>-1</sup>)
+   * as if {@code tNanos} were the right boundary of a samples window
+   * (for cases when {@code tNanos} is greater than {@link #rightSamplesWindowBoundary()}),
    * or returns {@link #rateAverage()}.
    *
-   * @param tNanos The right sample window boundary.
-   * @return If {@code tNanos} is greater than {@link #rightSampleWindowBoundary()} then returns
-   * current rate of ticks as if {@code tNanos} were the right sample window boundary,
+   * @param tNanos The right boundary of a samples window.
+   * @return If {@code tNanos} is greater than {@link #rightSamplesWindowBoundary()} then returns
+   * current rate of ticks as if {@code tNanos} were the right boundary of a samples window,
    * otherwise returns {@link #rateAverage()}.
    */
   double rate(long tNanos);
 
   /**
    * Acts just like {@link #rate(long)} but the result is measured in {@code unit}<sup>-1</sup>
-   * instead of sampleInterval<sup>-1</sup>.
+   * instead of samplesInterval<sup>-1</sup>.
    *
-   * @param tNanos MUST NOT be less than {@link #rightSampleWindowBoundary()}.
+   * @param tNanos MUST NOT be less than {@link #rightSamplesWindowBoundary()}.
    * @param unit A time interval to use as a unit.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
    * @return Current rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
   default double rate(final long tNanos, final Duration unit) {
     checkNotNull(unit, "unit");
-    checkArgument(!unit.isZero(), "sampleInterval", "Must not be zero");
-    checkArgument(!unit.isNegative(), "sampleInterval", "Must be positive");
-    return rate(tNanos) / ((double) getSampleInterval().toNanos() / unit.toNanos());
+    checkArgument(!unit.isZero(), "unit", "Must not be zero");
+    checkArgument(!unit.isNegative(), "unit", "Must be positive");
+    return rate(tNanos) / ((double) getSamplesInterval().toNanos() / unit.toNanos());
   }
 }

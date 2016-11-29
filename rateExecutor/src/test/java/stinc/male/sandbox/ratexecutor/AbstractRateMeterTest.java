@@ -2,14 +2,13 @@ package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractRateMeterTest {
-  private final BiFunction<Long, Duration, RateMeter> rateMeterCreator;
+  private final RateMeterCreator rateMeterCreator;
 
-  AbstractRateMeterTest(final BiFunction<Long, Duration, RateMeter> rateMeterCreator) {
+  AbstractRateMeterTest(final RateMeterCreator rateMeterCreator) {
     this.rateMeterCreator = rateMeterCreator;
   }
 
@@ -20,23 +19,23 @@ public abstract class AbstractRateMeterTest {
   }
 
   @Test
-  public final void getSampleInterval() {
-    final Duration sampleInterval = Duration.ofSeconds(1);
-    assertEquals(sampleInterval, newRateMeter(123, sampleInterval).getSampleInterval());
+  public final void getSamplesInterval() {
+    final Duration samplesInterval = Duration.ofSeconds(1);
+    assertEquals(samplesInterval, newRateMeter(123, samplesInterval).getSamplesInterval());
   }
 
   @Test
-  public final void rightSampleWindowBoundary1() {
+  public final void rightSamplesWindowBoundary1() {
     final long startNanos = 123;
-    assertEquals(startNanos, newRateMeter(startNanos, Duration.ofSeconds(1)).rightSampleWindowBoundary());
+    assertEquals(startNanos, newRateMeter(startNanos, Duration.ofSeconds(1)).rightSamplesWindowBoundary());
   }
 
   @Test
-  public final void rightSampleWindowBoundary2() {
+  public final void rightSamplesWindowBoundary2() {
     final RateMeter rs = newRateMeter(0, Duration.ofSeconds(1));
     final long rightmost = 123;
     rs.tick(1, rightmost);
-    assertEquals(rightmost, rs.rightSampleWindowBoundary());
+    assertEquals(rightmost, rs.rightSamplesWindowBoundary());
   }
 
   @Test
@@ -52,7 +51,7 @@ public abstract class AbstractRateMeterTest {
     rs.tick(2, TimeUnit.SECONDS.toNanos(2));
     rs.tick(3, TimeUnit.SECONDS.toNanos(3));
     assertEquals(1 + 4 + 2 + 3, rs.ticksCount());
-    rs.tick(0, TimeUnit.SECONDS.toNanos(8));//doesn't move a sample window
+    rs.tick(0, TimeUnit.SECONDS.toNanos(8));//doesn't move a samples window
     assertEquals(1 + 4 + 2 + 3, rs.ticksCount());
     rs.tick(-2, TimeUnit.SECONDS.toNanos(5));
     rs.tick(1, TimeUnit.SECONDS.toNanos(3));
@@ -73,7 +72,7 @@ public abstract class AbstractRateMeterTest {
     assertEquals(1, rs.ticksTotalCount());
     assertEquals(rs.ticksCount(), rs.ticksTotalCount());
     rs.tick(4, -TimeUnit.SECONDS.toNanos(6));
-    rs.tick(2, -TimeUnit.SECONDS.toNanos(5));
+    rs.tick(2, -TimeUnit.SECONDS.toNanos(5) - 2);
     assertEquals(1 + 4 + 2, rs.ticksTotalCount());
   }
 
@@ -95,8 +94,20 @@ public abstract class AbstractRateMeterTest {
         .tick(1, 0);
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public final void tick4() {
+    newRateMeter(Long.MAX_VALUE, Duration.ofNanos(1L))
+        .tick(1, -1);
+  }
+
+  @Test
+  public final void tick5() {
+    newRateMeter(Long.MAX_VALUE, Duration.ofNanos(1L))
+        .tick(1, -3);
+  }
+
+  @Test
+  public final void tick6() {
     newRateMeter(0, Duration.ofSeconds(1))
         .tick(1, 1);
   }
@@ -128,8 +139,8 @@ public abstract class AbstractRateMeterTest {
     rs.tick(1000, TimeUnit.SECONDS.toNanos(10));
     assertDoubleEquals((1d + 1 + 2 + 3 - 2 + 1 - 1 + 4 + 1000) / (10d / 5), rs.rateAverage());
     assertDoubleEquals((1d + 1 + 2 + 3 - 2 + 1 - 1 + 4 + 1000) / (10d / 2), rs.rateAverage(Duration.ofSeconds(2)));
-    assertDoubleEquals(rs.rateAverage(rs.rightSampleWindowBoundary()), rs.rateAverage());
-    assertDoubleEquals(rs.rateAverage(rs.rightSampleWindowBoundary(), Duration.ofSeconds(2)), rs.rateAverage(Duration.ofSeconds(2)));
+    assertDoubleEquals(rs.rateAverage(rs.rightSamplesWindowBoundary()), rs.rateAverage());
+    assertDoubleEquals(rs.rateAverage(rs.rightSamplesWindowBoundary(), Duration.ofSeconds(2)), rs.rateAverage(Duration.ofSeconds(2)));
   }
 
   @Test
@@ -178,8 +189,8 @@ public abstract class AbstractRateMeterTest {
     assertDoubleEquals(-2 - 1, rs.rate());
     assertDoubleEquals((-2d - 1) / (3 / 1), rs.rate(Duration.ofSeconds(1)));
     assertDoubleEquals(rs.ticksCount(), rs.rate());
-    assertDoubleEquals(rs.rate(rs.rightSampleWindowBoundary()), rs.rate());
-    assertDoubleEquals(rs.rate(rs.rightSampleWindowBoundary(), Duration.ofSeconds(1)), rs.rate(Duration.ofSeconds(1)));
+    assertDoubleEquals(rs.rate(rs.rightSamplesWindowBoundary()), rs.rate());
+    assertDoubleEquals(rs.rate(rs.rightSamplesWindowBoundary(), Duration.ofSeconds(1)), rs.rate(Duration.ofSeconds(1)));
   }
 
   @Test
@@ -202,11 +213,21 @@ public abstract class AbstractRateMeterTest {
     assertDoubleEquals((-2 - 1) / (3 / 1.5), rs.rate(TimeUnit.SECONDS.toNanos(7), Duration.ofMillis(1500)));
   }
 
-  private final RateMeter newRateMeter(final long startNanos, final Duration sampleInterval) {
-    return rateMeterCreator.apply(startNanos, sampleInterval);
+  private final RateMeter newRateMeter(final long startNanos, final Duration samplesInterval) {
+    return rateMeterCreator.create(
+        startNanos,
+        samplesInterval,
+        RateMeterConfig.defaultInstance()
+            .toBuilder()
+            .setCheckTNanos(true)
+            .build());
   }
 
   private static final void assertDoubleEquals(final double extected, final double actual) {
     assertEquals(extected, actual, 0.0000000000001);
+  }
+
+  interface RateMeterCreator {
+    RateMeter create(long startNanos, Duration samplesInterval, RateMeterConfig config);
   }
 }

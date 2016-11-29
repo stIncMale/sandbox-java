@@ -19,11 +19,11 @@ public final class ConcurrentRateMeter extends AbstractRateMeter {
    * Constructor.
    *
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
-   * @param sampleInterval Size of the sample window.
+   * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
    */
-  public ConcurrentRateMeter(final long startNanos, final Duration sampleInterval, final RateMeterConfig config) {
-    super(startNanos, sampleInterval, config);
+  public ConcurrentRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
+    super(startNanos, samplesInterval, config);
     aTicksTotalCount = new AtomicLong();
     samples = new ConcurrentSkipListMap<>(NanosComparator.getInstance());
     samples.put(startNanos, new AtomicLong());
@@ -34,19 +34,19 @@ public final class ConcurrentRateMeter extends AbstractRateMeter {
    * Acts like {@link #ConcurrentRateMeter(long, Duration, RateMeterConfig)} with {@link RateMeterConfig#defaultInstance}
    * as the third argument.
    */
-  public ConcurrentRateMeter(final long startNanos, final Duration sampleInterval) {
-    this(startNanos, sampleInterval, RateMeterConfig.defaultInstance());
+  public ConcurrentRateMeter(final long startNanos, final Duration samplesInterval) {
+    this(startNanos, samplesInterval, RateMeterConfig.defaultInstance());
   }
 
   @Override
-  public final long rightSampleWindowBoundary() {
+  public final long rightSamplesWindowBoundary() {
     return samples.lastKey();
   }
 
   @Override
   public final long ticksCount() {
-    final long rightNanos = rightSampleWindowBoundary();
-    return internalCount(rightNanos - getSampleIntervalNanos(), rightNanos);
+    final long rightNanos = rightSamplesWindowBoundary();
+    return internalCount(rightNanos - getSamplesIntervalNanos(), rightNanos);
   }
 
   @Override
@@ -56,13 +56,11 @@ public final class ConcurrentRateMeter extends AbstractRateMeter {
 
   @Override
   public final void tick(final long count, final long tNanos) {
-    final long startNanos = getStartNanos();
-    checkArgument(NanosComparator.compare(tNanos, startNanos) >= 0, "tNanos", () -> "Must not be less than " + startNanos);
     checkTNanos(tNanos, "tNanos");
     if (count != 0) {
-      final long rightNanos = rightSampleWindowBoundary();
-      final long leftNanos = rightNanos - getSampleIntervalNanos();
-      if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within the sample window
+      final long rightNanos = rightSamplesWindowBoundary();
+      final long leftNanos = rightNanos - getSamplesIntervalNanos();
+      if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within the samples window
         final AtomicLong newSample = new AtomicLong(count);
         @Nullable
         final AtomicLong existingSample = samples.putIfAbsent(tNanos, newSample);
@@ -77,21 +75,21 @@ public final class ConcurrentRateMeter extends AbstractRateMeter {
 
   @Override
   public final double rateAverage() {
-    return internalRateAverage(rightSampleWindowBoundary(), getSampleIntervalNanos());
+    return internalRateAverage(rightSamplesWindowBoundary(), getSamplesIntervalNanos());
   }
 
   @Override
   public final double rateAverage(final long tNanos) {
     checkTNanos(tNanos, "tNanos");
-    final long rightNanos = rightSampleWindowBoundary();
+    final long rightNanos = rightSamplesWindowBoundary();
     checkArgument(tNanos >= rightNanos, "tNanos", () -> "Must not be less than " + rightNanos);
-    return internalRateAverage(tNanos, getSampleIntervalNanos());
+    return internalRateAverage(tNanos, getSamplesIntervalNanos());
   }
 
   @Override
   public final double rate(final long tNanos) {
     checkTNanos(tNanos, "tNanos");
-    return internalRate(tNanos, getSampleIntervalNanos());
+    return internalRate(tNanos, getSamplesIntervalNanos());
   }
 
   private final double internalRateAverage(final long tNanos, final long unitSizeNanos) {
@@ -104,17 +102,17 @@ public final class ConcurrentRateMeter extends AbstractRateMeter {
 
   private final double internalRate(final long tNanos, final long unitSizeNanos) {
     final double result;
-    final long rightNanos = rightSampleWindowBoundary();
+    final long rightNanos = rightSamplesWindowBoundary();
     if (NanosComparator.compare(tNanos, rightNanos) < 0) {
       result = internalRateAverage(tNanos, unitSizeNanos);
     } else {
-      final long sampleIntervalNanos = getSampleIntervalNanos();
+      final long samplesIntervalNanos = getSamplesIntervalNanos();
       final long effectiveRightNanos = NanosComparator.max(rightNanos, tNanos);
-      final long effectiveLeftNanos = effectiveRightNanos - sampleIntervalNanos;
+      final long effectiveLeftNanos = effectiveRightNanos - samplesIntervalNanos;
       final long ticksCount = internalCount(effectiveLeftNanos, effectiveRightNanos);
-      result = (unitSizeNanos == sampleIntervalNanos)
+      result = (unitSizeNanos == samplesIntervalNanos)
           ? ticksCount
-          : (double) ticksCount / ((double) sampleIntervalNanos / unitSizeNanos);
+          : (double) ticksCount / ((double) samplesIntervalNanos / unitSizeNanos);
     }
     return result;
   }
@@ -131,8 +129,8 @@ public final class ConcurrentRateMeter extends AbstractRateMeter {
     if (counter % 1024 == 0) {
       if (aGcFlag.compareAndSet(false, true)) {
         try {
-          final long rightNanos = rightSampleWindowBoundary();
-          final long leftNanos = rightNanos - getSampleIntervalNanos();
+          final long rightNanos = rightSamplesWindowBoundary();
+          final long leftNanos = rightNanos - getSamplesIntervalNanos();
           @Nullable
           final Long rightNanosToRemoveTo = samples.floorKey(leftNanos);
           if (rightNanosToRemoveTo != null) {
