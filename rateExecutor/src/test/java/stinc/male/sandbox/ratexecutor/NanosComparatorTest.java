@@ -12,11 +12,11 @@ public final class NanosComparatorTest {
       new Sample(0, 0, CompareResult.EQUAL),
       new Sample(Long.MIN_VALUE + 1, Long.MIN_VALUE, CompareResult.GREATER),
       new Sample(Long.MAX_VALUE - 1, Long.MAX_VALUE, CompareResult.LOWER),
-      new Sample(0, Long.MAX_VALUE, CompareResult.LOWER),//maxDelta
-      new Sample(-2, Long.MAX_VALUE, CompareResult.GREATER),//maxDelta
-      new Sample(0, Long.MAX_VALUE, CompareResult.LOWER),//maxDelta
-      new Sample(-1, Long.MIN_VALUE, CompareResult.GREATER),//maxDelta
-      new Sample(Long.MAX_VALUE - Long.MAX_VALUE / 2, Long.MIN_VALUE + Long.MAX_VALUE / 2, CompareResult.LOWER),//maxDelta
+      new Sample(0, Long.MAX_VALUE, CompareResult.LOWER),
+      new Sample(-2, Long.MAX_VALUE, CompareResult.GREATER),
+      new Sample(0, Long.MAX_VALUE, CompareResult.LOWER),
+      new Sample(-1, Long.MIN_VALUE, CompareResult.GREATER),
+      new Sample(Long.MAX_VALUE - Long.MAX_VALUE / 2, Long.MIN_VALUE + Long.MAX_VALUE / 2, CompareResult.LOWER),
       new Sample(Long.MIN_VALUE, Long.MAX_VALUE, CompareResult.GREATER),
       new Sample(Long.MIN_VALUE + 1000, Long.MAX_VALUE - 1000, CompareResult.GREATER),
       new Sample(Long.MIN_VALUE, Long.MAX_VALUE - 2, CompareResult.GREATER),
@@ -25,6 +25,13 @@ public final class NanosComparatorTest {
       new Sample(5, 3, CompareResult.GREATER),
       new Sample(0, Long.MIN_VALUE, CompareResult.UNSUPPORTED),
       new Sample(-1, Long.MAX_VALUE, CompareResult.UNSUPPORTED),
+      new Sample(Long.MIN_VALUE + 1, 2, CompareResult.GREATER),
+      new Sample(1000, 1000 + Long.MAX_VALUE, CompareResult.LOWER),
+      new Sample(-1000, -1000 + Long.MAX_VALUE, CompareResult.LOWER),
+      new Sample(Long.MIN_VALUE, Long.MIN_VALUE + Long.MAX_VALUE, CompareResult.LOWER),
+      new Sample(1000 - Long.MAX_VALUE, 1000, CompareResult.LOWER),
+      new Sample(-1000 - Long.MAX_VALUE, -1000, CompareResult.LOWER),
+      new Sample(Long.MIN_VALUE - Long.MAX_VALUE, Long.MIN_VALUE, CompareResult.LOWER),
   };
 
   public NanosComparatorTest() {

@@ -36,6 +36,26 @@ final class Preconditions {
     }
   }
 
+  static final void checkState(
+      final boolean checkArgumentExpression,
+      final String stateName,
+      final String stateRestrictionDescription) throws IllegalArgumentException {
+    if (!checkArgumentExpression) {
+      throw new IllegalArgumentException(
+          format("The state %s is illegal. %s", stateName, stateRestrictionDescription));
+    }
+  }
+
+  static final void checkState(
+      final boolean checkArgumentExpression,
+      final String stateName,
+      final Supplier<String> stateRestrictionDescriptionSupplier) throws IllegalArgumentException {
+    if (!checkArgumentExpression) {
+      throw new IllegalArgumentException(
+          format("The state %s is illegal. %s", stateName, stateRestrictionDescriptionSupplier.get()));
+    }
+  }
+
   private Preconditions() {
     throw new UnsupportedOperationException("The class isn't designed to be instantiated");
   }

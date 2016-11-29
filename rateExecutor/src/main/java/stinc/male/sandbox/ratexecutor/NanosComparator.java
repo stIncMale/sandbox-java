@@ -2,6 +2,7 @@ package stinc.male.sandbox.ratexecutor;
 
 import java.util.Comparator;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
@@ -76,6 +77,19 @@ public final class NanosComparator implements Comparator<Long> {
     checkNotNull(l1, "o1");
     checkNotNull(l2, "o2");
     return compare(l1.longValue(), l2.longValue());
+  }
+
+  /**
+   * @return {@code true} if and only if {@code obj} is instance of {@link NanosComparator}.
+   */
+  @Override
+  public final boolean equals(@Nullable final Object obj) {
+    return obj instanceof NanosComparator;
+  }
+
+  @Override
+  public final int hashCode() {
+    return 2069133341;
   }
 
   private NanosComparator() {

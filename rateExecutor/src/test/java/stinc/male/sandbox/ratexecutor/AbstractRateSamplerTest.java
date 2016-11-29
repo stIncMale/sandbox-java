@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractRateSamplerTest {
   private final BiFunction<Long, Duration, RateSampler> rateSamplerCreator;
@@ -53,11 +52,12 @@ public abstract class AbstractRateSamplerTest {
     rs.tick(2, TimeUnit.SECONDS.toNanos(2));
     rs.tick(3, TimeUnit.SECONDS.toNanos(3));
     assertEquals(1 + 4 + 2 + 3, rs.ticksCount());
-    rs.tick(0, TimeUnit.SECONDS.toNanos(8));
+    rs.tick(0, TimeUnit.SECONDS.toNanos(8));//doesn't move a sample window
     assertEquals(1 + 4 + 2 + 3, rs.ticksCount());
     rs.tick(-2, TimeUnit.SECONDS.toNanos(5));
     rs.tick(1, TimeUnit.SECONDS.toNanos(3));
     rs.tick(-1, TimeUnit.SECONDS.toNanos(6));
+    rs.tick(5, TimeUnit.SECONDS.toNanos(1));
     assertEquals(2 + 3 - 2 + 1 - 1, rs.ticksCount());
   }
 
@@ -72,8 +72,8 @@ public abstract class AbstractRateSamplerTest {
     rs.tick(1, Long.MIN_VALUE);
     assertEquals(1, rs.ticksTotalCount());
     assertEquals(rs.ticksCount(), rs.ticksTotalCount());
-    rs.tick(4, -6_000_000_000L);
-    rs.tick(2, -5_500_000_000L);
+    rs.tick(4, -TimeUnit.SECONDS.toNanos(6));
+    rs.tick(2, -TimeUnit.SECONDS.toNanos(5));
     assertEquals(1 + 4 + 2, rs.ticksTotalCount());
   }
 
@@ -165,12 +165,10 @@ public abstract class AbstractRateSamplerTest {
     rs.tick(1, 0);
     rs.tick(1, TimeUnit.SECONDS.toNanos(1) - 123);
     assertDoubleEquals(1 + 1, rs.rate());
-    //noinspection PointlessArithmeticExpression
     assertDoubleEquals((1d + 1) / (3 / 1), rs.rate(Duration.ofSeconds(1)));
     rs.tick(0, TimeUnit.SECONDS.toNanos(1));
     rs.tick(2, TimeUnit.SECONDS.toNanos(2));
     assertDoubleEquals(1 + 1 + 2, rs.rate());
-    //noinspection PointlessArithmeticExpression
     assertDoubleEquals((1d + 1 + 2) / (3 / 1), rs.rate(Duration.ofSeconds(1)));
     rs.tick(3, TimeUnit.SECONDS.toNanos(3));
     assertDoubleEquals(1 + 2 + 3, rs.rate());
@@ -178,7 +176,6 @@ public abstract class AbstractRateSamplerTest {
     rs.tick(1, TimeUnit.SECONDS.toNanos(3));
     rs.tick(-1, TimeUnit.SECONDS.toNanos(6));
     assertDoubleEquals(-2 - 1, rs.rate());
-    //noinspection PointlessArithmeticExpression
     assertDoubleEquals((-2d - 1) / (3 / 1), rs.rate(Duration.ofSeconds(1)));
     assertDoubleEquals(rs.ticksCount(), rs.rate());
     assertDoubleEquals(rs.rate(rs.rightSampleWindowBoundary()), rs.rate());
@@ -210,7 +207,6 @@ public abstract class AbstractRateSamplerTest {
   }
 
   private static final void assertDoubleEquals(final double extected, final double actual) {
-    assertTrue(String.format("Expected %s but was %s", extected, actual),
-        Math.abs(extected - actual) <= 0.0000000000001);
+    assertEquals(extected, actual, 0.0000000000001);
   }
 }

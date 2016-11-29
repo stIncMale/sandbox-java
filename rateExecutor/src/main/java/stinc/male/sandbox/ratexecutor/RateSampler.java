@@ -12,25 +12,25 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * {@link RateSampler} treats instants as the number of nanoseconds elapsed since the {@linkplain #getStartNanos() start}.
  * So instant is a pair (startNanos, elapsedNanos), but because startNanos is known and fixed,
  * we can equivalently specify an instant via a single value tNanos = startNanos + elapsedNanos.
- * This class uses tNanos notation instead of (startNanos, elapsedNanos) notation.
+ * {@link RateSampler} uses tNanos notation instead of (startNanos, elapsedNanos) notation.
  * All nanosecond values are compared as specified by {@link System#nanoTime()}.
  * <p>
  * <i>Sample window</i><br>
  * Sample window is a half-closed time interval
  * ({@linkplain #rightSampleWindowBoundary() rightmostScoredInstant} - {@linkplain #getSampleInterval() sampleInterval}; rightmostScoredInstant]
- * (considering potential numerial overflow and comparison according to {@link System#nanoTime()}).
+ * (comparison according to {@link System#nanoTime()}).
  * Current ticks are those inside the sample window.
- * Current rate is calculated from current ticks only and by default is measured in sampleInterval<sup>-1</sup>.
+ * Current rate is calculated base on current ticks only and by default is measured in sampleInterval<sup>-1</sup>.
  * <p>
  * For example if sampleInterval is 3s,<br>
  * startNanos is 1_000_000_000 ns,<br>
  * and the only scored ticks are<br>
- * 1 at 2_500_000_000 ns (this is just tNanos, not tNanos - startNanos),<br>
+ * 1 at 2_500_000_000 ns (this is tNanos, not tNanos - startNanos),<br>
  * 1 at 3_000_000_000 ns,<br>
  * 8 at 5_000_000_000 ns,<br>
  * -2 at 6_000_000_000 ns,<br>
  * then the current rate is<br>
- * (8 - 2) / sampleInterval = 6 sampleInterval<sup>-1</sup> = 2 s<sup>-1</sup> because sampleInterval is 3s.
+ * (8 - 2) / sampleInterval = 6sampleInterval<sup>-1</sup> = 2s<sup>-1</sup> because sampleInterval is 3s.
  * <pre>
  *             2_500_000_000 ns         5_000_000_000 ns
  *                    |                        |                                                 t
@@ -40,25 +40,16 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  *                         (--------sample window--------]
  * </pre>
  * <p>
- * <b>Allowed time values</b><br>
- * All methods with parameters that specify instants restrict possible values.
- * If startNanos - sampleInterval (the left border of the initial sample window) is negative or zero then allowed tNanos are in closed interval<br>
- * [startNanos; startNanos - sampleInterval + {@link Long#MAX_VALUE}],<br>
- * otherwise allowed tNanos are in the union of closed intervals<br>
- * [startNanos; {@link Long#MAX_VALUE}]\u222a[{@link Long#MIN_VALUE}; {@link Long#MIN_VALUE} + startNanos - sampleInterval - 1]<br>
- * (note that {@link Long#MIN_VALUE} is greater than {@link Long#MAX_VALUE} according to {@link System#nanoTime()}).<br>
- * <p>
- * <b>Performance notes</b><br>
- * This utility is primarily designed to measure current rate by using sample window.
- * This approach introduces performance overhead and although {@link RateSampler} can also measure
- * {@linkplain #rateAverage() average rate} and calculate the {@linkplain #ticksTotalCount() total number of ticks},
- * you MAY want to use more lightweight techniques if you don't need to measure the exact current rate.
+ * <b>Allowed values</b><br>
+ * sampleInterval \u2208 [1, {@link Long#MAX_VALUE} - 1],<br>
+ * tNanos \u2208 [startNanos, startNanos - sampleInterval + {@link Long#MAX_VALUE}]
+ * (comparison according to {@link System#nanoTime()}).
  */
-public interface RateSampler {
+//TODO rename Sample window to samples window
+public interface RateSampler {//TODO rename to RateMeter
   /**
-   * See {@link System#nanoTime()}.
-   *
    * @return A starting point that is used to calculate elapsed nanoseconds.
+   * @see System#nanoTime()
    */
   long getStartNanos();
 
@@ -73,6 +64,7 @@ public interface RateSampler {
   /**
    * Instant that corresponds to the right border of the sample window.
    * At the very beginning this is equal to {@link #getStartNanos()}.
+   * This border can be moved to the right by the {@link #tick(long, long)} method.
    *
    * @return The rightmost {@linkplain #tick(long, long) scored} instant.
    */
@@ -100,7 +92,7 @@ public interface RateSampler {
    * @param count Number of ticks. MAY be negative, zero, or positive.
    * If zero then the method does nothing,
    * otherwise adds {@code count} to the currently scored number of ticks at the specified instant,
-   * or just remembers {@code count} ticks is no ticks were scored at the specified instant.
+   * or just remembers {@code count} ticks if no ticks were scored at the specified instant.
    * @param tNanos Instant at which {@code count} ticks need to be scored.
    * MUST be greater than or equal to {@link #getStartNanos()} because ticks at {@link #getStartNanos()} doesn't count.
    */
