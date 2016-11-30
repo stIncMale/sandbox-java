@@ -16,9 +16,9 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 import stinc.male.PerformanceTest;
-import stinc.male.sandbox.ratexecutor.ConcurrentRateMeter;
+import stinc.male.sandbox.ratexecutor.ConcurrentAccurateRateMeter;
 import stinc.male.sandbox.ratexecutor.RateMeter;
-import stinc.male.sandbox.ratexecutor.SimpleRateMeter;
+import stinc.male.sandbox.ratexecutor.AccurateRateMeter;
 
 @Category(PerformanceTest.class)
 public class ComparativeRateMeterTest {
@@ -90,7 +90,7 @@ public class ComparativeRateMeterTest {
 
     @Setup
     public final void setup() {
-      value = new SimpleRateMeter(System.nanoTime(), Duration.ofMillis(150));
+      value = new AccurateRateMeter(System.nanoTime(), Duration.ofMillis(150));
     }
   }
 
@@ -103,7 +103,7 @@ public class ComparativeRateMeterTest {
 
     @Setup
     public final void setup() {
-      value = new ConcurrentRateMeter(System.nanoTime(), Duration.ofMillis(150));
+      value = new ConcurrentAccurateRateMeter(System.nanoTime(), Duration.ofMillis(150));
     }
   }
 }

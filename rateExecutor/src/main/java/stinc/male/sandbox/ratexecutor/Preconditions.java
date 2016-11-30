@@ -10,49 +10,29 @@ final class Preconditions {
 
   static final void checkNotNull(
       final Object argument,
-      final String paramName) throws NullPointerException {
+      final String safeParamName) throws NullPointerException {
     if (argument == null) {
-      throw new NullPointerException(format("The argument %s must not be null", paramName));
+      throw new NullPointerException(format("The argument %s must not be null", safeParamName));
     }
   }
 
   static final void checkArgument(
       final boolean checkArgumentExpression,
-      final String paramName,
-      final String paramRestrictionDescription) throws IllegalArgumentException {
+      final String safeParamName,
+      final String safeParamRestrictionDescription) throws IllegalArgumentException {
     if (!checkArgumentExpression) {
       throw new IllegalArgumentException(
-          format("The argument %s is illegal. %s", paramName, paramRestrictionDescription));
+          format("The argument %s is illegal. %s", safeParamName, safeParamRestrictionDescription));
     }
   }
 
   static final void checkArgument(
       final boolean checkArgumentExpression,
-      final String paramName,
-      final Supplier<String> paramRestrictionDescriptionSupplier) throws IllegalArgumentException {
+      final String safeParamName,
+      final Supplier<String> safeParamRestrictionDescriptionSupplier) throws IllegalArgumentException {
     if (!checkArgumentExpression) {
       throw new IllegalArgumentException(
-          format("The argument %s is illegal. %s", paramName, paramRestrictionDescriptionSupplier.get()));
-    }
-  }
-
-  static final void checkState(
-      final boolean checkArgumentExpression,
-      final String stateName,
-      final String stateRestrictionDescription) throws IllegalArgumentException {
-    if (!checkArgumentExpression) {
-      throw new IllegalArgumentException(
-          format("The state %s is illegal. %s", stateName, stateRestrictionDescription));
-    }
-  }
-
-  static final void checkState(
-      final boolean checkArgumentExpression,
-      final String stateName,
-      final Supplier<String> stateRestrictionDescriptionSupplier) throws IllegalArgumentException {
-    if (!checkArgumentExpression) {
-      throw new IllegalArgumentException(
-          format("The state %s is illegal. %s", stateName, stateRestrictionDescriptionSupplier.get()));
+          format("The argument %s is illegal. %s", safeParamName, safeParamRestrictionDescriptionSupplier.get()));
     }
   }
 

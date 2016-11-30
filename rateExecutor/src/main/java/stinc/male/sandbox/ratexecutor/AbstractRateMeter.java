@@ -1,16 +1,17 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import javax.annotation.Nullable;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratexecutor.RateMeterMath.checkUnit;
+import static stinc.male.sandbox.ratexecutor.RateMeterMath.convertRate;
 
 abstract class AbstractRateMeter implements RateMeter {
+  private final TicksCounter ticksTotal;
   private final long startNanos;
   private final Duration samplesInterval;
   private final long samplesIntervalNanos;
   private final long maxTNanos;
-  private final boolean checkTNanos;
+  private final RateMeterConfig config;
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -19,16 +20,17 @@ abstract class AbstractRateMeter implements RateMeter {
    */
   AbstractRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
     checkNotNull(samplesInterval, "samplesInterval");
-    checkArgument(!samplesInterval.isZero(), "samplesInterval", "Must not be zero");
-    checkArgument(!samplesInterval.isNegative(), "samplesInterval", "Must be positive");
+    Preconditions.checkArgument(!samplesInterval.isZero(), "samplesInterval", "Must not be zero");
+    Preconditions.checkArgument(!samplesInterval.isNegative(), "samplesInterval", "Must be positive");
     checkNotNull(config, "config");
     this.startNanos = startNanos;
     this.samplesInterval = samplesInterval;
     samplesIntervalNanos = samplesInterval.toNanos();
-    checkArgument(samplesIntervalNanos <= Long.MAX_VALUE - 1, "samplesInterval",
+    Preconditions.checkArgument(samplesIntervalNanos <= Long.MAX_VALUE - 1, "samplesInterval",
         () -> String.format("Must be less than (Long.MAX_VALUE - 1)nanos = %snanos, but actual value is %s", Long.MAX_VALUE - 1, samplesIntervalNanos));
     maxTNanos = startNanos - samplesIntervalNanos + Long.MAX_VALUE;
-    this.checkTNanos = config.isCheckTNanos();
+    this.config = config;
+    ticksTotal = config.getTicksCounterSupplier().apply(0L);
   }
 
   @Override
@@ -42,43 +44,70 @@ abstract class AbstractRateMeter implements RateMeter {
   }
 
   @Override
-  public String toString() {
-    return getClass().getSimpleName()
-        + "(startNanos=" + startNanos
-        + ", samplesIntervalNanos=" + samplesIntervalNanos
-        + ')';
+  public final long ticksTotalCount() {
+    return ticksTotal.get();
+  }
+
+  @Override
+  public final double rateAverage(final Duration unit) {
+    checkArgument(unit, "unit");
+    return convertRate(rateAverage(), samplesIntervalNanos, unit.toNanos());
+  }
+
+  @Override
+  public final double rateAverage(final long tNanos) {
+    checkArgument(tNanos, "tNanos");
+    return RateMeterMath.rateAverage(tNanos, samplesIntervalNanos, startNanos, ticksTotalCount());
+  }
+
+  @Override
+  public final double rateAverage(final long tNanos, final Duration unit) {
+    checkArguments(tNanos, "tNanos", unit, "unit");
+    return convertRate(rateAverage(tNanos), samplesIntervalNanos, unit.toNanos());
+  }
+
+  protected final TicksCounter getTicksTotalCounter() {
+    return ticksTotal;
   }
 
   /**
-   * @return samplesInterval in nanoseconds.
+   * @return {@link #getSamplesInterval()} in nanoseconds.
    */
   protected final long getSamplesIntervalNanos() {
     return samplesIntervalNanos;
   }
 
-  /**
-   * Checks if {@code tNanos} is a valid value for the startNanos and samplesInterval,
-   * or does nothing if {@link RateMeterConfig#isCheckTNanos()} is {@code false}.
-   *
-   * @param tNanos Value to check.
-   * @param paramName Name of the method parameter with value {@code tNanos} which will be used to generate error if {@code tNanos} is not a valid value.
-   * @throws IllegalArgumentException If {@code tNanos} is invalid.
-   */
-  protected final void checkTNanos(final long tNanos, final String paramName) throws IllegalArgumentException {
-    if (checkTNanos) {
-      boolean ok = false;
-      @Nullable
-      IllegalArgumentException cause = null;
-      try {
-        ok = NanosComparator.compare(startNanos, tNanos) <= 0 && NanosComparator.compare(tNanos, maxTNanos) <= 0;
-      } catch (final IllegalArgumentException e) {
-        cause = e;
-      }
-      if (!ok) {
-        throw new IllegalArgumentException(
-            String.format("Must be in [%s; %s] (comparison according to System.nanoTime()), but actual value is %s",
-                startNanos, maxTNanos, tNanos), cause);
-      }
+  protected final RateMeterConfig getConfig() {
+    return config;
+  }
+
+  protected final void checkArgument(final long tNanos, final String safeParamName) throws IllegalArgumentException {
+    if (config.isCheckArguments()) {
+      RateMeterMath.checkTNanos(tNanos, startNanos, maxTNanos, safeParamName);
     }
+  }
+
+  protected final void checkArgument(final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
+    if (config.isCheckArguments()) {
+      checkUnit(unit, safeUnitParamName);
+    }
+  }
+
+  protected final void checkArguments(
+      final long tNanos, final String safeTNanosParamName,
+      final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
+    if (config.isCheckArguments()) {
+      RateMeterMath.checkTNanos(tNanos, startNanos, maxTNanos, safeTNanosParamName);
+      checkUnit(unit, safeUnitParamName);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName()
+        + "(startNanos=" + startNanos
+        + ", samplesIntervalNanos=" + samplesIntervalNanos
+        + ", config=" + config
+        + ')';
   }
 }

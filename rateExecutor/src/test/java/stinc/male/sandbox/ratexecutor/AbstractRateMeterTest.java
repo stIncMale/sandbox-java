@@ -219,7 +219,7 @@ public abstract class AbstractRateMeterTest {
         samplesInterval,
         RateMeterConfig.defaultInstance()
             .toBuilder()
-            .setCheckTNanos(true)
+            .setCheckArguments(true)
             .build());
   }
 

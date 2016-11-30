@@ -18,12 +18,12 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 import stinc.male.PerformanceTest;
-import stinc.male.sandbox.ratexecutor.ConcurrentRateMeter;
+import stinc.male.sandbox.ratexecutor.ConcurrentAccurateRateMeter;
 import stinc.male.sandbox.ratexecutor.RateMeter;
 
 @Category(PerformanceTest.class)
-public class ConcurrentRateMeterTest {
-  public ConcurrentRateMeterTest() {
+public class ConcurrentAccurateRateMeterTest {
+  public ConcurrentAccurateRateMeterTest() {
   }
 
   @Test
@@ -126,7 +126,7 @@ public class ConcurrentRateMeterTest {
 
     @Setup
     public final void setup() {
-      value = new ConcurrentRateMeter(System.nanoTime(), Duration.ofMillis(150));
+      value = new ConcurrentAccurateRateMeter(System.nanoTime(), Duration.ofMillis(150));
     }
   }
 }
