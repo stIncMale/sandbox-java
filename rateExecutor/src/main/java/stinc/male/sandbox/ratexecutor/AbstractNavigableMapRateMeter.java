@@ -31,18 +31,18 @@ public abstract class AbstractNavigableMapRateMeter extends AbstractRateMeter {
   }
 
   @Override
-  public final long rightSamplesWindowBoundary() {
+  public long rightSamplesWindowBoundary() {
     return samples.lastKey();
   }
 
   @Override
-  public final long ticksCount() {
+  public long ticksCount() {
     final long rightNanos = rightSamplesWindowBoundary();
     return count(rightNanos - getSamplesIntervalNanos(), rightNanos);
   }
 
   @Override
-  public final void tick(final long count, final long tNanos) {
+  public void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();
@@ -55,19 +55,21 @@ public abstract class AbstractNavigableMapRateMeter extends AbstractRateMeter {
           existingSample.add(count);
         }
       }
-      final long ticksTotalCount = getTicksTotalCounter().addAndGet(count);
-      gc(ticksTotalCount);
+      getTicksTotalCounter().add(count);
+      if (gcRequired()) {
+        gc();
+      }
     }
   }
 
   @Override
-  public final double rate(final Duration unit) {
+  public double rate(final Duration unit) {
     checkArgument(unit, "unit");
     return convertRate(rate(), getSamplesIntervalNanos(), unit.toNanos());
   }
 
   @Override
-  public final double rate(final long tNanos) {
+  public double rate(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final double result;
     final long rightNanos = rightSamplesWindowBoundary();
@@ -83,7 +85,7 @@ public abstract class AbstractNavigableMapRateMeter extends AbstractRateMeter {
   }
 
   @Override
-  public final double rate(final long tNanos, final Duration unit) {
+  public double rate(final long tNanos, final Duration unit) {
     checkArguments(tNanos, "tNanos", unit, "unit");
     return convertRate(rate(tNanos), getSamplesIntervalNanos(), unit.toNanos());
   }
@@ -96,21 +98,33 @@ public abstract class AbstractNavigableMapRateMeter extends AbstractRateMeter {
         .sum();
   }
 
-  private final void gc(long counter) {
-    if (counter % 1024 == 0) {//TODO test; GC strategies, adaptive 1024?
-      doGc();
+  protected boolean gcRequired() {
+    return ticksTotalCount() % 1024 == 0;//TODO test; GC strategies, adaptive 1024, use rightNanos - startNanos instead of ticksTotal?
+  }
+
+  /**
+   * This method is called by {@link #tick(long, long)} if {@link #gcRequired()} is {@code true}.
+   */
+  protected void gc() {
+    final long rightNanos = rightSamplesWindowBoundary();
+    final long leftNanos = rightNanos - getSamplesIntervalNanos();
+    final NavigableMap<Long, TicksCounter> samples = getSamples();
+    @Nullable
+    final Long rightNanosToRemoveTo = samples.floorKey(leftNanos);
+    if (rightNanosToRemoveTo != null) {
+      samples.subMap(samples.firstKey(), true, rightNanosToRemoveTo, true)
+          .clear();
     }
   }
 
-  protected abstract void doGc();
-
   /**
    * @return A {@link NavigableMap} with samples (keys are tNanos and values are corresponding ticks counters).
-   * This method always return the same instance.
+   * This method always return the same instance that was created in
+   * {@link #AbstractNavigableMapRateMeter(long, Duration, RateMeterConfig, Supplier)} by using the fourth argument.
    * The returned instance MUST NOT contain {@code null} values (one MUST NOT put such values inside).
    * @see #AbstractNavigableMapRateMeter(long, Duration, RateMeterConfig, Supplier)
    */
-  protected final NavigableMap<Long, TicksCounter> getSamples() {
+  protected NavigableMap<Long, TicksCounter> getSamples() {
     return samples;
   }
 

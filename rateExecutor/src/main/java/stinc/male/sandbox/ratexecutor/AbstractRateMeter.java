@@ -34,66 +34,66 @@ abstract class AbstractRateMeter implements RateMeter {
   }
 
   @Override
-  public final long getStartNanos() {
+  public long getStartNanos() {
     return startNanos;
   }
 
   @Override
-  public final Duration getSamplesInterval() {
+  public Duration getSamplesInterval() {
     return samplesInterval;
   }
 
   @Override
-  public final long ticksTotalCount() {
+  public long ticksTotalCount() {
     return ticksTotal.get();
   }
 
   @Override
-  public final double rateAverage(final Duration unit) {
+  public double rateAverage(final Duration unit) {
     checkArgument(unit, "unit");
     return convertRate(rateAverage(), samplesIntervalNanos, unit.toNanos());
   }
 
   @Override
-  public final double rateAverage(final long tNanos) {
+  public double rateAverage(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     return RateMeterMath.rateAverage(tNanos, samplesIntervalNanos, startNanos, ticksTotalCount());
   }
 
   @Override
-  public final double rateAverage(final long tNanos, final Duration unit) {
+  public double rateAverage(final long tNanos, final Duration unit) {
     checkArguments(tNanos, "tNanos", unit, "unit");
     return convertRate(rateAverage(tNanos), samplesIntervalNanos, unit.toNanos());
   }
 
-  protected final TicksCounter getTicksTotalCounter() {
+  protected TicksCounter getTicksTotalCounter() {
     return ticksTotal;
   }
 
   /**
    * @return {@link #getSamplesInterval()} in nanoseconds.
    */
-  protected final long getSamplesIntervalNanos() {
+  protected long getSamplesIntervalNanos() {
     return samplesIntervalNanos;
   }
 
-  protected final RateMeterConfig getConfig() {
+  protected RateMeterConfig getConfig() {
     return config;
   }
 
-  protected final void checkArgument(final long tNanos, final String safeParamName) throws IllegalArgumentException {
+  protected void checkArgument(final long tNanos, final String safeParamName) throws IllegalArgumentException {
     if (config.isCheckArguments()) {
       RateMeterMath.checkTNanos(tNanos, startNanos, maxTNanos, safeParamName);
     }
   }
 
-  protected final void checkArgument(final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
+  protected void checkArgument(final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
     if (config.isCheckArguments()) {
       checkUnit(unit, safeUnitParamName);
     }
   }
 
-  protected final void checkArguments(
+  protected void checkArguments(
       final long tNanos, final String safeTNanosParamName,
       final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
     if (config.isCheckArguments()) {

@@ -46,6 +46,8 @@ public final class RateMeterConfig {
 
   /**
    * Specifies a supplier which MUST be used by {@link AbstractRateMeter} to create ticks counters.
+   * Note that if {@link AbstractRateMeter} is used concurrently
+   * then supplier MUST provide a thread-safe implementation of {@link TicksCounter}.
    * @return {@code AtomicLongTicksCounter::new} by default.
    */
   public final Function<Long, ? extends TicksCounter> getTicksCounterSupplier() {

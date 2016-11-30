@@ -1,8 +1,6 @@
 package stinc.male.sandbox.ratexecutor;
 
-interface TicksCounter {
-  long addAndGet(long delta);
-
+public interface TicksCounter {
   void add(long delta);
 
   long get();

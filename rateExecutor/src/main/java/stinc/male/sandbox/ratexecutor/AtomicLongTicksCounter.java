@@ -7,13 +7,8 @@ import javax.annotation.concurrent.ThreadSafe;
 public final class AtomicLongTicksCounter extends AbstractTicksCounter {
   private final AtomicLong aValue;
 
-  AtomicLongTicksCounter(final long initialValue) {
+  public AtomicLongTicksCounter(final long initialValue) {
     aValue = new AtomicLong(initialValue);
-  }
-
-  @Override
-  public final long addAndGet(final long delta) {
-    return aValue.addAndGet(delta);
   }
 
   @Override

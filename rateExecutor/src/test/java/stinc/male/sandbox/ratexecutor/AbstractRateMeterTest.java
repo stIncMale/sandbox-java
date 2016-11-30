@@ -217,8 +217,7 @@ public abstract class AbstractRateMeterTest {
     return rateMeterCreator.create(
         startNanos,
         samplesInterval,
-        RateMeterConfig.defaultInstance()
-            .toBuilder()
+        RateMeterConfig.newBuilder()
             .setCheckArguments(true)
             .build());
   }

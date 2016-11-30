@@ -1,13 +1,11 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import java.util.NavigableMap;
 import java.util.TreeMap;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
-public final class AccurateRateMeter extends AbstractNavigableMapRateMeter {
+public class AccurateRateMeter extends AbstractNavigableMapRateMeter {
   /**
    * Constructor.
    *
@@ -25,18 +23,5 @@ public final class AccurateRateMeter extends AbstractNavigableMapRateMeter {
    */
   public AccurateRateMeter(final long startNanos, final Duration samplesInterval) {
     this(startNanos, samplesInterval, RateMeterConfig.defaultInstance());
-  }
-
-  @Override
-  protected final void doGc() {
-    final long rightNanos = rightSamplesWindowBoundary();
-    final long leftNanos = rightNanos - getSamplesIntervalNanos();
-    final NavigableMap<Long, TicksCounter> samples = getSamples();
-    @Nullable
-    final Long rightNanosToRemoveTo = samples.floorKey(leftNanos);
-    if (rightNanosToRemoveTo != null) {
-      samples.subMap(samples.firstKey(), true, rightNanosToRemoveTo, true)
-          .clear();
-    }
   }
 }

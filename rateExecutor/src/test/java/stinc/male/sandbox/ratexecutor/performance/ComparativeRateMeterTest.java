@@ -16,12 +16,19 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 import stinc.male.PerformanceTest;
-import stinc.male.sandbox.ratexecutor.ConcurrentAccurateRateMeter;
-import stinc.male.sandbox.ratexecutor.RateMeter;
 import stinc.male.sandbox.ratexecutor.AccurateRateMeter;
+import stinc.male.sandbox.ratexecutor.AtomicLongTicksCounter;
+import stinc.male.sandbox.ratexecutor.ConcurrentAccurateRateMeter;
+import stinc.male.sandbox.ratexecutor.LongAdderTicksCounter;
+import stinc.male.sandbox.ratexecutor.LongTicksCounter;
+import stinc.male.sandbox.ratexecutor.RateMeter;
+import stinc.male.sandbox.ratexecutor.RateMeterConfig;
 
 @Category(PerformanceTest.class)
 public class ComparativeRateMeterTest {
+  private static final Duration samplesInterval = Duration.ofMillis(150);
+  private static final boolean checkArguments = false;
+
   public ComparativeRateMeterTest() {
   }
 
@@ -30,7 +37,7 @@ public class ComparativeRateMeterTest {
     Options opt = new OptionsBuilder()
         .include(getClass().getName())
         .mode(Mode.Throughput)
-        .timeUnit(TimeUnit.MICROSECONDS)
+        .timeUnit(TimeUnit.MILLISECONDS)
         .warmupTime(TimeValue.seconds(1))
         .warmupIterations(1)
         .measurementTime(TimeValue.seconds(1))
@@ -45,65 +52,132 @@ public class ComparativeRateMeterTest {
     new Runner(opt).run();
   }
 
-//  @Benchmark
-//  public void emptyBaseline() throws Exception {
-//  }
-//
-//  @Benchmark
-//  public void tickAndCompoundBaseline(final Blackhole bh) throws Exception {
-//    final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-//    bh.consume(tNanos);
-//  }
-
   @Benchmark
-  public void simpleTick(final SimpleRateMeterContainer rateMeterContainer, final Blackhole bh) throws Exception {
-    final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateMeterContainer.value.tick(1, tNanos);
+  public void empty_baseline() {
   }
 
   @Benchmark
-  public void concurrentTick(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) throws Exception {
-    final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateMeterContainer.value.tick(1, tNanos);
+  public void blackHoleConsume_baseline(final Blackhole bh) {
+    bh.consume(1L);
   }
 
   @Benchmark
-  public void simpleCompound(final SimpleRateMeterContainer rateMeterContainer, final Blackhole bh) throws Exception {
-    final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateMeterContainer.value.tick(1, tNanos);
-    bh.consume(rateMeterContainer.value.rate());
+  public void tick_accurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tick(state.accurateRateMeter_longTicksCounter);
   }
 
   @Benchmark
-  public void concurrentCompound(final ConcurrentRateMeterContainer rateMeterContainer, final Blackhole bh) throws Exception {
-    final long tNanos = TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    rateMeterContainer.value.tick(1, tNanos);
-    bh.consume(rateMeterContainer.value.rate());
+  public void tick_accurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tick(state.accurateRateMeter_atomicLongTicksCounter);
+  }
+
+  @Benchmark
+  public void tick_accurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tick(state.accurateRateMeter_longAdderTicksCounter);
+  }
+
+  @Benchmark
+  public void tick_concurrentAccurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tick(state.concurrentAccurateRateMeter_longTicksCounter);
+  }
+
+  @Benchmark
+  public void tick_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tick(state.concurrentAccurateRateMeter_atomicLongTicksCounter);
+  }
+
+  @Benchmark
+  public void tick_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tick(state.concurrentAccurateRateMeter_longAdderTicksCounter);
+  }
+
+  @Benchmark
+  public void tickAndRate_accurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tickAndRate(state.accurateRateMeter_longTicksCounter, bh);
+  }
+
+  @Benchmark
+  public void tickAndRate_accurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tickAndRate(state.accurateRateMeter_atomicLongTicksCounter, bh);
+  }
+
+  @Benchmark
+  public void tickAndRate_accurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tickAndRate(state.accurateRateMeter_longAdderTicksCounter, bh);
+  }
+
+  @Benchmark
+  public void tickAndRate_concurrentAccurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_longTicksCounter, bh);
+  }
+
+  @Benchmark
+  public void tickAndRate_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh);
+  }
+
+  @Benchmark
+  public void tickAndRate_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh);
+  }
+
+  private static final void tick(final RateMeter rm) {
+    rm.tick(1, nanoTime());
+  }
+
+  private static final void tickAndRate(final RateMeter rm, final Blackhole bh) {
+    rm.tick(1, nanoTime());
+    bh.consume(rm.rate());
+  }
+
+  private static final long nanoTime() {
+    return TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
   }
 
   @State(Scope.Thread)
-  public static class SimpleRateMeterContainer {
-    volatile RateMeter value;
+  public static class RateMeterContainer_ThreadScope {
+    AccurateRateMeter accurateRateMeter_longTicksCounter;
+    AccurateRateMeter accurateRateMeter_atomicLongTicksCounter;
+    AccurateRateMeter accurateRateMeter_longAdderTicksCounter;
+    ConcurrentAccurateRateMeter concurrentAccurateRateMeter_longTicksCounter;
+    ConcurrentAccurateRateMeter concurrentAccurateRateMeter_atomicLongTicksCounter;
+    ConcurrentAccurateRateMeter concurrentAccurateRateMeter_longAdderTicksCounter;
 
-    public SimpleRateMeterContainer() {
+    public RateMeterContainer_ThreadScope() {
     }
 
     @Setup
     public final void setup() {
-      value = new AccurateRateMeter(System.nanoTime(), Duration.ofMillis(150));
-    }
-  }
-
-  @State(Scope.Thread)
-  public static class ConcurrentRateMeterContainer {
-    volatile RateMeter value;
-
-    public ConcurrentRateMeterContainer() {
-    }
-
-    @Setup
-    public final void setup() {
-      value = new ConcurrentAccurateRateMeter(System.nanoTime(), Duration.ofMillis(150));
+      accurateRateMeter_longTicksCounter = new AccurateRateMeter(nanoTime(), samplesInterval,
+          RateMeterConfig.newBuilder()
+              .setCheckArguments(checkArguments)
+              .setTicksCounterSupplier(LongTicksCounter::new)
+              .build());
+      accurateRateMeter_atomicLongTicksCounter = new AccurateRateMeter(nanoTime(), samplesInterval,
+          RateMeterConfig.newBuilder()
+              .setCheckArguments(checkArguments)
+              .setTicksCounterSupplier(AtomicLongTicksCounter::new)
+              .build());
+      accurateRateMeter_longAdderTicksCounter = new AccurateRateMeter(nanoTime(), samplesInterval,
+          RateMeterConfig.newBuilder()
+              .setCheckArguments(checkArguments)
+              .setTicksCounterSupplier(LongAdderTicksCounter::new)
+              .build());
+      concurrentAccurateRateMeter_longTicksCounter = new ConcurrentAccurateRateMeter(nanoTime(), samplesInterval,
+          RateMeterConfig.newBuilder()
+              .setCheckArguments(checkArguments)
+              .setTicksCounterSupplier(LongTicksCounter::new)
+              .build());
+      concurrentAccurateRateMeter_atomicLongTicksCounter = new ConcurrentAccurateRateMeter(nanoTime(), samplesInterval,
+          RateMeterConfig.newBuilder()
+              .setCheckArguments(checkArguments)
+              .setTicksCounterSupplier(AtomicLongTicksCounter::new)
+              .build());
+      concurrentAccurateRateMeter_longAdderTicksCounter = new ConcurrentAccurateRateMeter(nanoTime(), samplesInterval,
+          RateMeterConfig.newBuilder()
+              .setCheckArguments(checkArguments)
+              .setTicksCounterSupplier(LongAdderTicksCounter::new)
+              .build());
     }
   }
 }

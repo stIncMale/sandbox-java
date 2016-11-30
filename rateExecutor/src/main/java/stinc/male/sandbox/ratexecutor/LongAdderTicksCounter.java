@@ -7,15 +7,9 @@ import javax.annotation.concurrent.ThreadSafe;
 public final class LongAdderTicksCounter extends AbstractTicksCounter {
   private final LongAdder adder;
 
-  LongAdderTicksCounter(final long initialValue) {
+  public LongAdderTicksCounter(final long initialValue) {
     adder = new LongAdder();
     adder.add(initialValue);
-  }
-
-  @Override
-  public final long addAndGet(final long delta) {
-    adder.add(delta);
-    return adder.sum();
   }
 
   @Override

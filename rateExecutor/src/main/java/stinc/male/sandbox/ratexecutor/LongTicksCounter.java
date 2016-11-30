@@ -6,14 +6,8 @@ import javax.annotation.concurrent.NotThreadSafe;
 public final class LongTicksCounter extends AbstractTicksCounter {
   private long value;
 
-  LongTicksCounter(final long initialValue) {
+  public LongTicksCounter(final long initialValue) {
     value = initialValue;
-  }
-
-  @Override
-  public final long addAndGet(final long delta) {
-    value = value + delta;
-    return value;
   }
 
   @Override
