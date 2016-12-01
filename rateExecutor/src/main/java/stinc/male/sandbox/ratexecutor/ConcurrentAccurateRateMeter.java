@@ -2,13 +2,10 @@ package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 public class ConcurrentAccurateRateMeter extends AbstractNavigableMapRateMeter {
-  private final AtomicBoolean aGcFlag;
-
   /**
    * Constructor.
    *
@@ -18,7 +15,6 @@ public class ConcurrentAccurateRateMeter extends AbstractNavigableMapRateMeter {
    */
   public ConcurrentAccurateRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
     super(startNanos, samplesInterval, config, () -> new ConcurrentSkipListMap<>(NanosComparator.getInstance()));
-    aGcFlag = new AtomicBoolean();
   }
 
   /**
@@ -27,16 +23,5 @@ public class ConcurrentAccurateRateMeter extends AbstractNavigableMapRateMeter {
    */
   public ConcurrentAccurateRateMeter(final long startNanos, final Duration samplesInterval) {
     this(startNanos, samplesInterval, RateMeterConfig.defaultInstance());
-  }
-
-  @Override
-  protected void gc() {
-    if (aGcFlag.compareAndSet(false, true)) {
-      try {
-        super.gc();
-      } finally {
-        aGcFlag.set(false);
-      }
-    }
   }
 }

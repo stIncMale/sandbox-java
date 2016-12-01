@@ -30,22 +30,22 @@ import stinc.male.sandbox.ratexecutor.RateMeterConfig;
 @Category(PerformanceTest.class)
 public class RateMeterTest {
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> new OptionsBuilder()
-      .include(RateMeterTest.class.getName() + ".*_baseline")
+      //.include(RateMeterTest.class.getName() + ".*_baseline")
       .mode(Mode.Throughput)
       .timeUnit(TimeUnit.MILLISECONDS)
-      .warmupTime(TimeValue.seconds(1))
-      .warmupIterations(1)
-      .measurementTime(TimeValue.seconds(1))
-      .measurementIterations(1)
+      .warmupTime(TimeValue.seconds(2))
+      .warmupIterations(3)
+      .measurementTime(TimeValue.seconds(2))
+      .measurementIterations(3)
       .syncIterations(true)
       .threads(1)
-      .forks(1)
+      .forks(3)
       .shouldFailOnError(true)
       .shouldDoGC(true)
       .timeout(TimeValue.seconds(30));
   private static final Supplier<RateMeterConfig.Builder> rateMeterConfigBuilderSuppplier = () -> RateMeterConfig.newBuilder()
       .setCheckArguments(false);
-  private static final Duration samplesInterval = Duration.ofMillis(100);
+  private static final Duration samplesInterval = Duration.ofMillis(150);
 
   public RateMeterTest() {
   }
@@ -61,7 +61,7 @@ public class RateMeterTest {
   @Test
   public void parallelTest() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
-        .include(getClass().getName() + ".*parallel$.*")
+        .include(getClass().getName() + ".*parallel\\$.*")
         .threads(4)
         .build())
         .run();
@@ -72,8 +72,8 @@ public class RateMeterTest {
   }
 
   @Benchmark
-  public void blackHoleConsume_baseline(final Blackhole bh) {
-    bh.consume(1L);
+  public void nanoTime_baseline(final Blackhole bh) {
+    bh.consume(nanoTime());
   }
 
   @Benchmark
@@ -314,7 +314,8 @@ public class RateMeterTest {
   }
 
   private static final long nanoTime() {
-    return TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
+    //return TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
+    return System.nanoTime();
   }
 
   @State(Scope.Thread)
