@@ -30,7 +30,7 @@ import stinc.male.sandbox.ratexecutor.RateMeterConfig;
 @Category(PerformanceTest.class)
 public class RateMeterTest {
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> new OptionsBuilder()
-      //.include(RateMeterTest.class.getName() + ".*_baseline")
+      .include(RateMeterTest.class.getName() + ".*_baseline")
       .mode(Mode.Throughput)
       .timeUnit(TimeUnit.MILLISECONDS)
       .warmupTime(TimeValue.seconds(2))
@@ -42,10 +42,11 @@ public class RateMeterTest {
       .forks(3)
       .shouldFailOnError(true)
       .shouldDoGC(true)
-      .timeout(TimeValue.seconds(30));
+      .timeout(TimeValue.seconds(5));
   private static final Supplier<RateMeterConfig.Builder> rateMeterConfigBuilderSuppplier = () -> RateMeterConfig.newBuilder()
       .setCheckArguments(false);
   private static final Duration samplesInterval = Duration.ofMillis(150);
+  private static final boolean useMillisInsteadOfNanos = false;
 
   public RateMeterTest() {
   }
@@ -113,33 +114,33 @@ public class RateMeterTest {
   }
 
   @Benchmark
-  public void serial_tick$1rate$1_accurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.accurateRateMeter_longTicksCounter, bh, counter.v++, 1);
+  public void serial_tick$100rate$1_accurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.accurateRateMeter_longTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$1rate$1_accurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.accurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 1);
+  public void serial_tick$100rate$1_accurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.accurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$1rate$1_accurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.accurateRateMeter_longAdderTicksCounter, bh, counter.v++, 1);
+  public void serial_tick$100rate$1_accurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.accurateRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$1rate$1_concurrentAccurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longTicksCounter, bh, counter.v++, 1);
+  public void serial_tick$100rate$1_concurrentAccurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_longTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$1rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 1);
+  public void serial_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$1rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 1);
+  public void serial_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
@@ -215,45 +216,45 @@ public class RateMeterTest {
   }
 
   @Benchmark
-  @Group("parallel$1_tick$1rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$1_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
   @GroupThreads(1)
-  public void parallel$1_tick$1rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 1);
+  public void parallel$1_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$2_tick$1rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$2_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
   @GroupThreads(2)
-  public void parallel$2_tick$1rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 1);
+  public void parallel$2_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$1rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$4_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
   @GroupThreads(4)
-  public void parallel$4_tick$1rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 1);
+  public void parallel$4_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$1_tick$1rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$1_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
   @GroupThreads(1)
-  public void parallel$1_tick$1rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 1);
+  public void parallel$1_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$2_tick$1rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$2_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
   @GroupThreads(2)
-  public void parallel$2_tick$1rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 1);
+  public void parallel$2_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$1rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$4_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
   @GroupThreads(4)
-  public void parallel$4_tick$1rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 1);
+  public void parallel$4_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
@@ -298,6 +299,62 @@ public class RateMeterTest {
     tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
   }
 
+  @Benchmark
+  @Group("parallel$4_tick$2_rate$2_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @GroupThreads(2)
+  public void parallel$4_TICK$2_rate$2_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentAccurateRateMeter_atomicLongTicksCounter);
+  }
+
+  @Benchmark
+  @Group("parallel$4_tick$2_rate$2_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @GroupThreads(2)
+  public void parallel$4_tick$2_RATE$2_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh);
+  }
+
+  @Benchmark
+  @Group("parallel$4_tick$3_rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @GroupThreads(3)
+  public void parallel$4_TICK$3_rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentAccurateRateMeter_atomicLongTicksCounter);
+  }
+
+  @Benchmark
+  @Group("parallel$4_tick$3_rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @GroupThreads(1)
+  public void parallel$4_tick$3_RATE$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh);
+  }
+
+  @Benchmark
+  @Group("parallel$4_tick$2_rate$2_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @GroupThreads(2)
+  public void parallel$4_TICK$2_rate$2_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentAccurateRateMeter_longAdderTicksCounter);
+  }
+
+  @Benchmark
+  @Group("parallel$4_tick$2_rate$2_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @GroupThreads(2)
+  public void parallel$4_tick$2_RATE$2_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh);
+  }
+
+  @Benchmark
+  @Group("parallel$4_tick$3_rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @GroupThreads(3)
+  public void parallel$4_TICK$3_rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentAccurateRateMeter_longAdderTicksCounter);
+  }
+
+  @Benchmark
+  @Group("parallel$4_tick$3_rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @GroupThreads(1)
+  public void parallel$4_tick$3_RATE$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh);
+  }
+
   private static final void tick(final RateMeter rm) {
     rm.tick(1, nanoTime());
   }
@@ -314,8 +371,9 @@ public class RateMeterTest {
   }
 
   private static final long nanoTime() {
-    //return TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
-    return System.nanoTime();
+    return useMillisInsteadOfNanos
+        ? TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis())//this timer is not monotonic
+        : System.nanoTime();
   }
 
   @State(Scope.Thread)
