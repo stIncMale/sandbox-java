@@ -8,10 +8,12 @@ import org.junit.experimental.categories.Category;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Group;
 import org.openjdk.jmh.annotations.GroupThreads;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -29,24 +31,34 @@ import stinc.male.sandbox.ratexecutor.RateMeterConfig;
 
 @Category(PerformanceTest.class)
 public class RateMeterTest {
-  private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> new OptionsBuilder()
-      .include(RateMeterTest.class.getName() + ".*_baseline")
-      .mode(Mode.Throughput)
-      .timeUnit(TimeUnit.MILLISECONDS)
-      .warmupTime(TimeValue.seconds(2))
-      .warmupIterations(3)
-      .measurementTime(TimeValue.seconds(2))
-      .measurementIterations(3)
-      .syncIterations(true)
-      .threads(1)
-      .forks(3)
-      .shouldFailOnError(true)
-      .shouldDoGC(true)
-      .timeout(TimeValue.seconds(5));
+  private static final Duration samplesInterval = Duration.ofMillis(150);
+  private static final boolean millisInsteadOfNanos = false;
+  private static final boolean quickRun = true;
+  private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
+    final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)
+        .include(RateMeterTest.class.getName() + ".*_baseline")
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .syncIterations(true)
+        .shouldFailOnError(true)
+        .shouldDoGC(true)
+        .timeout(TimeValue.seconds(30));
+    if (quickRun) {
+      result.warmupTime(TimeValue.seconds(2))
+          .warmupIterations(2)
+          .measurementTime(TimeValue.seconds(1))
+          .measurementIterations(1)
+          .forks(1);
+    } else {
+      result.warmupTime(TimeValue.seconds(2))
+          .warmupIterations(3)
+          .measurementTime(TimeValue.seconds(2))
+          .measurementIterations(3)
+          .forks(3);
+    }
+    return result;
+  };
   private static final Supplier<RateMeterConfig.Builder> rateMeterConfigBuilderSuppplier = () -> RateMeterConfig.newBuilder()
       .setCheckArguments(false);
-  private static final Duration samplesInterval = Duration.ofMillis(150);
-  private static final boolean useMillisInsteadOfNanos = false;
 
   public RateMeterTest() {
   }
@@ -55,6 +67,7 @@ public class RateMeterTest {
   public void serialTest() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
         .include(getClass().getName() + ".*serial_.*")
+        .threads(4)
         .build())
         .run();
   }
@@ -366,12 +379,12 @@ public class RateMeterTest {
   private static final void tickAndRate(final RateMeter rm, final Blackhole bh, final int counter, final int tickToRateRatio) {
     rm.tick(1, nanoTime());
     if (counter % tickToRateRatio == 0) {
-      bh.consume(rm.rate());//TODO check if rm.rate() is the same as rate measured by JMH
+      bh.consume(rm.rate());
     }
   }
 
   private static final long nanoTime() {
-    return useMillisInsteadOfNanos
+    return millisInsteadOfNanos
         ? TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis())//this timer is not monotonic
         : System.nanoTime();
   }
@@ -388,8 +401,9 @@ public class RateMeterTest {
     public RateMeterContainer_ThreadScope() {
     }
 
-    @Setup
+    @Setup(Level.Trial)
     public final void setup() {
+      System.out.println("TODO setup");
       accurateRateMeter_longTicksCounter = new AccurateRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
@@ -415,6 +429,17 @@ public class RateMeterTest {
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
     }
+
+    @TearDown(Level.Trial)
+    public final void tearDown() {
+      System.out.println(String.format("TODO tearDown"));
+      System.out.println(String.format("TODO accurateRateMeter_longTicksCounter.rateAverage=%s, total=%s", accurateRateMeter_longTicksCounter.rateAverage(Duration.ofMillis(1)), accurateRateMeter_longTicksCounter.ticksTotalCount()));
+      System.out.println(String.format("TODO accurateRateMeter_atomicLongTicksCounter.rateAverage=%s, total=%s", accurateRateMeter_atomicLongTicksCounter.rateAverage(Duration.ofMillis(1)), accurateRateMeter_atomicLongTicksCounter.ticksTotalCount()));
+      System.out.println(String.format("TODO accurateRateMeter_longAdderTicksCounter.rateAverage=%s, total=%s", accurateRateMeter_longAdderTicksCounter.rateAverage(Duration.ofMillis(1)), accurateRateMeter_longAdderTicksCounter.ticksTotalCount()));
+      System.out.println(String.format("TODO concurrentAccurateRateMeter_longTicksCounter.rateAverage=%s, total=%s", concurrentAccurateRateMeter_longTicksCounter.rateAverage(Duration.ofMillis(1)), concurrentAccurateRateMeter_longTicksCounter.ticksTotalCount()));
+      System.out.println(String.format("TODO concurrentAccurateRateMeter_atomicLongTicksCounter.rateAverage=%s, total=%s", concurrentAccurateRateMeter_atomicLongTicksCounter.rateAverage(Duration.ofMillis(1)), concurrentAccurateRateMeter_atomicLongTicksCounter.ticksTotalCount()));
+      System.out.println(String.format("TODO concurrentAccurateRateMeter_longAdderTicksCounter.rateAverage=%s, total=%s", concurrentAccurateRateMeter_longAdderTicksCounter.rateAverage(Duration.ofMillis(1)), concurrentAccurateRateMeter_longAdderTicksCounter.ticksTotalCount()));
+    }
   }
 
   @State(Scope.Group)
@@ -425,7 +450,7 @@ public class RateMeterTest {
     public RateMeterContainer_GroupScope() {
     }
 
-    @Setup
+    @Setup(Level.Trial)
     public final void setup() {
       concurrentAccurateRateMeter_atomicLongTicksCounter = new ConcurrentAccurateRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
@@ -435,6 +460,13 @@ public class RateMeterTest {
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
+    }
+
+    @TearDown(Level.Trial)
+    public final void tearDown() {
+      System.out.println(String.format("TODO tearDown"));
+      System.out.println(String.format("TODO concurrentAccurateRateMeter_atomicLongTicksCounter.rateAverage=%s, total=%s", concurrentAccurateRateMeter_atomicLongTicksCounter.rateAverage(Duration.ofMillis(1)), concurrentAccurateRateMeter_atomicLongTicksCounter.ticksTotalCount()));
+      System.out.println(String.format("TODO concurrentAccurateRateMeter_longAdderTicksCounter.rateAverage=%s, total=%s", concurrentAccurateRateMeter_longAdderTicksCounter.rateAverage(Duration.ofMillis(1)), concurrentAccurateRateMeter_longAdderTicksCounter.ticksTotalCount()));
     }
   }
 
