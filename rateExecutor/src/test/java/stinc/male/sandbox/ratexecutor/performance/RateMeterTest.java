@@ -1,6 +1,8 @@
 package stinc.male.sandbox.ratexecutor.performance;
 
 import java.time.Duration;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import org.junit.Test;
@@ -31,20 +33,19 @@ import stinc.male.sandbox.ratexecutor.RateMeterConfig;
 
 @Category(PerformanceTest.class)
 public class RateMeterTest {
-  private static final Duration samplesInterval = Duration.ofMillis(150);
+  private static final Duration samplesInterval = Duration.ofMillis(1);
   private static final boolean millisInsteadOfNanos = false;
   private static final boolean quickRun = true;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)
-        .include(RateMeterTest.class.getName() + ".*_baseline")
         .timeUnit(TimeUnit.MILLISECONDS)
         .syncIterations(true)
         .shouldFailOnError(true)
         .shouldDoGC(true)
         .timeout(TimeValue.seconds(30));
     if (quickRun) {
-      result.warmupTime(TimeValue.seconds(2))
-          .warmupIterations(2)
+      result.warmupTime(TimeValue.seconds(1))
+          .warmupIterations(0)
           .measurementTime(TimeValue.seconds(1))
           .measurementIterations(1)
           .forks(1);
@@ -53,7 +54,8 @@ public class RateMeterTest {
           .warmupIterations(3)
           .measurementTime(TimeValue.seconds(2))
           .measurementIterations(3)
-          .forks(3);
+          .forks(3)
+          .include(RateMeterTest.class.getName() + ".*_baseline");
     }
     return result;
   };
@@ -67,7 +69,7 @@ public class RateMeterTest {
   public void serialTest() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
         .include(getClass().getName() + ".*serial_.*")
-        .threads(4)
+        .threads(1)
         .build())
         .run();
   }
@@ -104,6 +106,10 @@ public class RateMeterTest {
   @Benchmark
   public void serial_tick_accurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state) {
     tick(state.accurateRateMeter_atomicLongTicksCounter);
+    state.all.add(state.accurateRateMeter_atomicLongTicksCounter.rate(nanoTime()));
+//    if (state.accurateRateMeter_atomicLongTicksCounter.ticksTotalCount() % 50_000 == 0) {
+//      System.out.println(state.accurateRateMeter_atomicLongTicksCounter.rate(nanoTime(), Duration.ofMillis(1)));
+//    }//TODO
   }
 
   @Benchmark
@@ -205,6 +211,10 @@ public class RateMeterTest {
   @GroupThreads(4)
   public void parallel$4_tick_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
     tick(state.concurrentAccurateRateMeter_atomicLongTicksCounter);
+    state.all.add(state.concurrentAccurateRateMeter_atomicLongTicksCounter.rate(nanoTime()));
+//    if (state.concurrentAccurateRateMeter_atomicLongTicksCounter.ticksTotalCount() % 50_000 == 0) {
+//      System.out.println(state.concurrentAccurateRateMeter_atomicLongTicksCounter.rate(nanoTime(), Duration.ofMillis(1)));
+//    }//TODO
   }
 
   @Benchmark
@@ -391,6 +401,7 @@ public class RateMeterTest {
 
   @State(Scope.Thread)
   public static class RateMeterContainer_ThreadScope {
+    Collection<Double> all;
     AccurateRateMeter accurateRateMeter_longTicksCounter;
     AccurateRateMeter accurateRateMeter_atomicLongTicksCounter;
     AccurateRateMeter accurateRateMeter_longAdderTicksCounter;
@@ -401,9 +412,9 @@ public class RateMeterTest {
     public RateMeterContainer_ThreadScope() {
     }
 
-    @Setup(Level.Trial)
+    @Setup(Level.Iteration)
     public final void setup() {
-      System.out.println("TODO setup");
+      all = new ConcurrentLinkedQueue<>();//TODO
       accurateRateMeter_longTicksCounter = new AccurateRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
@@ -430,28 +441,26 @@ public class RateMeterTest {
               .build());
     }
 
-    @TearDown(Level.Trial)
-    public final void tearDown() {
-      System.out.println(String.format("TODO tearDown"));
-      System.out.println(String.format("TODO accurateRateMeter_longTicksCounter.rateAverage=%s, total=%s", accurateRateMeter_longTicksCounter.rateAverage(Duration.ofMillis(1)), accurateRateMeter_longTicksCounter.ticksTotalCount()));
-      System.out.println(String.format("TODO accurateRateMeter_atomicLongTicksCounter.rateAverage=%s, total=%s", accurateRateMeter_atomicLongTicksCounter.rateAverage(Duration.ofMillis(1)), accurateRateMeter_atomicLongTicksCounter.ticksTotalCount()));
-      System.out.println(String.format("TODO accurateRateMeter_longAdderTicksCounter.rateAverage=%s, total=%s", accurateRateMeter_longAdderTicksCounter.rateAverage(Duration.ofMillis(1)), accurateRateMeter_longAdderTicksCounter.ticksTotalCount()));
-      System.out.println(String.format("TODO concurrentAccurateRateMeter_longTicksCounter.rateAverage=%s, total=%s", concurrentAccurateRateMeter_longTicksCounter.rateAverage(Duration.ofMillis(1)), concurrentAccurateRateMeter_longTicksCounter.ticksTotalCount()));
-      System.out.println(String.format("TODO concurrentAccurateRateMeter_atomicLongTicksCounter.rateAverage=%s, total=%s", concurrentAccurateRateMeter_atomicLongTicksCounter.rateAverage(Duration.ofMillis(1)), concurrentAccurateRateMeter_atomicLongTicksCounter.ticksTotalCount()));
-      System.out.println(String.format("TODO concurrentAccurateRateMeter_longAdderTicksCounter.rateAverage=%s, total=%s", concurrentAccurateRateMeter_longAdderTicksCounter.rateAverage(Duration.ofMillis(1)), concurrentAccurateRateMeter_longAdderTicksCounter.ticksTotalCount()));
+    @TearDown(Level.Iteration)
+    public final void tearDown() {//TODO
+      final double avg = all.isEmpty() ? Double.NaN : all.stream().mapToDouble(Double::doubleValue).sum() / all.size();
+      System.out.println("AVG " + avg);
+      all.clear();
     }
   }
 
   @State(Scope.Group)
   public static class RateMeterContainer_GroupScope {
+    Collection<Double> all;
     ConcurrentAccurateRateMeter concurrentAccurateRateMeter_atomicLongTicksCounter;
     ConcurrentAccurateRateMeter concurrentAccurateRateMeter_longAdderTicksCounter;
 
     public RateMeterContainer_GroupScope() {
     }
 
-    @Setup(Level.Trial)
+    @Setup(Level.Iteration)
     public final void setup() {
+      all = new ConcurrentLinkedQueue<>();//TODO
       concurrentAccurateRateMeter_atomicLongTicksCounter = new ConcurrentAccurateRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(AtomicLongTicksCounter::new)
@@ -462,11 +471,11 @@ public class RateMeterTest {
               .build());
     }
 
-    @TearDown(Level.Trial)
-    public final void tearDown() {
-      System.out.println(String.format("TODO tearDown"));
-      System.out.println(String.format("TODO concurrentAccurateRateMeter_atomicLongTicksCounter.rateAverage=%s, total=%s", concurrentAccurateRateMeter_atomicLongTicksCounter.rateAverage(Duration.ofMillis(1)), concurrentAccurateRateMeter_atomicLongTicksCounter.ticksTotalCount()));
-      System.out.println(String.format("TODO concurrentAccurateRateMeter_longAdderTicksCounter.rateAverage=%s, total=%s", concurrentAccurateRateMeter_longAdderTicksCounter.rateAverage(Duration.ofMillis(1)), concurrentAccurateRateMeter_longAdderTicksCounter.ticksTotalCount()));
+    @TearDown(Level.Iteration)
+    public final void tearDown() {//TODO
+      final double avg = all.isEmpty() ? Double.NaN : all.stream().mapToDouble(Double::doubleValue).sum() / all.size();
+      System.out.println("AVG " + avg);
+      all.clear();
     }
   }
 
@@ -477,7 +486,7 @@ public class RateMeterTest {
     public IntCounter_ThreadScope() {
     }
 
-    @Setup
+    @Setup(Level.Iteration)
     public final void setup() {
       v = 0;
     }

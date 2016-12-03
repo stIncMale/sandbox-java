@@ -12,17 +12,12 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.convertRate;
 public abstract class AbstractNavigableMapRateMeter extends AbstractRateMeter {
   private final NavigableMap<Long, TicksCounter> samples;
   private final AtomicBoolean gcInProgress;
-  private volatile long gcCount;
   private volatile long gcLastRightSamplesWindowBoundary;
   /**
+   * [0,Double.MAX_VALUE]<br>
    * The bigger, the less frequently GC happens.
    */
-  private volatile double gcFactor;
-  /**
-   * The bigger, the less frequently {@link #gcFactor} is recalculated.
-   */
-  private final long gcAdjustmentFactor;
-  private final int gcTargetSamplesSise;
+  private final double gcFactor = 0.3;
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -42,11 +37,7 @@ public abstract class AbstractNavigableMapRateMeter extends AbstractRateMeter {
     samples = samplesSuppplier.get();
     samples.put(startNanos, getConfig().getTicksCounterSupplier().apply(0L));
     gcInProgress = new AtomicBoolean();
-    gcCount = 0;
     gcLastRightSamplesWindowBoundary = getStartNanos();
-    gcFactor = 10;
-    gcAdjustmentFactor = 2;
-    gcTargetSamplesSise = 50_000;
   }
 
   @Override
@@ -120,31 +111,13 @@ public abstract class AbstractNavigableMapRateMeter extends AbstractRateMeter {
   private final boolean gcRequired(final long rightSamplesWindowBoundary) {
     final long shift = rightSamplesWindowBoundary - gcLastRightSamplesWindowBoundary;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final boolean result;
-    double gcFactor = this.gcFactor;
-    if (shift > samplesIntervalNanos) {
-      result = (double)shift / samplesIntervalNanos >= gcFactor;
-    } else {
-      result = false;
-    }
-    if (result && gcCount % gcAdjustmentFactor == 0) {
-      final int samplesSize = samples.size();
-      if (samplesSize > 1.5 * gcTargetSamplesSise) {
-        if (gcFactor > 1) {
-          final double newGcFactor = 0.71 * gcFactor;
-          this.gcFactor = newGcFactor >= 1 ? newGcFactor : 1;
-        }
-      } else if (samplesSize < 0.67 * gcTargetSamplesSise) {
-        this.gcFactor = 1.4 * gcFactor;
-      }
-    }
+    final boolean result = (double)shift / samplesIntervalNanos >= gcFactor;
     return result;
   }
 
   private final void gc() {
     if (gcInProgress.compareAndSet(false, true)) {
       try {
-        gcCount++;
         final long rightNanos = rightSamplesWindowBoundary();
         gcLastRightSamplesWindowBoundary = rightNanos;
         final long leftNanos = rightNanos - getSamplesIntervalNanos();
