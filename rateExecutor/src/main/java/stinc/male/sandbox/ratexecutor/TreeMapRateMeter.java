@@ -5,7 +5,7 @@ import java.util.TreeMap;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
-public class AccurateRateMeter extends AbstractNavigableMapRateMeter {
+public class TreeMapRateMeter extends AbstractNavigableMapRateMeter<TreeMap<Long, TicksCounter>> {
   /**
    * Constructor.
    *
@@ -13,15 +13,15 @@ public class AccurateRateMeter extends AbstractNavigableMapRateMeter {
    * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
    */
-  public AccurateRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
+  public TreeMapRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
     super(startNanos, samplesInterval, config, () -> new TreeMap<>(NanosComparator.getInstance()));
   }
 
   /**
-   * Acts like {@link #AccurateRateMeter(long, Duration, RateMeterConfig)} with {@link RateMeterConfig#defaultInstance()}
+   * Acts like {@link #TreeMapRateMeter(long, Duration, RateMeterConfig)} with {@link RateMeterConfig#defaultInstance()}
    * as the third argument.
    */
-  public AccurateRateMeter(final long startNanos, final Duration samplesInterval) {
+  public TreeMapRateMeter(final long startNanos, final Duration samplesInterval) {
     this(startNanos, samplesInterval, RateMeterConfig.defaultInstance());
   }
 }

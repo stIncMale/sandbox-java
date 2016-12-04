@@ -9,8 +9,8 @@ import javax.annotation.Nullable;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratexecutor.RateMeterMath.convertRate;
 
-public abstract class AbstractNavigableMapRateMeter extends AbstractRateMeter {
-  private final NavigableMap<Long, TicksCounter> samples;
+public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
+  private final T samples;
   private final AtomicBoolean gcInProgress;
   private volatile long gcLastRightSamplesWindowBoundary;
   /**
@@ -27,11 +27,11 @@ public abstract class AbstractNavigableMapRateMeter extends AbstractRateMeter {
    * The {@link NavigableMap} provided by this supplier MUST use {@link NavigableMap#comparator() comparator}
    * that compares nanoseconds according to {@link System#nanoTime()} specification.
    */
-  AbstractNavigableMapRateMeter(
+  public AbstractNavigableMapRateMeter(
       final long startNanos,
       final Duration samplesInterval,
       final RateMeterConfig config,
-      final Supplier<? extends NavigableMap<Long, TicksCounter>> samplesSuppplier) {
+      final Supplier<T> samplesSuppplier) {
     super(startNanos, samplesInterval, config);
     checkNotNull(samplesSuppplier, "samplesSuppplier");
     samples = samplesSuppplier.get();
@@ -140,7 +140,7 @@ public abstract class AbstractNavigableMapRateMeter extends AbstractRateMeter {
    * The returned instance MUST NOT contain {@code null} values (one MUST NOT put such values inside).
    * @see #AbstractNavigableMapRateMeter(long, Duration, RateMeterConfig, Supplier)
    */
-  protected NavigableMap<Long, TicksCounter> getSamples() {
+  protected T getSamples() {
     return samples;
   }
 

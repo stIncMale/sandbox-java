@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
-public class ConcurrentAccurateRateMeter extends AbstractNavigableMapRateMeter {
+public class ConcurrentSkipListMapRateMeter extends AbstractNavigableMapRateMeter<ConcurrentSkipListMap<Long, TicksCounter>> {
   /**
    * Constructor.
    *
@@ -13,15 +13,15 @@ public class ConcurrentAccurateRateMeter extends AbstractNavigableMapRateMeter {
    * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
    */
-  public ConcurrentAccurateRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
+  public ConcurrentSkipListMapRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
     super(startNanos, samplesInterval, config, () -> new ConcurrentSkipListMap<>(NanosComparator.getInstance()));
   }
 
   /**
-   * Acts like {@link #ConcurrentAccurateRateMeter(long, Duration, RateMeterConfig)} with {@link RateMeterConfig#defaultInstance()}
+   * Acts like {@link #ConcurrentSkipListMapRateMeter(long, Duration, RateMeterConfig)} with {@link RateMeterConfig#defaultInstance()}
    * as the third argument.
    */
-  public ConcurrentAccurateRateMeter(final long startNanos, final Duration samplesInterval) {
+  public ConcurrentSkipListMapRateMeter(final long startNanos, final Duration samplesInterval) {
     this(startNanos, samplesInterval, RateMeterConfig.defaultInstance());
   }
 }

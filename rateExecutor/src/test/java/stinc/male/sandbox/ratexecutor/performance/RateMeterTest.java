@@ -23,9 +23,9 @@ import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 import stinc.male.PerformanceTest;
-import stinc.male.sandbox.ratexecutor.AccurateRateMeter;
+import stinc.male.sandbox.ratexecutor.TreeMapRateMeter;
 import stinc.male.sandbox.ratexecutor.AtomicLongTicksCounter;
-import stinc.male.sandbox.ratexecutor.ConcurrentAccurateRateMeter;
+import stinc.male.sandbox.ratexecutor.ConcurrentSkipListMapRateMeter;
 import stinc.male.sandbox.ratexecutor.LongAdderTicksCounter;
 import stinc.male.sandbox.ratexecutor.LongTicksCounter;
 import stinc.male.sandbox.ratexecutor.RateMeter;
@@ -99,283 +99,283 @@ public class RateMeterTest {
   }
 
   @Benchmark
-  public void serial_tick_accurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state) {
-    tick(state.accurateRateMeter_longTicksCounter);
+  public void serial_tick_treeMapRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state) {
+    tick(state.treeMapRateMeter_longTicksCounter);
   }
 
   @Benchmark
-  public void serial_tick_accurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state) {
-    tick(state.accurateRateMeter_atomicLongTicksCounter);
-    state.all.add(state.accurateRateMeter_atomicLongTicksCounter.rate(nanoTime()));
-//    if (state.accurateRateMeter_atomicLongTicksCounter.ticksTotalCount() % 50_000 == 0) {
-//      System.out.println(state.accurateRateMeter_atomicLongTicksCounter.rate(nanoTime(), Duration.ofMillis(1)));
+  public void serial_tick_treeMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state) {
+    tick(state.treeMapRateMeter_atomicLongTicksCounter);
+    state.all.add(state.treeMapRateMeter_atomicLongTicksCounter.rate(nanoTime()));
+//    if (state.treeMapRateMeter_atomicLongTicksCounter.ticksTotalCount() % 50_000 == 0) {
+//      System.out.println(state.treeMapRateMeter_atomicLongTicksCounter.rate(nanoTime(), Duration.ofMillis(1)));
 //    }//TODO
   }
 
   @Benchmark
-  public void serial_tick_accurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state) {
-    tick(state.accurateRateMeter_longAdderTicksCounter);
+  public void serial_tick_treeMapRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state) {
+    tick(state.treeMapRateMeter_longAdderTicksCounter);
   }
 
   @Benchmark
-  public void serial_tick_concurrentAccurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state) {
-    tick(state.concurrentAccurateRateMeter_longTicksCounter);
+  public void serial_tick_concurrentSkipListMapRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state) {
+    tick(state.concurrentSkipListMapRateMeter_longTicksCounter);
   }
 
   @Benchmark
-  public void serial_tick_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state) {
-    tick(state.concurrentAccurateRateMeter_atomicLongTicksCounter);
+  public void serial_tick_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state) {
+    tick(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter);
   }
 
   @Benchmark
-  public void serial_tick_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state) {
-    tick(state.concurrentAccurateRateMeter_longAdderTicksCounter);
+  public void serial_tick_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state) {
+    tick(state.concurrentSkipListMapRateMeter_longAdderTicksCounter);
   }
 
   @Benchmark
-  public void serial_tick$100rate$1_accurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.accurateRateMeter_longTicksCounter, bh, counter.v++, 100);
+  public void serial_tick$100rate$1_treeMapRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.treeMapRateMeter_longTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$100rate$1_accurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.accurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
+  public void serial_tick$100rate$1_treeMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.treeMapRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$100rate$1_accurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.accurateRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
+  public void serial_tick$100rate$1_treeMapRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.treeMapRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$100rate$1_concurrentAccurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longTicksCounter, bh, counter.v++, 100);
+  public void serial_tick$100rate$1_concurrentSkipListMapRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_longTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
+  public void serial_tick$100rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
+  public void serial_tick$100rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  public void serial_tick$10rate$1_accurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.accurateRateMeter_longTicksCounter, bh, counter.v++, 10);
+  public void serial_tick$10rate$1_treeMapRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.treeMapRateMeter_longTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  public void serial_tick$10rate$1_accurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.accurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 10);
+  public void serial_tick$10rate$1_treeMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.treeMapRateMeter_atomicLongTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  public void serial_tick$10rate$1_accurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.accurateRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
+  public void serial_tick$10rate$1_treeMapRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.treeMapRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  public void serial_tick$10rate$1_concurrentAccurateRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longTicksCounter, bh, counter.v++, 10);
+  public void serial_tick$10rate$1_concurrentSkipListMapRateMeter_longTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_longTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  public void serial_tick$10rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 10);
+  public void serial_tick$10rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  public void serial_tick$10rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
+  public void serial_tick$10rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  @Group("parallel_tick_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel_tick_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(1)
-  public void parallel$1_tick_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
-    tick(state.concurrentAccurateRateMeter_atomicLongTicksCounter);
+  public void parallel$1_tick_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter);
   }
 
   @Benchmark
-  @Group("parallel$2_tick_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$2_tick_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(2)
-  public void parallel$2_tick_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
-    tick(state.concurrentAccurateRateMeter_atomicLongTicksCounter);
+  public void parallel$2_tick_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter);
   }
 
   @Benchmark
-  @Group("parallel$4_tick_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$4_tick_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(4)
-  public void parallel$4_tick_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
-    tick(state.concurrentAccurateRateMeter_atomicLongTicksCounter);
-    state.all.add(state.concurrentAccurateRateMeter_atomicLongTicksCounter.rate(nanoTime()));
-//    if (state.concurrentAccurateRateMeter_atomicLongTicksCounter.ticksTotalCount() % 50_000 == 0) {
-//      System.out.println(state.concurrentAccurateRateMeter_atomicLongTicksCounter.rate(nanoTime(), Duration.ofMillis(1)));
+  public void parallel$4_tick_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter);
+    state.all.add(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter.rate(nanoTime()));
+//    if (state.concurrentSkipListMapRateMeter_atomicLongTicksCounter.ticksTotalCount() % 50_000 == 0) {
+//      System.out.println(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter.rate(nanoTime(), Duration.ofMillis(1)));
 //    }//TODO
   }
 
   @Benchmark
-  @Group("parallel$1_tick_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$1_tick_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(1)
-  public void parallel$1_tick_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
-    tick(state.concurrentAccurateRateMeter_longAdderTicksCounter);
+  public void parallel$1_tick_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSkipListMapRateMeter_longAdderTicksCounter);
   }
 
   @Benchmark
-  @Group("parallel$2_tick_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$2_tick_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(2)
-  public void parallel$2_tick_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
-    tick(state.concurrentAccurateRateMeter_longAdderTicksCounter);
+  public void parallel$2_tick_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSkipListMapRateMeter_longAdderTicksCounter);
   }
 
   @Benchmark
-  @Group("parallel$4_tick_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$4_tick_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(4)
-  public void parallel$4_tick_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
-    tick(state.concurrentAccurateRateMeter_longAdderTicksCounter);
+  public void parallel$4_tick_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSkipListMapRateMeter_longAdderTicksCounter);
   }
 
   @Benchmark
-  @Group("parallel$1_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$1_tick$100rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(1)
-  public void parallel$1_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
+  public void parallel$1_tick$100rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$2_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$2_tick$100rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(2)
-  public void parallel$2_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
+  public void parallel$2_tick$100rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$4_tick$100rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(4)
-  public void parallel$4_tick$100rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
+  public void parallel$4_tick$100rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$1_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$1_tick$100rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(1)
-  public void parallel$1_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
+  public void parallel$1_tick$100rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$2_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$2_tick$100rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(2)
-  public void parallel$2_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
+  public void parallel$2_tick$100rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$4_tick$100rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(4)
-  public void parallel$4_tick$100rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
+  public void parallel$4_tick$100rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_longAdderTicksCounter, bh, counter.v++, 100);
   }
 
   @Benchmark
-  @Group("parallel$1_tick$10rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$1_tick$10rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(1)
-  public void parallel$1_tick$10rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 10);
+  public void parallel$1_tick$10rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  @Group("parallel$2_tick$10rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$2_tick$10rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(2)
-  public void parallel$2_tick$10rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 10);
+  public void parallel$2_tick$10rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$10rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$4_tick$10rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(4)
-  public void parallel$4_tick$10rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh, counter.v++, 10);
+  public void parallel$4_tick$10rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  @Group("parallel$1_tick$10rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$1_tick$10rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(1)
-  public void parallel$1_tick$10rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
+  public void parallel$1_tick$10rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  @Group("parallel$2_tick$10rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$2_tick$10rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(2)
-  public void parallel$2_tick$10rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
+  public void parallel$2_tick$10rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$10rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$4_tick$10rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(4)
-  public void parallel$4_tick$10rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
+  public void parallel$4_tick$10rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSkipListMapRateMeter_longAdderTicksCounter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$2_rate$2_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$4_tick$2_rate$2_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(2)
-  public void parallel$4_TICK$2_rate$2_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
-    tick(state.concurrentAccurateRateMeter_atomicLongTicksCounter);
+  public void parallel$4_TICK$2_rate$2_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$2_rate$2_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$4_tick$2_rate$2_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(2)
-  public void parallel$4_tick$2_RATE$2_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
-    rate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh);
+  public void parallel$4_tick$2_RATE$2_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter, bh);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$3_rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$4_tick$3_rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(3)
-  public void parallel$4_TICK$3_rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
-    tick(state.concurrentAccurateRateMeter_atomicLongTicksCounter);
+  public void parallel$4_TICK$3_rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$3_rate$1_concurrentAccurateRateMeter_atomicLongTicksCounter")
+  @Group("parallel$4_tick$3_rate$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter")
   @GroupThreads(1)
-  public void parallel$4_tick$3_RATE$1_concurrentAccurateRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
-    rate(state.concurrentAccurateRateMeter_atomicLongTicksCounter, bh);
+  public void parallel$4_tick$3_RATE$1_concurrentSkipListMapRateMeter_atomicLongTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.concurrentSkipListMapRateMeter_atomicLongTicksCounter, bh);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$2_rate$2_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$4_tick$2_rate$2_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(2)
-  public void parallel$4_TICK$2_rate$2_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
-    tick(state.concurrentAccurateRateMeter_longAdderTicksCounter);
+  public void parallel$4_TICK$2_rate$2_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSkipListMapRateMeter_longAdderTicksCounter);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$2_rate$2_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$4_tick$2_rate$2_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(2)
-  public void parallel$4_tick$2_RATE$2_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
-    rate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh);
+  public void parallel$4_tick$2_RATE$2_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.concurrentSkipListMapRateMeter_longAdderTicksCounter, bh);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$3_rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$4_tick$3_rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(3)
-  public void parallel$4_TICK$3_rate$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
-    tick(state.concurrentAccurateRateMeter_longAdderTicksCounter);
+  public void parallel$4_TICK$3_rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSkipListMapRateMeter_longAdderTicksCounter);
   }
 
   @Benchmark
-  @Group("parallel$4_tick$3_rate$1_concurrentAccurateRateMeter_longAdderTicksCounter")
+  @Group("parallel$4_tick$3_rate$1_concurrentSkipListMapRateMeter_longAdderTicksCounter")
   @GroupThreads(1)
-  public void parallel$4_tick$3_RATE$1_concurrentAccurateRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
-    rate(state.concurrentAccurateRateMeter_longAdderTicksCounter, bh);
+  public void parallel$4_tick$3_RATE$1_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.concurrentSkipListMapRateMeter_longAdderTicksCounter, bh);
   }
 
   private static final void tick(final RateMeter rm) {
@@ -402,12 +402,12 @@ public class RateMeterTest {
   @State(Scope.Thread)
   public static class RateMeterContainer_ThreadScope {
     Collection<Double> all;
-    AccurateRateMeter accurateRateMeter_longTicksCounter;
-    AccurateRateMeter accurateRateMeter_atomicLongTicksCounter;
-    AccurateRateMeter accurateRateMeter_longAdderTicksCounter;
-    ConcurrentAccurateRateMeter concurrentAccurateRateMeter_longTicksCounter;
-    ConcurrentAccurateRateMeter concurrentAccurateRateMeter_atomicLongTicksCounter;
-    ConcurrentAccurateRateMeter concurrentAccurateRateMeter_longAdderTicksCounter;
+    TreeMapRateMeter treeMapRateMeter_longTicksCounter;
+    TreeMapRateMeter treeMapRateMeter_atomicLongTicksCounter;
+    TreeMapRateMeter treeMapRateMeter_longAdderTicksCounter;
+    ConcurrentSkipListMapRateMeter concurrentSkipListMapRateMeter_longTicksCounter;
+    ConcurrentSkipListMapRateMeter concurrentSkipListMapRateMeter_atomicLongTicksCounter;
+    ConcurrentSkipListMapRateMeter concurrentSkipListMapRateMeter_longAdderTicksCounter;
 
     public RateMeterContainer_ThreadScope() {
     }
@@ -415,27 +415,27 @@ public class RateMeterTest {
     @Setup(Level.Iteration)
     public final void setup() {
       all = new ConcurrentLinkedQueue<>();//TODO
-      accurateRateMeter_longTicksCounter = new AccurateRateMeter(nanoTime(), samplesInterval,
+      treeMapRateMeter_longTicksCounter = new TreeMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
               .build());
-      accurateRateMeter_atomicLongTicksCounter = new AccurateRateMeter(nanoTime(), samplesInterval,
+      treeMapRateMeter_atomicLongTicksCounter = new TreeMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(AtomicLongTicksCounter::new)
               .build());
-      accurateRateMeter_longAdderTicksCounter = new AccurateRateMeter(nanoTime(), samplesInterval,
+      treeMapRateMeter_longAdderTicksCounter = new TreeMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
-      concurrentAccurateRateMeter_longTicksCounter = new ConcurrentAccurateRateMeter(nanoTime(), samplesInterval,
+      concurrentSkipListMapRateMeter_longTicksCounter = new ConcurrentSkipListMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
               .build());
-      concurrentAccurateRateMeter_atomicLongTicksCounter = new ConcurrentAccurateRateMeter(nanoTime(), samplesInterval,
+      concurrentSkipListMapRateMeter_atomicLongTicksCounter = new ConcurrentSkipListMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(AtomicLongTicksCounter::new)
               .build());
-      concurrentAccurateRateMeter_longAdderTicksCounter = new ConcurrentAccurateRateMeter(nanoTime(), samplesInterval,
+      concurrentSkipListMapRateMeter_longAdderTicksCounter = new ConcurrentSkipListMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
@@ -452,8 +452,8 @@ public class RateMeterTest {
   @State(Scope.Group)
   public static class RateMeterContainer_GroupScope {
     Collection<Double> all;
-    ConcurrentAccurateRateMeter concurrentAccurateRateMeter_atomicLongTicksCounter;
-    ConcurrentAccurateRateMeter concurrentAccurateRateMeter_longAdderTicksCounter;
+    ConcurrentSkipListMapRateMeter concurrentSkipListMapRateMeter_atomicLongTicksCounter;
+    ConcurrentSkipListMapRateMeter concurrentSkipListMapRateMeter_longAdderTicksCounter;
 
     public RateMeterContainer_GroupScope() {
     }
@@ -461,11 +461,11 @@ public class RateMeterTest {
     @Setup(Level.Iteration)
     public final void setup() {
       all = new ConcurrentLinkedQueue<>();//TODO
-      concurrentAccurateRateMeter_atomicLongTicksCounter = new ConcurrentAccurateRateMeter(nanoTime(), samplesInterval,
+      concurrentSkipListMapRateMeter_atomicLongTicksCounter = new ConcurrentSkipListMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(AtomicLongTicksCounter::new)
               .build());
-      concurrentAccurateRateMeter_longAdderTicksCounter = new ConcurrentAccurateRateMeter(nanoTime(), samplesInterval,
+      concurrentSkipListMapRateMeter_longAdderTicksCounter = new ConcurrentSkipListMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
