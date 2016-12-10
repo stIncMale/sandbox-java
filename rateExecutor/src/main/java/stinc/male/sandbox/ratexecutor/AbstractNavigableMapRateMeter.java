@@ -57,7 +57,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();
       final long leftNanos = rightNanos - getSamplesIntervalNanos();
-      if (samples.comparator().compare(leftNanos, tNanos) < 0) {//tNanos is within the samples window
+      if (samples.comparator().compare(leftNanos, tNanos) < 0) {//tNanos is not behind the samples window
         final TicksCounter newSample = getConfig().getTicksCounterSupplier().apply(count);
         @Nullable
         final TicksCounter existingSample = samples.putIfAbsent(tNanos, newSample);
@@ -109,9 +109,9 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   }
 
   private final boolean gcRequired(final long rightSamplesWindowBoundary) {
-    final long shift = rightSamplesWindowBoundary - gcLastRightSamplesWindowBoundary;
+    final long samplesWindowShiftNanos = rightSamplesWindowBoundary - gcLastRightSamplesWindowBoundary;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final boolean result = (double)shift / samplesIntervalNanos >= gcFactor;
+    final boolean result = (double)samplesWindowShiftNanos / samplesIntervalNanos >= gcFactor;
     return result;
   }
 

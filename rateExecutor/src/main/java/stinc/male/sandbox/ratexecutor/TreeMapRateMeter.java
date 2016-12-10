@@ -14,7 +14,7 @@ public class TreeMapRateMeter extends AbstractNavigableMapRateMeter<TreeMap<Long
    * @param config Additional configuration parameters.
    */
   public TreeMapRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
-    super(startNanos, samplesInterval, config, () -> new TreeMap<>(NanosComparator.getInstance()));
+    super(startNanos, samplesInterval, config, () -> new TreeMap<>(NanosComparator.instance()));
   }
 
   /**

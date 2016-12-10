@@ -18,7 +18,7 @@ public final class NanosComparator implements Comparator<Long> {
    *
    * @return An instance of {@link NanosComparator}.
    */
-  public static final NanosComparator getInstance() {
+  public static final NanosComparator instance() {
     return instance;
   }
 

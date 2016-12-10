@@ -40,7 +40,7 @@ public final class NanosComparatorTest {
   @Test
   public final void compare() {
     for (final Sample sample : samples) {
-      assertCompare(sample.l1, sample.l2, sample.expected, NanosComparator.getInstance());
+      assertCompare(sample.l1, sample.l2, sample.expected, NanosComparator.instance());
     }
   }
 

@@ -14,7 +14,7 @@ public class ConcurrentSkipListMapRateMeter extends AbstractNavigableMapRateMete
    * @param config Additional configuration parameters.
    */
   public ConcurrentSkipListMapRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
-    super(startNanos, samplesInterval, config, () -> new ConcurrentSkipListMap<>(NanosComparator.getInstance()));
+    super(startNanos, samplesInterval, config, () -> new ConcurrentSkipListMap<>(NanosComparator.instance()));
   }
 
   /**
