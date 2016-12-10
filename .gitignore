@@ -1,6 +1,5 @@
-*.class
-*.jar
-*.war
-*.ear
-.idea/
-target/
+**/*.DS_Store
+**/*.iml
+**/.idea/
+**/build/
+**/target/
