@@ -1,22 +1,27 @@
 package stinc.male.sandbox.ratexecutor;
 
+import java.time.Duration;
 import java.util.function.Function;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
+import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
 @Immutable
 public final class RateMeterConfig {
   private static final RateMeterConfig defaultInstance = new Builder().build();
 
-  private boolean checkArguments;
-  private Function<Long, ? extends TicksCounter> ticksCounterSupplier;
+  private final boolean checkArguments;
+  private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
+  private final Duration timeSensitivity;
 
   private RateMeterConfig(
       final boolean checkArguments,
-      final Function<Long, ? extends TicksCounter> ticksCounterSupplier) {
+      final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
+      final Duration timeSensitivity) {
     this.checkArguments = checkArguments;
     this.ticksCounterSupplier = ticksCounterSupplier;
+    this.timeSensitivity = timeSensitivity;
   }
 
   /**
@@ -54,11 +59,26 @@ public final class RateMeterConfig {
     return ticksCounterSupplier;
   }
 
+  /**
+   * Specifies the time sensitivity.
+   * The actual sensitivity of {@link RateMeter} may be finer then the specified value,
+   * but must not be more grainy.
+   * It is recommended to specify here an resolution (accuracy, granularity) of the used timer.
+   * @return {@code Duration.ofNanos(50)} by default. As of year 2017 there is no need to use
+   * a finer sensitivity because it is an approximation of the {@link System#nanoTime()} resolution
+   * (see <a href="https://github.com/shipilev/timers-bench">timers-bench</a>
+   * and <a href="https://shipilev.net/blog/2014/nanotrusting-nanotime/">Nanotrusting the Nanotime</a> for measurements and explanations).
+   */
+  public final Duration getTimeSensitivity() {
+    return timeSensitivity;
+  }
+
   @Override
   public final String toString() {
     return getClass().getSimpleName()
         + "(checkArguments=" + checkArguments
         + ", ticksCounterSupplier=" + ticksCounterSupplier
+        + ", timeSensitivity=" + timeSensitivity
         + ')';
   }
 
@@ -66,15 +86,18 @@ public final class RateMeterConfig {
   public static final class Builder {
     private boolean checkArguments;
     private Function<Long, ? extends TicksCounter> ticksCounterSupplier;
+    private Duration timeSensitivity;
 
     private Builder() {
       checkArguments = false;
       ticksCounterSupplier = LongAdderTicksCounter::new;
+      timeSensitivity = Duration.ofNanos(50);
     }
 
     private Builder(final RateMeterConfig config) {
       checkArguments = config.checkArguments;
       ticksCounterSupplier = config.ticksCounterSupplier;
+      timeSensitivity = config.timeSensitivity;
     }
 
     /**
@@ -86,7 +109,7 @@ public final class RateMeterConfig {
     }
 
     /**
-     * @param ticksCounterSupplier MUST be immutable.
+     * @param ticksCounterSupplier Must be immutable.
      * @see RateMeterConfig#getTicksCounterSupplier()
      */
     public final Builder setTicksCounterSupplier(final Function<Long, ? extends TicksCounter> ticksCounterSupplier) {
@@ -95,8 +118,20 @@ public final class RateMeterConfig {
       return this;
     }
 
+    /**
+     * @param timeSensitivity Must be positive (not {@linkplain Duration#isNegative() negative} and not {@linkplain Duration#isZero() zero}).
+     * @see RateMeterConfig#getTimeSensitivity()
+     */
+    public final Builder setTimeSensitivity(final Duration timeSensitivity) {
+      checkNotNull(timeSensitivity, "timeSensitivity");
+      checkArgument(!timeSensitivity.isNegative(), "timeSensitivity", "Must be positive");
+      checkArgument(!timeSensitivity.isZero(), "timeSensitivity", "Must not be zero");
+      this.timeSensitivity = timeSensitivity;
+      return this;
+    }
+
     public final RateMeterConfig build() {
-      return new RateMeterConfig(checkArguments, ticksCounterSupplier);
+      return new RateMeterConfig(checkArguments, ticksCounterSupplier, timeSensitivity);
     }
   }
 }

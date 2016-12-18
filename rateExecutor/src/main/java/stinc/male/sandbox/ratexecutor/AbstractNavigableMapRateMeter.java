@@ -2,6 +2,7 @@ package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
 import java.util.Comparator;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -11,6 +12,7 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.convertRate;
 
 public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
   private final T samples;
+  private final long timeSensitivityNanos;
   private final AtomicBoolean gcInProgress;
   private volatile long gcLastRightSamplesWindowBoundary;
   /**
@@ -35,9 +37,13 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     super(startNanos, samplesInterval, config);
     checkNotNull(samplesSuppplier, "samplesSuppplier");
     samples = samplesSuppplier.get();
-    samples.put(startNanos, getConfig().getTicksCounterSupplier().apply(0L));
+    samples.put(startNanos, config.getTicksCounterSupplier().apply(0L));
     gcInProgress = new AtomicBoolean();
     gcLastRightSamplesWindowBoundary = getStartNanos();
+    timeSensitivityNanos = config.getTimeSensitivity().toNanos();
+    Preconditions.checkArgument(timeSensitivityNanos <= getSamplesIntervalNanos(), "config",
+        () -> String.format("timeSensitivityNanos = %s must be not greater than getSamplesIntervalNanos() = %s",
+            timeSensitivityNanos, getSamplesIntervalNanos()));
   }
 
   @Override
@@ -58,9 +64,21 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long rightNanos = rightSamplesWindowBoundary();
       final long leftNanos = rightNanos - getSamplesIntervalNanos();
       if (samples.comparator().compare(leftNanos, tNanos) < 0) {//tNanos is not behind the samples window
-        final TicksCounter newSample = getConfig().getTicksCounterSupplier().apply(count);
         @Nullable
-        final TicksCounter existingSample = samples.putIfAbsent(tNanos, newSample);
+        final TicksCounter existingSample;
+        if (timeSensitivityNanos == 1) {
+          final TicksCounter newSample = getConfig().getTicksCounterSupplier().apply(count);
+          existingSample = samples.putIfAbsent(tNanos, newSample);
+        } else {
+          @Nullable
+          final Entry<Long, TicksCounter> existingEntry = samples.floorEntry(tNanos);
+          if (existingEntry != null && (tNanos - existingEntry.getKey()) <= timeSensitivityNanos) {
+            existingSample = existingEntry.getValue();
+          } else {
+            final TicksCounter newSample = getConfig().getTicksCounterSupplier().apply(count);
+            existingSample = samples.putIfAbsent(tNanos, newSample);
+          }
+        }
         if (existingSample != null) {//we need to merge samples
           existingSample.add(count);
         }

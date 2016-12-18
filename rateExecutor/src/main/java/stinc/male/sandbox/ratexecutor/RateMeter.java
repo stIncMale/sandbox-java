@@ -11,7 +11,7 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * <p>
  * <b>Glossary</b><br>
  * <i>Instant</i><br>
- * {@link RateMeter} treats instants as the number of nanoseconds elapsed since the {@linkplain #getStartNanos() start}.
+ * {@link RateMeter} treats instants as the time (number of nanoseconds) elapsed since the {@linkplain #getStartNanos() start}.
  * So instant is a pair (startNanos, elapsedNanos), but because startNanos is known and fixed,
  * we can equivalently specify an instant via a single value tNanos = startNanos + elapsedNanos.
  * {@link RateMeter} uses tNanos notation instead of (startNanos, elapsedNanos) notation.
