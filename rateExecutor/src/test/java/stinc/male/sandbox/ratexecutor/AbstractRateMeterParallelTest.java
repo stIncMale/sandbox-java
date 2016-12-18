@@ -25,6 +25,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
       final Duration samplesInterval = Duration.ofMillis(ThreadLocalRandom.current().nextLong(400, 600));
       final TestParams tp = new TestParams(
           samplesInterval,
+          ThreadLocalRandom.current().nextBoolean() ? Duration.ofNanos(1) : Duration.ofNanos((long)(ThreadLocalRandom.current().nextDouble(0.01, 0.1) * samplesInterval.toNanos())),
           ThreadLocalRandom.current().nextInt(5, 40),
           ThreadLocalRandom.current().nextInt(1, 5),
           Duration.ofMillis((long)(ThreadLocalRandom.current().nextDouble(1, 5) * samplesInterval.toMillis()))
@@ -35,7 +36,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
 
   private final void doTest(final TestParams tp) throws InterruptedException {
     final long startNanos = System.nanoTime();
-    final RateMeter rm = getRateMeterCreator().create(startNanos, tp.samplesInterval, RateMeterConfig.defaultInstance());
+    final RateMeter rm = getRateMeterCreator().create(startNanos, tp.samplesInterval, RateMeterConfig.newBuilder().setTimeSensitivity(tp.timeSensitivity).build());
     final ScheduledExecutorService ses = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     try {
       final AtomicBoolean onOffSwitch = new AtomicBoolean();
@@ -68,9 +69,14 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
           .getAsLong();
       final double rateAverage = (double)ticksTotalCount * (double)tp.samplesInterval.toNanos() / (lastNanos - startNanos);
       assertEquals(tp.toString(), ticksTotalCount, rm.ticksTotalCount());
-      assertEquals(tp.toString(), lastNanos, rm.rightSamplesWindowBoundary());
-      assertEquals(tp.toString(), rate, rm.rate(), rate * 0.05);
-      assertEquals(tp.toString(), rateAverage, rm.rateAverage(), rateAverage * 0.000000000001);
+      if (tp.timeSensitivity.toNanos() == 1) {
+        assertEquals(tp.toString(), lastNanos, rm.rightSamplesWindowBoundary());
+        assertEquals(tp.toString(), rateAverage, rm.rateAverage(), rateAverage * 0.000000000001);
+      } else {
+        assertEquals(tp.toString(), lastNanos, rm.rightSamplesWindowBoundary(), 1.5 * tp.timeSensitivity.toNanos());
+        assertEquals(tp.toString(), rateAverage, rm.rateAverage(), rateAverage * 0.075);
+      }
+      assertEquals(tp.toString(), rate, rm.rate(), rate * 0.075);
     } finally {
       ses.shutdownNow();
     }
@@ -122,16 +128,19 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
 
   private static final class TestParams {
     final Duration samplesInterval;
+    final Duration timeSensitivity;
     final int numberOfTickersWithDifferentRate;
     final int numberOfTickersWithSameRate;
     final Duration duration;
 
     TestParams(
         final Duration samplesInterval,
+        final Duration timeSensitivity,
         final int numberOfTickersWithDifferentRate,
         final int numberOfTickersWithSameRate,
         final Duration duration) {
       this.samplesInterval = samplesInterval;
+      this.timeSensitivity = timeSensitivity;
       this.numberOfTickersWithDifferentRate = numberOfTickersWithDifferentRate;
       this.numberOfTickersWithSameRate = numberOfTickersWithSameRate;
       this.duration = duration;
@@ -141,6 +150,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
     public final String toString() {
       return getClass().getSimpleName()
           + "(samplesInterval=" + samplesInterval.toMillis()
+          + ", timeSensitivity=" + timeSensitivity.toMillis()
           + ", numberOfTickersWithDifferentRate=" + numberOfTickersWithDifferentRate
           + ", numberOfTickersWithSameRate=" + numberOfTickersWithSameRate
           + ", duration=" + duration.toMillis()

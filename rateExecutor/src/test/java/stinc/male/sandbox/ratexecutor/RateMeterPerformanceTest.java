@@ -1,4 +1,4 @@
-package stinc.male.sandbox.ratexecutor.performance;
+package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -19,22 +19,16 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import stinc.male.PerformanceTest;
-import stinc.male.sandbox.ratexecutor.ConcurrentSkipListMapRateMeter;
-import stinc.male.sandbox.ratexecutor.LongAdderTicksCounter;
-import stinc.male.sandbox.ratexecutor.LongTicksCounter;
-import stinc.male.sandbox.ratexecutor.RateMeter;
-import stinc.male.sandbox.ratexecutor.RateMeterConfig;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
-import stinc.male.sandbox.ratexecutor.TreeMapRateMeter;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
 @Category(PerformanceTest.class)
-public class RateMeterTest {
+public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.ofMillis(100);
-  private static final boolean precisionMillisInsteadOfNanos = false;
+  private static final boolean precisionMillisInsteadOfNanos = true;
   private static final boolean server = true;
   private static final boolean quick = true;
-  private static final boolean baseline = true;
+  private static final boolean baseline = false;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)
         .jvmArgsPrepend(server ? "-server" : "-client")
@@ -57,7 +51,7 @@ public class RateMeterTest {
           .forks(3);
     }
     if (baseline) {
-      result.include(RateMeterTest.class.getName() + ".baseline_.*");
+      result.include(RateMeterPerformanceTest.class.getName() + ".baseline_.*");
     }
     return result;
   };
@@ -69,7 +63,7 @@ public class RateMeterTest {
     return result;
   };
 
-  public RateMeterTest() {
+  public RateMeterPerformanceTest() {
   }
 
   @Test
@@ -295,14 +289,14 @@ public class RateMeterTest {
   @Benchmark
   @Group("parallel_4_tick$1_rate$1_concurrentSkipListMapRateMeter")
   @GroupThreads(2)
-  public void parallel_4_TICK$1_rate$1_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state) {
+  public void parallel_2_TICK$1_rate$1_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state) {
     tick(state.concurrentSkipListMapRateMeter);
   }
 
   @Benchmark
   @Group("parallel_4_tick$1_rate$1_concurrentSkipListMapRateMeter")
   @GroupThreads(2)
-  public void parallel_4_tick$1_RATE$1_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+  public void parallel_2_tick$1_RATE$1_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
     rate(state.concurrentSkipListMapRateMeter, bh);
   }
 
