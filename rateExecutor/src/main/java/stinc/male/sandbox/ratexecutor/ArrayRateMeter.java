@@ -3,71 +3,57 @@ package stinc.male.sandbox.ratexecutor;
 import java.time.Duration;
 import java.util.concurrent.locks.StampedLock;
 import javax.annotation.concurrent.ThreadSafe;
+import static com.sun.xml.internal.ws.client.ContentNegotiation.optimistic;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
 @ThreadSafe
-public class ArrayRateSampler extends AbstractRateMeter {
-  private static final int MAX_TRY_LOCK_ATTEMPTS = 3;
+public class ArrayRateMeter extends AbstractRateMeter {
+  private static final int MAX_SAMPLES_ARRAY_LENGTH = 1_000;
 
   private final TicksCounter[] samples;
   private final long samplesWindowStepNanos;
-  private volatile long samplesWindowShiftSteps;
-  private final StampedLock moveSamplesWindowLock;
+  private long samplesWindowShiftSteps;
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
    * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
-   * @param granularity
    */
-  public ArrayRateSampler(
+  public ArrayRateMeter(
       final long startNanos,
       final Duration samplesInterval,
-      final RateMeterConfig config,
-      final Duration granularity) {
+      final RateMeterConfig config) {
     super(startNanos, samplesInterval, config);
-    checkNotNull(granularity, "granularity");
-    Preconditions.checkArgument(!granularity.isZero(), "granularity", "Must not be zero");
-    Preconditions.checkArgument(!granularity.isNegative(), "granularity", "Must be positive");
-    this.samplesWindowStepNanos = granularity.toNanos();
+    final long sensitivityNanos = config.getTimeSensitivity().toNanos();
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final int stepsCountInSamplesInterval = (int)(samplesIntervalNanos / samplesWindowStepNanos);
-    Preconditions.checkArgument(samplesWindowStepNanos * stepsCountInSamplesInterval == samplesIntervalNanos,
-        "granularity", () -> String.format("Samples interval (%s nanos) must be multiple of samples window step (%s nanos)", samplesIntervalNanos, samplesWindowStepNanos));
-    samples = new TicksCounter[stepsCountInSamplesInterval];
+    int samplesArrayLength;
+    for (samplesArrayLength = (int)(samplesIntervalNanos / sensitivityNanos);
+        samplesArrayLength > 0 && samplesArrayLength <= MAX_SAMPLES_ARRAY_LENGTH + 1
+            && samplesIntervalNanos / samplesArrayLength * samplesArrayLength == samplesIntervalNanos;
+        samplesArrayLength++);
+    if (samplesArrayLength > MAX_SAMPLES_ARRAY_LENGTH) {
+      throw new IllegalArgumentException(String.format(
+          "The specified samplesInterval %snanos and timeSensitivity %snanos can not be used together because samplesInterval can not be devided evenly by timeSensitivity",
+          samplesArrayLength, sensitivityNanos));
+    }
+    samplesWindowStepNanos = samplesIntervalNanos / samplesArrayLength;
+    samples = new TicksCounter[samplesArrayLength];
     for (int idx = 0; idx < samples.length; idx++) {
       samples[idx] = config.getTicksCounterSupplier().apply(0L);
     }
     samplesWindowShiftSteps = 0;
-    moveSamplesWindowLock = new StampedLock();
   }
 
   @Override
   public long rightSamplesWindowBoundary() {
-    return samplesWindowShiftSteps * samplesWindowStepNanos;
+    return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
   }
 
   @Override
   public long ticksCount() {
-    long result;
-    long stamp = 0;
-    boolean optimistic = true;
-    try {
-      do {
-        result = 0;
-        stamp = moveSamplesWindowLock.tryOptimisticRead();
-        if (stamp == 0) {//no luck, get read lock
-          stamp = moveSamplesWindowLock.readLock();
-          optimistic = false;
-        }
-        for (int idx = 0; idx < samples.length; idx++) {
-          result += samples[idx].get();
-        }
-      } while (!optimistic || !moveSamplesWindowLock.validate(stamp));
-    } finally {
-      if (!optimistic) {
-        moveSamplesWindowLock.unlockRead(stamp);
-      }
+    long result = 0;
+    for (int idx = 0; idx < samples.length; idx++) {
+      result += samples[idx].get();
     }
     return result;
   }
@@ -108,6 +94,4 @@ public class ArrayRateSampler extends AbstractRateMeter {
   private final int samplesIdx(final long samplesWindowShiftSteps) {
     return (int)((samplesWindowShiftSteps + samples.length - 1) % samples.length);//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
-
-  private static final
 }

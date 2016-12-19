@@ -6,7 +6,8 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
 /**
- * This class is only required because in Java 8 one can't define a private or package private method.
+ * This class is only required because in Java 8 one can not define a private or package private method,
+ * so it is not possible to define this methods as package private in {@link RateMeter}.
  */
 final class RateMeterMath {
   /**
