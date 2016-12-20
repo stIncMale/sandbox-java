@@ -21,4 +21,9 @@ public final class LongAdderTicksCounter extends AbstractTicksCounter {
   public final long get() {
     return adder.sum();
   }
+
+  @Override
+  public final void reset() {
+    adder.reset();
+  }
 }

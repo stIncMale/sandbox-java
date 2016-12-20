@@ -19,4 +19,9 @@ public final class LongTicksCounter extends AbstractTicksCounter {
   public final long get() {
     return value;
   }
+
+  @Override
+  public final void reset() {
+    value = 0;
+  }
 }

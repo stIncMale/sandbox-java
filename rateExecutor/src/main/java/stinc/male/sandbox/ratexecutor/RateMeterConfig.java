@@ -27,7 +27,7 @@ public final class RateMeterConfig {
   /**
    * @return A reasonable configuration.
    */
-  public static final RateMeterConfig defaultInstance() {
+  public static final RateMeterConfig defaultInstance() {//TODO remove and add defaultConfig for each RateMeter implementation
     return defaultInstance;
   }
 

@@ -20,4 +20,9 @@ public final class AtomicLongTicksCounter extends AbstractTicksCounter {
   public final long get() {
     return aValue.get();
   }
+
+  @Override
+  public final void reset() {
+    aValue.set(0);
+  }
 }

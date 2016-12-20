@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractRateMeterSerialTest extends AbstractRateMeterTest {
+public abstract class AbstractRateMeterSerialTest extends AbstractRateMeterTest {//TODO add tests for RateMeter with timeSensitivity > 1nanos
   AbstractRateMeterSerialTest(final RateMeterCreator rateMeterCreator) {
     super(rateMeterCreator);
   }
