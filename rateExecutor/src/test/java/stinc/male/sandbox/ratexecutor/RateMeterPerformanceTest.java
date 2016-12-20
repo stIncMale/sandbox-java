@@ -25,10 +25,9 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 @Category(PerformanceTest.class)
 public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.ofMillis(100);
-  private static final boolean precisionMillisInsteadOfNanos = true;
   private static final boolean server = true;
   private static final boolean quick = true;
-  private static final boolean baseline = false;
+  private static final boolean baseline = true;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)
         .jvmArgsPrepend(server ? "-server" : "-client")
@@ -56,24 +55,38 @@ public class RateMeterPerformanceTest {
     return result;
   };
   private static final Supplier<Builder> rateMeterConfigBuilderSuppplier = () -> {
-    final Builder result = RateMeterConfig.newBuilder();
-    if (precisionMillisInsteadOfNanos) {
-      result.setTimeSensitivity(Duration.ofMillis(1));
-    };
-    return result;
+    return RateMeterConfig.newBuilder();
+//            .setTimeSensitivity(Duration.ofMillis(1));
   };
 
   public RateMeterPerformanceTest() {
   }
 
   @Test
-  public void serialTest() throws RunnerException {
+  public void serialTreeMapRateMeter() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
         .include(getClass().getName() + ".serial_.*treeMapRateMeter")
-        .include(getClass().getName() + ".serial_.*concurrentSkipListMapRateMeter")
         .threads(1)
         .build())
         .run();
+  }
+
+  @Test
+  public void serialConcurrentSkipListMapRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+            .include(getClass().getName() + ".serial_.*concurrentSkipListMapRateMeter")
+            .threads(1)
+            .build())
+            .run();
+  }
+
+  @Test
+  public void serialArrayRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+            .include(getClass().getName() + ".serial_.*arrayRateMeter")
+            .threads(1)
+            .build())
+            .run();
   }
 
   @Test
@@ -111,13 +124,8 @@ public class RateMeterPerformanceTest {
   }
 
   @Benchmark
-  public void serial_tick$100rate$1_treeMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.treeMapRateMeter, bh, counter.v++, 100);
-  }
-
-  @Benchmark
-  public void serial_tick$100rate$1_concurrentSkipListMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentSkipListMapRateMeter, bh, counter.v++, 100);
+  public void serial_tick_arrayRateMeter(final RateMeterContainer_ThreadScope state) {
+    tick(state.arrayRateMeter);
   }
 
   @Benchmark
@@ -131,6 +139,11 @@ public class RateMeterPerformanceTest {
   }
 
   @Benchmark
+  public void serial_tick$10rate$1_arrayRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.arrayRateMeter, bh, counter.v++, 10);
+  }
+
+  @Benchmark
   public void serial_tick$1rate$1_treeMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
     tickAndRate(state.treeMapRateMeter, bh, counter.v++, 1);
   }
@@ -138,6 +151,11 @@ public class RateMeterPerformanceTest {
   @Benchmark
   public void serial_tick$1rate$1_concurrentSkipListMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
     tickAndRate(state.concurrentSkipListMapRateMeter, bh, counter.v++, 1);
+  }
+
+  @Benchmark
+  public void serial_tick$1rate$1_arrayRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.arrayRateMeter, bh, counter.v++, 1);
   }
 
   @Benchmark
@@ -151,13 +169,8 @@ public class RateMeterPerformanceTest {
   }
 
   @Benchmark
-  public void serial_tick$1rate$100_treeMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    rateAndTick(state.treeMapRateMeter, bh, counter.v++, 100);
-  }
-
-  @Benchmark
-  public void serial_tick$1rate$100_concurrentSkipListMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    rateAndTick(state.concurrentSkipListMapRateMeter, bh, counter.v++, 100);
+  public void serial_tick$1rate$10_arrayRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    rateAndTick(state.arrayRateMeter, bh, counter.v++, 10);
   }
 
   @Benchmark
@@ -179,27 +192,6 @@ public class RateMeterPerformanceTest {
   @GroupThreads(4)
   public void parallel_4_tick_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state) {
     tick(state.concurrentSkipListMapRateMeter);
-  }
-
-  @Benchmark
-  @Group("parallel_1_tick$100rate$1_concurrentSkipListMapRateMeter")
-  @GroupThreads(1)
-  public void parallel_1_tick$100rate$1_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentSkipListMapRateMeter, bh, counter.v++, 100);
-  }
-
-  @Benchmark
-  @Group("parallel_2_tick$100rate$1_concurrentSkipListMapRateMeter")
-  @GroupThreads(2)
-  public void parallel_2_tick$100rate$1_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentSkipListMapRateMeter, bh, counter.v++, 100);
-  }
-
-  @Benchmark
-  @Group("parallel_4_tick$100rate$1_concurrentSkipListMapRateMeter")
-  @GroupThreads(4)
-  public void parallel_4_tick$100rate$1_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.concurrentSkipListMapRateMeter, bh, counter.v++, 100);
   }
 
   @Benchmark
@@ -266,27 +258,6 @@ public class RateMeterPerformanceTest {
   }
 
   @Benchmark
-  @Group("parallel_1_tick$1rate$100_concurrentSkipListMapRateMeter")
-  @GroupThreads(1)
-  public void parallel1_tick$1rate$100_concurrentSkipListMapRateMeter_longAdderTicksCounter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    rateAndTick(state.concurrentSkipListMapRateMeter, bh, counter.v++, 100);
-  }
-
-  @Benchmark
-  @Group("parallel_2_tick$1rate$100_concurrentSkipListMapRateMeter")
-  @GroupThreads(2)
-  public void parallel_2_tick$1rate$100_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    rateAndTick(state.concurrentSkipListMapRateMeter, bh, counter.v++, 100);
-  }
-
-  @Benchmark
-  @Group("parallel_4_tick$1rate$100_concurrentSkipListMapRateMeter")
-  @GroupThreads(4)
-  public void parallel_4_tick$1rate$100_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    rateAndTick(state.concurrentSkipListMapRateMeter, bh, counter.v++, 100);
-  }
-
-  @Benchmark
   @Group("parallel_4_tick$1_rate$1_concurrentSkipListMapRateMeter")
   @GroupThreads(2)
   public void parallel_2_TICK$1_rate$1_concurrentSkipListMapRateMeter(final RateMeterContainer_GroupScope state) {
@@ -323,20 +294,20 @@ public class RateMeterPerformanceTest {
   }
 
   /**
+   * TODO remove millis?
    * This method is similar to {@link System#nanoTime()} with the difference that one may influence it's precision (granularity)
    * via {@link #precisionMillisInsteadOfNanos}. However with {@code precisionMillisInsteadOfNanos == true}
    * the method loses guarantees of monotony.
    */
   private static final long time() {
-    return precisionMillisInsteadOfNanos
-        ? TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis())
-        : System.nanoTime();
+    return System.nanoTime();//TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis())
   }
 
   @State(Scope.Thread)
   public static class RateMeterContainer_ThreadScope {
     TreeMapRateMeter treeMapRateMeter;
     ConcurrentSkipListMapRateMeter concurrentSkipListMapRateMeter;
+    ArrayRateMeter arrayRateMeter;
 
     public RateMeterContainer_ThreadScope() {
     }
@@ -351,6 +322,10 @@ public class RateMeterPerformanceTest {
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
               .build());
+      arrayRateMeter = new ArrayRateMeter(time(), samplesInterval,
+              rateMeterConfigBuilderSuppplier.get()
+                      .setTicksCounterSupplier(LongTicksCounter::new)
+                      .build());
     }
   }
 
