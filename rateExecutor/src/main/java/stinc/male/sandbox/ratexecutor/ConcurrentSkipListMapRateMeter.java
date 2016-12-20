@@ -6,6 +6,17 @@ import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 public class ConcurrentSkipListMapRateMeter extends AbstractNavigableMapRateMeter<ConcurrentSkipListMap<Long, TicksCounter>> {
+  private static final RateMeterConfig defaultInstance = RateMeterConfig.newBuilder()
+          .setTicksCounterSupplier(LongAdderTicksCounter::new)
+          .build();
+
+  /**
+   * @return A reasonable configuration.
+   */
+  public static final RateMeterConfig defaultConfig() {
+    return defaultInstance;
+  }
+
   /**
    * Constructor.
    *
@@ -18,10 +29,10 @@ public class ConcurrentSkipListMapRateMeter extends AbstractNavigableMapRateMete
   }
 
   /**
-   * Acts like {@link #ConcurrentSkipListMapRateMeter(long, Duration, RateMeterConfig)} with {@link RateMeterConfig#defaultInstance()}
+   * Acts like {@link #ConcurrentSkipListMapRateMeter(long, Duration, RateMeterConfig)} with {@link #defaultConfig()}
    * as the third argument.
    */
   public ConcurrentSkipListMapRateMeter(final long startNanos, final Duration samplesInterval) {
-    this(startNanos, samplesInterval, RateMeterConfig.defaultInstance());
+    this(startNanos, samplesInterval, defaultConfig());
   }
 }

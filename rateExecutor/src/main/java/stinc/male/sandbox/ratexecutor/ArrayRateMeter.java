@@ -56,7 +56,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
       final long leftNanos = rightNanos - getSamplesIntervalNanos();
       if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is not behind the samples window
         final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
-        final long targetSamplesWindowShiftSteps = (tNanos - getStartNanos()) / samplesWindowStepNanos + 1;
+        final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
         final int targetRightSamplesIdx = rightSamplesIdx(targetSamplesWindowShiftSteps);
         if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//we need to move the samples window
           this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
@@ -80,13 +80,24 @@ public class ArrayRateMeter extends AbstractRateMeter {
     final long rightNanos = rightSamplesWindowBoundary();
     if (NanosComparator.compare(tNanos, rightNanos) < 0) {
       result = rateAverage();
-    } else {//TODO
+    } else {
       final long samplesIntervalNanos = getSamplesIntervalNanos();
-      final long effectiveRightNanos = max(rightNanos, tNanos, samples.comparator());
+      final long effectiveRightNanos = NanosComparator.max(rightNanos, tNanos);
       final long effectiveLeftNanos = effectiveRightNanos - samplesIntervalNanos;
-      result = count(effectiveLeftNanos, effectiveRightNanos);
+      if (effectiveLeftNanos >= rightNanos) {//the are no samples for the requested tNanos
+        result = 0;
+      } else {//TODO
+        final long effectiveSamplesWindowShiftSteps = samplesWindowShiftSteps(effectiveRightNanos);
+        final int effectiveRightSamplesIdx = rightSamplesIdx(effectiveSamplesWindowShiftSteps);
+        //result = count(effectiveLeftNanos, effectiveRightNanos);
+        result = 0;
+      }
     }
     return result;
+  }
+
+  private final long samplesWindowShiftSteps(final long tNanos) {
+    return (tNanos - getStartNanos()) / samplesWindowStepNanos + 1;
   }
 
   private final int rightSamplesIdx(final long samplesWindowShiftSteps) {

@@ -37,7 +37,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
   private final void doTest(final TestParams tp) throws InterruptedException {
     final long startNanos = System.nanoTime();
     final RateMeter rm = getRateMeterCreator().create(startNanos, tp.samplesInterval, RateMeterConfig.newBuilder().setTimeSensitivity(tp.timeSensitivity).build());
-    final ScheduledExecutorService ses = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+    final ScheduledExecutorService ses = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2);//TODO refactor to use Ticker per thread (not thread-safe tickers) so that they don't produce any memory effects. record all samples into TreeMap and make the test 100% accurate
     try {
       final AtomicBoolean onOffSwitch = new AtomicBoolean();
       final Collection<Ticker> tickers = new ArrayList<>();

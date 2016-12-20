@@ -6,6 +6,17 @@ import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
 public class TreeMapRateMeter extends AbstractNavigableMapRateMeter<TreeMap<Long, TicksCounter>> {
+  private static final RateMeterConfig defaultInstance = RateMeterConfig.newBuilder()
+          .setTicksCounterSupplier(LongTicksCounter::new)
+          .build();
+
+  /**
+   * @return A reasonable configuration.
+   */
+  public static final RateMeterConfig defaultConfig() {
+    return defaultInstance;
+  }
+
   /**
    * Constructor.
    *
@@ -18,10 +29,10 @@ public class TreeMapRateMeter extends AbstractNavigableMapRateMeter<TreeMap<Long
   }
 
   /**
-   * Acts like {@link #TreeMapRateMeter(long, Duration, RateMeterConfig)} with {@link RateMeterConfig#defaultInstance()}
+   * Acts like {@link #TreeMapRateMeter(long, Duration, RateMeterConfig)} with {@link #defaultConfig()}
    * as the third argument.
    */
   public TreeMapRateMeter(final long startNanos, final Duration samplesInterval) {
-    this(startNanos, samplesInterval, RateMeterConfig.defaultInstance());
+    this(startNanos, samplesInterval, defaultConfig());
   }
 }

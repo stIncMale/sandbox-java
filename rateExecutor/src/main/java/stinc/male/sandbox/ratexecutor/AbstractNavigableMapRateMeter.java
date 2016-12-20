@@ -107,7 +107,11 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long samplesIntervalNanos = getSamplesIntervalNanos();
       final long effectiveRightNanos = max(rightNanos, tNanos, samples.comparator());
       final long effectiveLeftNanos = effectiveRightNanos - samplesIntervalNanos;
-      result = count(effectiveLeftNanos, effectiveRightNanos);
+      if (effectiveLeftNanos >= rightNanos) {//the are no samples for the requested tNanos
+        result = 0;
+      } else {
+        result = count(effectiveLeftNanos, effectiveRightNanos);
+      }
     }
     return result;
   }

@@ -9,8 +9,6 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
 @Immutable
 public final class RateMeterConfig {
-  private static final RateMeterConfig defaultInstance = new Builder().build();
-
   private final boolean checkArguments;
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final Duration timeSensitivity;
@@ -22,13 +20,6 @@ public final class RateMeterConfig {
     this.checkArguments = checkArguments;
     this.ticksCounterSupplier = ticksCounterSupplier;
     this.timeSensitivity = timeSensitivity;
-  }
-
-  /**
-   * @return A reasonable configuration.
-   */
-  public static final RateMeterConfig defaultInstance() {//TODO remove and add defaultConfig for each RateMeter implementation
-    return defaultInstance;
   }
 
   public static final Builder newBuilder() {
