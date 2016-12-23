@@ -60,7 +60,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
         if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//we need to move the samples window
           for (int samplesIdx = leftSamplesIdx(samplesWindowShiftSteps), i = 0;
               i < Math.min(samples.length, targetSamplesWindowShiftSteps - samplesWindowShiftSteps);
-              samplesIdx = nextSamplesIdx(samplesIdx)) {//reset moved samples
+              samplesIdx = nextSamplesIdx(samplesIdx), i++) {//reset moved samples
             samples[samplesIdx].reset();
           }
           this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
@@ -89,7 +89,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
         long count = 0;
         for (int samplesIdx = leftSamplesIdx(effectiveSamplesWindowShiftSteps), i = 0;
              i < effectiveSamplesWindowShiftSteps;
-             samplesIdx = nextSamplesIdx(samplesIdx)) {
+             samplesIdx = nextSamplesIdx(samplesIdx), i++) {
           count += samples[samplesIdx].get();
         }
         result = count;

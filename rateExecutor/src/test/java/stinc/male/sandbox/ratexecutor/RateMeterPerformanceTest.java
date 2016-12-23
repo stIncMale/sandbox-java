@@ -26,8 +26,7 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.ofMillis(100);
   private static final boolean server = true;
-  private static final boolean quick = true;
-  private static final boolean baseline = true;
+  private static final boolean quick = false;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)
         .jvmArgsPrepend(server ? "-server" : "-client")
@@ -49,17 +48,21 @@ public class RateMeterPerformanceTest {
           .measurementIterations(3)
           .forks(3);
     }
-    if (baseline) {
-      result.include(RateMeterPerformanceTest.class.getName() + ".baseline_.*");
-    }
     return result;
   };
-  private static final Supplier<Builder> rateMeterConfigBuilderSuppplier = () -> {
-    return RateMeterConfig.newBuilder();
-//            .setTimeSensitivity(Duration.ofMillis(1));
-  };
+  private static final Supplier<Builder> rateMeterConfigBuilderSuppplier = () -> RateMeterConfig.newBuilder()
+            .setTimeSensitivity(Duration.ofMillis(10));
 
   public RateMeterPerformanceTest() {
+  }
+
+  @Test
+  public void serialBaseline() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
+        .threads(1)
+        .build())
+        .run();
   }
 
   @Test
@@ -87,6 +90,15 @@ public class RateMeterPerformanceTest {
             .threads(1)
             .build())
             .run();
+  }
+
+  @Test
+  public void parallelBaseline() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
+        .threads(4)
+        .build())
+        .run();
   }
 
   @Test

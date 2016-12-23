@@ -3,13 +3,23 @@ package stinc.male.sandbox.ratexecutor;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -30,11 +40,11 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
           ThreadLocalRandom.current().nextInt(1, 5),
           Duration.ofMillis((long)(ThreadLocalRandom.current().nextDouble(1, 5) * samplesInterval.toMillis()))
       );
-      doTest(tp);
+      doTestOld(tp);
     }
   }
 
-  private final void doTest(final TestParams tp) throws InterruptedException {
+  private final void doTestOld(final TestParams tp) throws InterruptedException {
     final long startNanos = System.nanoTime();
     final RateMeter rm = getRateMeterCreator().create(startNanos, tp.samplesInterval, RateMeterConfig.newBuilder().setTimeSensitivity(tp.timeSensitivity).build());
     final ScheduledExecutorService ses = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2);//TODO refactor to use Ticker per thread (not thread-safe tickers) so that they don't produce any memory effects. record all samples into TreeMap and make the test 100% accurate
@@ -82,6 +92,21 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
     }
   }
 
+  private final void doTest(final TestParams tp) {
+    final RateMeter rm = null;//TODO
+    final Collection<TicksGenerator> ticksGenerators = new TicksGenerator(0, 0, tp.numberOfSamples)
+        .split(tp.numberOfThreads);
+    ticksGenerators.stream()
+        .map(ticksGenerator -> ticksGenerator.sink(rm))
+        .forEach(futureSink -> {
+          try {
+            futureSink.get();
+          } catch (final Exception e) {
+            throw new RuntimeException(e);
+          }
+        });
+  }
+
   private static final class Ticker {
     private final RateMeter rm;
     private final AtomicBoolean onOffSwitch;
@@ -127,6 +152,8 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
   }
 
   private static final class TestParams {
+    final int numberOfThreads;
+    final int numberOfSamples;
     final Duration samplesInterval;
     final Duration timeSensitivity;
     final int numberOfTickersWithDifferentRate;
@@ -134,11 +161,15 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
     final Duration duration;
 
     TestParams(
+        final int numberOfThreads,
+        final int numberOfSamples,
         final Duration samplesInterval,
         final Duration timeSensitivity,
         final int numberOfTickersWithDifferentRate,
         final int numberOfTickersWithSameRate,
         final Duration duration) {
+      this.numberOfThreads = numberOfThreads;
+      this.numberOfSamples = numberOfSamples;
       this.samplesInterval = samplesInterval;
       this.timeSensitivity = timeSensitivity;
       this.numberOfTickersWithDifferentRate = numberOfTickersWithDifferentRate;
@@ -149,12 +180,62 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
     @Override
     public final String toString() {
       return getClass().getSimpleName()
-          + "(samplesInterval=" + samplesInterval.toMillis()
+          + "(numberOfThreads=" + numberOfThreads
+          + ", numberOfSamples=" + numberOfSamples
+          + ", samplesInterval=" + samplesInterval.toMillis()
           + ", timeSensitivity=" + timeSensitivity.toMillis()
           + ", numberOfTickersWithDifferentRate=" + numberOfTickersWithDifferentRate
           + ", numberOfTickersWithSameRate=" + numberOfTickersWithSameRate
           + ", duration=" + duration.toMillis()
           + ')';
+    }
+  }
+
+  private final class TicksGenerator {
+    NavigableMap<Long, Long> samples;
+
+    TicksGenerator(final long minTNanosIncluseve, final long maxTNanosExclusive, final int numberOfSamples) {
+      final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+      samples = new TreeMap<>(NanosComparator.instance());
+      for (int i = 0; i < numberOfSamples; i++) {
+        samples.put(
+            rnd.nextLong(minTNanosIncluseve, maxTNanosExclusive),
+            rnd.nextLong(-4, 5)
+        );
+      }
+    }
+
+    TicksGenerator(final NavigableMap<Long, Long> samples) {
+      this.samples = samples;
+    }
+
+    final Future<?> sink(final RateMeter rm) {
+      final List<Entry<Long, Long>> shuffledSamples = new ArrayList<>(samples.entrySet());
+      Collections.shuffle(shuffledSamples);
+      final Future<?> result;
+      final ExecutorService ex = Executors.newSingleThreadExecutor();
+      try {
+        result = ex.submit(() -> shuffledSamples.forEach(sample -> rm.tick(sample.getKey(), sample.getValue())));
+      } finally {
+        ex.shutdownNow();
+      }
+      return result;
+    }
+
+    final Collection<TicksGenerator> split(final int n) {
+      final List<NavigableMap<Long, Long>> maps = new ArrayList<>(n);
+      for (int i = 0; i < n; i++) {
+        maps.add(new TreeMap<>(NanosComparator.instance()));
+      }
+      final List<Entry<Long, Long>> listOfSamples = new ArrayList<>(samples.entrySet());
+      for (int i = 0; i < listOfSamples.size(); i++) {
+        final Entry<Long, Long> sample = listOfSamples.get(i);
+        maps.get(i % maps.size())
+            .put(sample.getKey(), sample.getValue());
+      }
+      return maps.stream()
+          .map(TicksGenerator::new)
+          .collect(Collectors.toList());
     }
   }
 }
