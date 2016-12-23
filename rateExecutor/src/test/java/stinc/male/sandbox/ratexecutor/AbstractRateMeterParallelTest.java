@@ -9,8 +9,6 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.TreeMap;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -33,14 +31,14 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
   public final void test() throws InterruptedException {
     for (int i = 0; i < 10; i++) {
       final Duration samplesInterval = Duration.ofMillis(ThreadLocalRandom.current().nextLong(400, 600));
-      final TestParams tp = new TestParams(
-          samplesInterval,
-          ThreadLocalRandom.current().nextBoolean() ? Duration.ofNanos(1) : Duration.ofNanos((long)(ThreadLocalRandom.current().nextDouble(0.01, 0.1) * samplesInterval.toNanos())),
-          ThreadLocalRandom.current().nextInt(5, 40),
-          ThreadLocalRandom.current().nextInt(1, 5),
-          Duration.ofMillis((long)(ThreadLocalRandom.current().nextDouble(1, 5) * samplesInterval.toMillis()))
-      );
-      doTestOld(tp);
+//      final TestParams tp = new TestParams(
+//          samplesInterval,
+//          ThreadLocalRandom.current().nextBoolean() ? Duration.ofNanos(1) : Duration.ofNanos((long)(ThreadLocalRandom.current().nextDouble(0.01, 0.1) * samplesInterval.toNanos())),
+//          ThreadLocalRandom.current().nextInt(5, 40),
+//          ThreadLocalRandom.current().nextInt(1, 5),
+//          Duration.ofMillis((long)(ThreadLocalRandom.current().nextDouble(1, 5) * samplesInterval.toMillis()))
+//      );
+//      doTestOld(tp);
     }
   }
 
@@ -209,7 +207,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
       this.samples = samples;
     }
 
-    final Future<?> sink(final RateMeter rm) {
+    final Future<?> sink(final RateMeter rm) {//TODO use shuffle/ordered flag
       final List<Entry<Long, Long>> shuffledSamples = new ArrayList<>(samples.entrySet());
       Collections.shuffle(shuffledSamples);
       final Future<?> result;

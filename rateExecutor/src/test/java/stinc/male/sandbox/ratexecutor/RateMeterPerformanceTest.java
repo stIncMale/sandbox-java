@@ -50,8 +50,8 @@ public class RateMeterPerformanceTest {
     }
     return result;
   };
-  private static final Supplier<Builder> rateMeterConfigBuilderSuppplier = () -> RateMeterConfig.newBuilder()
-            .setTimeSensitivity(Duration.ofMillis(10));
+  private static final Supplier<Builder> rateMeterConfigBuilderSuppplier = () -> RateMeterConfig.newBuilder();
+//            .setTimeSensitivity(Duration.ofMillis(10));
 
   public RateMeterPerformanceTest() {
   }
