@@ -5,7 +5,6 @@ import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 public class ArrayRateMeter extends AbstractRateMeter {
-//  private final TicksCounter[] samples;TODO
   private final long[] samples;
   private final long samplesWindowStepNanos;
   private long samplesWindowShiftSteps;
@@ -28,11 +27,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
             "The specified samplesInterval %snanos and timeSensitivity %snanos can not be used together because samplesInterval can not be devided evenly by timeSensitivity",
             samplesArrayLength, sensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesArrayLength;
-//    samples = new TicksCounter[samplesArrayLength];TODO
     samples = new long[samplesArrayLength];
-//    for (int idx = 0; idx < samples.length; idx++) {TODO
-//      samples[idx] = config.getTicksCounterSupplier().apply(0L);
-//    }
     samplesWindowShiftSteps = 0;
   }
 
@@ -45,7 +40,6 @@ public class ArrayRateMeter extends AbstractRateMeter {
   public long ticksCount() {
     long result = 0;
     for (int samplesIdx = 0; samplesIdx < samples.length; samplesIdx++) {
-//      result += samples[samplesIdx].get();TODO
       result += samples[samplesIdx];
     }
     return result;
@@ -64,12 +58,10 @@ public class ArrayRateMeter extends AbstractRateMeter {
           for (int samplesIdx = leftSamplesIdx(samplesWindowShiftSteps), i = 0;
               i < Math.min(samples.length, targetSamplesWindowShiftSteps - samplesWindowShiftSteps);
               samplesIdx = nextSamplesIdx(samplesIdx), i++) {//reset moved samples
-//            samples[samplesIdx].reset();TODO
             samples[samplesIdx] = 0;
           }
           this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
         }
-//        samples[rightSamplesIdx(targetSamplesWindowShiftSteps)].add(count);TODO
         samples[rightSamplesIdx(targetSamplesWindowShiftSteps)] += count;
       }
       getTicksTotalCounter().add(count);
@@ -95,7 +87,6 @@ public class ArrayRateMeter extends AbstractRateMeter {
         for (int samplesIdx = leftSamplesIdx(effectiveSamplesWindowShiftSteps), i = 0;
              i < effectiveSamplesWindowShiftSteps;
              samplesIdx = nextSamplesIdx(samplesIdx), i++) {
-//          count += samples[samplesIdx].get();TODO
           count += samples[samplesIdx];
         }
         result = count;
@@ -113,10 +104,10 @@ public class ArrayRateMeter extends AbstractRateMeter {
   }
 
   private final int leftSamplesIdx(final long samplesWindowShiftSteps) {
-    return (int)((samplesWindowShiftSteps + samples.length) % samples.length);//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int)(samplesWindowShiftSteps % samples.length);//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int nextSamplesIdx(final int samplesIdx) {
-    return (samplesIdx + samples.length + 1) % samples.length;
+    return (samplesIdx + 1) % samples.length;
   }
 }

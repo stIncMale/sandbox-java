@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
-import static stinc.male.sandbox.ratexecutor.RateMeterMath.convertRate;
 
 public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
   private final T samples;
@@ -91,12 +90,6 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   }
 
   @Override
-  public double rate(final Duration unit) {
-    checkArgument(unit, "unit");
-    return convertRate(rate(), getSamplesIntervalNanos(), unit.toNanos());
-  }
-
-  @Override
   public double rate(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final double result;
@@ -114,12 +107,6 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       }
     }
     return result;
-  }
-
-  @Override
-  public double rate(final long tNanos, final Duration unit) {
-    checkArguments(tNanos, "tNanos", unit, "unit");
-    return convertRate(rate(tNanos), getSamplesIntervalNanos(), unit.toNanos());
   }
 
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {

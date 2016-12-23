@@ -25,6 +25,7 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 @Category(PerformanceTest.class)
 public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.ofMillis(100);
+  private static final Duration timeSensitivity = Duration.ofMillis(10);
   private static final boolean server = true;
   private static final boolean quick = false;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
@@ -51,7 +52,6 @@ public class RateMeterPerformanceTest {
     return result;
   };
   private static final Supplier<Builder> rateMeterConfigBuilderSuppplier = () -> RateMeterConfig.newBuilder();
-//            .setTimeSensitivity(Duration.ofMillis(10));
 
   public RateMeterPerformanceTest() {
   }
@@ -116,7 +116,7 @@ public class RateMeterPerformanceTest {
 
   @Benchmark
   public void baseline_time(final Blackhole bh) {
-    bh.consume(time());
+    bh.consume(nanoTime());
   }
 
   @Benchmark
@@ -284,7 +284,7 @@ public class RateMeterPerformanceTest {
   }
 
   private static final void tick(final RateMeter rm) {
-    rm.tick(1, time());
+    rm.tick(1, nanoTime());
   }
 
   private static final void rate(final RateMeter rm, final Blackhole bh) {
@@ -292,7 +292,7 @@ public class RateMeterPerformanceTest {
   }
 
   private static final void tickAndRate(final RateMeter rm, final Blackhole bh, final int counter, final int tickToRateRatio) {
-    rm.tick(1, time());
+    rm.tick(1, nanoTime());
     if (counter % tickToRateRatio == 0) {
       bh.consume(rm.rate());
     }
@@ -301,18 +301,12 @@ public class RateMeterPerformanceTest {
   private static final void rateAndTick(final RateMeter rm, final Blackhole bh, final int counter, final int rateToTickRatio) {
     bh.consume(rm.rate());
     if (counter % rateToTickRatio == 0) {
-      rm.tick(1, time());
+      rm.tick(1, nanoTime());
     }
   }
 
-  /**
-   * TODO remove millis?
-   * This method is similar to {@link System#nanoTime()} with the difference that one may influence it's precision (granularity)
-   * via {@link #precisionMillisInsteadOfNanos}. However with {@code precisionMillisInsteadOfNanos == true}
-   * the method loses guarantees of monotony.
-   */
-  private static final long time() {
-    return System.nanoTime();//TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis())
+  private static final long nanoTime() {
+    return System.nanoTime();
   }
 
   @State(Scope.Thread)
@@ -326,15 +320,15 @@ public class RateMeterPerformanceTest {
 
     @Setup(Level.Trial)
     public final void setup() {
-      treeMapRateMeter = new TreeMapRateMeter(time(), samplesInterval,
+      treeMapRateMeter = new TreeMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
               .build());
-      concurrentSkipListMapRateMeter = new ConcurrentSkipListMapRateMeter(time(), samplesInterval,
+      concurrentSkipListMapRateMeter = new ConcurrentSkipListMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
               .build());
-      arrayRateMeter = new ArrayRateMeter(time(), samplesInterval,
+      arrayRateMeter = new ArrayRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSuppplier.get()
                       .setTicksCounterSupplier(LongTicksCounter::new)
                       .build());
@@ -350,7 +344,7 @@ public class RateMeterPerformanceTest {
 
     @Setup(Level.Trial)
     public final void setup() {
-      concurrentSkipListMapRateMeter = new ConcurrentSkipListMapRateMeter(time(), samplesInterval,
+      concurrentSkipListMapRateMeter = new ConcurrentSkipListMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());

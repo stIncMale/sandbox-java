@@ -66,6 +66,18 @@ abstract class AbstractRateMeter implements RateMeter {
     return convertRate(rateAverage(tNanos), samplesIntervalNanos, unit.toNanos());
   }
 
+  @Override
+  public double rate(final Duration unit) {
+    checkArgument(unit, "unit");
+    return convertRate(rate(), samplesIntervalNanos, unit.toNanos());
+  }
+
+  @Override
+  public double rate(final long tNanos, final Duration unit) {
+    checkArguments(tNanos, "tNanos", unit, "unit");
+    return convertRate(rate(tNanos), samplesIntervalNanos, unit.toNanos());
+  }
+
   protected TicksCounter getTicksTotalCounter() {
     return ticksTotal;
   }
