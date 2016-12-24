@@ -7,13 +7,17 @@ import javax.annotation.concurrent.NotThreadSafe;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
+/**
+ * The {@code @}{@link Immutable} here only guarantees that the {@code get...} methods
+ * always behave as methods of immutable class.
+ */
 @Immutable
-public final class RateMeterConfig {
+public class RateMeterConfig {
   private final boolean checkArguments;
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final Duration timeSensitivity;
 
-  private RateMeterConfig(
+  protected RateMeterConfig(
       final boolean checkArguments,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity) {
@@ -22,11 +26,11 @@ public final class RateMeterConfig {
     this.timeSensitivity = timeSensitivity;
   }
 
-  public static final Builder newBuilder() {
+  public static Builder newBuilder() {
     return new Builder();
   }
 
-  public final Builder toBuilder() {
+  public Builder toBuilder() {
     return new Builder(this);
   }
 
@@ -51,9 +55,10 @@ public final class RateMeterConfig {
   }
 
   /**
-   * Specifies the time sensitivity.
-   * The actual sensitivity of {@link RateMeter} may be finer then the specified value,
-   * but must not be more grainy.
+   * Specifies the time sensitivity which affects behaviour of {@link AbstractRateMeter#tick(long, long)} method
+   * in a way that allows an implementation to score the specified sample at an instant
+   * that differ from the specified one not more than by the time sensitivity.
+   * <p>
    * It is recommended to specify here an resolution (accuracy, granularity) of the used timer.
    * @return {@code Duration.ofNanos(50)} by default. As of year 2017 there is no need to use
    * a finer sensitivity because it is an approximation of the {@link System#nanoTime()} resolution
@@ -65,7 +70,7 @@ public final class RateMeterConfig {
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     return getClass().getSimpleName()
         + "(checkArguments=" + checkArguments
         + ", ticksCounterSupplier=" + ticksCounterSupplier
@@ -74,18 +79,18 @@ public final class RateMeterConfig {
   }
 
   @NotThreadSafe
-  public static final class Builder {
+  public static class Builder {
     private boolean checkArguments;
     private Function<Long, ? extends TicksCounter> ticksCounterSupplier;
     private Duration timeSensitivity;
 
-    private Builder() {
+    protected Builder() {
       checkArguments = false;
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = Duration.ofNanos(50);
     }
 
-    private Builder(final RateMeterConfig config) {
+    protected Builder(final RateMeterConfig config) {
       checkArguments = config.checkArguments;
       ticksCounterSupplier = config.ticksCounterSupplier;
       timeSensitivity = config.timeSensitivity;
@@ -121,7 +126,7 @@ public final class RateMeterConfig {
       return this;
     }
 
-    public final RateMeterConfig build() {
+    public RateMeterConfig build() {
       return new RateMeterConfig(checkArguments, ticksCounterSupplier, timeSensitivity);
     }
   }

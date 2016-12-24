@@ -3,6 +3,11 @@ package stinc.male.sandbox.ratexecutor;
 import java.time.Duration;
 import javax.annotation.concurrent.ThreadSafe;
 
+/**
+ * <p>
+ * <b>Implementation considerations</b><br>
+ * This is a racy implementation (see {@link RateMeter} for details).
+ */
 @ThreadSafe
 public class ArrayRateMeter extends AbstractRateMeter {
   private final long[] samples;
@@ -66,6 +71,27 @@ public class ArrayRateMeter extends AbstractRateMeter {
       }
       getTicksTotalCounter().add(count);
     }
+  }
+
+  @Override
+  public double rateAverage(final long tNanos) {
+    checkArgument(tNanos, "tNanos");
+    final long samplesIntervalNanos = getSamplesIntervalNanos();
+    final long rightNanos = rightSamplesWindowBoundary();
+    final long leftNanos = rightNanos - samplesIntervalNanos;
+    final long count;
+    final long effectiveTNanos;
+    if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is left from samples window
+      count = ticksTotalCount();
+      effectiveTNanos = rightNanos;
+    } else if (NanosComparator.compare(tNanos, rightNanos) >= 0) {//tNanos is right from samples window or exactly on the right border
+      count = ticksTotalCount();
+      effectiveTNanos = tNanos;
+    } else {//tNanos is within the samples window
+      count = ticksTotalCount() - 0;//TODO use count(tNanos, rightNanos) instead of 0
+      effectiveTNanos = tNanos;
+    }
+    return RateMeterMath.rateAverage(effectiveTNanos, samplesIntervalNanos, getStartNanos(), count);
   }
 
   @Override

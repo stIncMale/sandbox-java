@@ -9,7 +9,13 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
-public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
+/**
+ * <p>
+ * <b>Implementation considerations</b><br>
+ * This is a racy implementation (see {@link RateMeter} for details).
+ * @param <T>
+ */
+public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {//TODO implement linearizable RateMeter and create test which compares racy implementations with linearizable
   private final T samples;
   private final long timeSensitivityNanos;
   private final AtomicBoolean gcInProgress;
@@ -90,6 +96,27 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   }
 
   @Override
+  public double rateAverage(final long tNanos) {
+    checkArgument(tNanos, "tNanos");
+    final long samplesIntervalNanos = getSamplesIntervalNanos();
+    final long rightNanos = rightSamplesWindowBoundary();
+    final long leftNanos = rightNanos - samplesIntervalNanos;
+    final long count;
+    final long effectiveTNanos;
+    if (samples.comparator().compare(tNanos, leftNanos) <= 0) {//tNanos is left from samples window
+      count = ticksTotalCount();
+      effectiveTNanos = rightNanos;
+    } else if (samples.comparator().compare(tNanos, rightNanos) >= 0) {//tNanos is right from samples window or exactly on the right border
+      count = ticksTotalCount();
+      effectiveTNanos = tNanos;
+    } else {//tNanos is within the samples window
+      count = ticksTotalCount() - count(tNanos, rightNanos);
+      effectiveTNanos = tNanos;
+    }
+    return RateMeterMath.rateAverage(effectiveTNanos, samplesIntervalNanos, getStartNanos(), count);
+  }
+
+  @Override
   public double rate(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final double result;
@@ -98,7 +125,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       result = rateAverage();
     } else {
       final long samplesIntervalNanos = getSamplesIntervalNanos();
-      final long effectiveRightNanos = max(rightNanos, tNanos, samples.comparator());
+      final long effectiveRightNanos = maxTNanos(rightNanos, tNanos, samples.comparator());
       final long effectiveLeftNanos = effectiveRightNanos - samplesIntervalNanos;
       if (effectiveLeftNanos >= rightNanos) {//the are no samples for the requested tNanos
         result = 0;
@@ -153,7 +180,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     return samples;
   }
 
-  private static final long max(final long v1, final long v2, final Comparator<? super Long> comparator) {
+  private static final long maxTNanos(final long v1, final long v2, final Comparator<? super Long> comparator) {
     return comparator.compare(v1, v2) >= 0 ? v1 : v2;
   }
 }

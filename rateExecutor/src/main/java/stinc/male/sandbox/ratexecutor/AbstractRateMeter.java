@@ -28,7 +28,7 @@ abstract class AbstractRateMeter implements RateMeter {
     samplesIntervalNanos = samplesInterval.toNanos();
     Preconditions.checkArgument(samplesIntervalNanos <= Long.MAX_VALUE - 1, "samplesInterval",
         () -> String.format("Must be less than (Long.MAX_VALUE - 1)nanos = %snanos, but actual value is %s", Long.MAX_VALUE - 1, samplesIntervalNanos));
-    maxTNanos = startNanos - samplesIntervalNanos + Long.MAX_VALUE;
+    maxTNanos = RateMeterMath.maxTNanos(startNanos, samplesIntervalNanos);
     this.config = config;
     ticksTotal = config.getTicksCounterSupplier().apply(0L);
   }
@@ -52,12 +52,6 @@ abstract class AbstractRateMeter implements RateMeter {
   public double rateAverage(final Duration unit) {
     checkArgument(unit, "unit");
     return convertRate(rateAverage(), samplesIntervalNanos, unit.toNanos());
-  }
-
-  @Override
-  public double rateAverage(final long tNanos) {
-    checkArgument(tNanos, "tNanos");
-    return RateMeterMath.rateAverage(tNanos, samplesIntervalNanos, startNanos, ticksTotalCount());
   }
 
   @Override

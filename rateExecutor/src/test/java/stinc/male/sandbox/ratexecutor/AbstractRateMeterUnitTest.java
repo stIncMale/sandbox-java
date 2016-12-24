@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractRateMeterSerialTest extends AbstractRateMeterTest {//TODO add tests for RateMeter with timeSensitivity > 1nanos
-  AbstractRateMeterSerialTest(final RateMeterCreator rateMeterCreator) {
+public abstract class AbstractRateMeterUnitTest extends AbstractRateMeterTest {//TODO add tests for RateMeter with timeSensitivity > 1nanos
+  AbstractRateMeterUnitTest(final RateMeterCreator rateMeterCreator) {
     super(rateMeterCreator);
   }
 
@@ -156,6 +156,8 @@ public abstract class AbstractRateMeterSerialTest extends AbstractRateMeterTest 
     rm.tick(-1, TimeUnit.SECONDS.toNanos(6));
     assertDoubleEquals((4d + 1 + 2 + 3 - 2 + 1 - 1) / (10d / 5), rm.rateAverage(TimeUnit.SECONDS.toNanos(10)));
     assertDoubleEquals((4d + 1 + 2 + 3 - 2 + 1 - 1) / (10d / 3), rm.rateAverage(TimeUnit.SECONDS.toNanos(10), Duration.ofSeconds(3)));
+    assertDoubleEquals((4d + 1 + 2 + 3 + 1) / (3d / 5), rm.rateAverage(TimeUnit.SECONDS.toNanos(3)));
+    assertDoubleEquals(rm.rateAverage(), rm.rateAverage(TimeUnit.SECONDS.toNanos(1)));
   }
 
   @Test

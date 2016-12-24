@@ -50,6 +50,22 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * samplesInterval (in nanos) \u2208 [1, {@link Long#MAX_VALUE} - 1],<br>
  * tNanos \u2208 [startNanos, startNanos - samplesInterval + {@link Long#MAX_VALUE}]
  * (comparison according to {@link System#nanoTime()}).
+ * <p>
+ * <b>Implementation considerations</b><br>
+ * The obvious difficulty in thread-safe implementation of this interface is the fact that samples window
+ * may be moved by running {@link #tick(long, long)} method while some other method
+ * (e.g. {@link #ticksCount()}) tries to count ticks. And because it is impossible to always store all the accounted samples,
+ * some history may be lost while it is still needed causing some results to be undervalued.
+ * So implementations have two choices: be linearizable, or be racy.
+ * A linearizable implementation can produce accurate results and is theoretically possible
+ * (the simplest obvious implementation would use a copy-on-write approach).
+ * A racy implementation on the other hand may be much more performant and yet may produce accurate results in practice
+ * (the longer history the implementation stores the more probable accurate results are).
+ * <p>
+ * All methods, that don't have a default implementation and may produce inaccurate results are specifically marked as such.
+ * All methods with default implementation that depend on the mentioned methods are implied to be allowed to produce inaccurate results.
+ * Implementations are recommended to aim for accuracy on the best effort basis.
+ * Implementations also must specify is they are linearizable, or racy (this does not concern single-threaded implementations).
  */
 public interface RateMeter {
   /**
@@ -76,14 +92,17 @@ public interface RateMeter {
   long rightSamplesWindowBoundary();
 
   /**
-   * Calculates number of ticks inside the samples window (current ticks).
+   * Calculates the number of ticks inside the samples window (current ticks).
+   * <p>
+   * <b>Implementation considerations</b><br>
+   * This method may produce inaccurate results.
    *
    * @return Number of current ticks.
    */
   long ticksCount();
 
   /**
-   * Calculates total number of ticks since the {@linkplain #getStartNanos() start}.
+   * Calculates the total number of ticks since the {@linkplain #getStartNanos() start}.
    *
    * @return Total number of ticks.
    */
@@ -129,22 +148,20 @@ public interface RateMeter {
   /**
    * Calculates average rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * from the {@linkplain #getStartNanos() start} till the {@code tNanos}.
-   * Note that this method MAY produce an overvalued result if {@code tNanos} is lower than {@link #rightSamplesWindowBoundary()}.
+   * <p>
+   * <b>Implementation considerations</b><br>
+   * This method may produce inaccurate results
+   * if {@code tNanos} is lower than {@link #rightSamplesWindowBoundary()}.
    *
    * @return Average rate of ticks or 0 if {@code tNanos} is equal to {@link #getStartNanos()}.
    */
-  default double rateAverage(final long tNanos) {
-    final long startNanos = getStartNanos();
-    final long samplesIntervalNanos = getSamplesInterval().toNanos();
-    checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos), "tNanos");
-    return RateMeterMath.rateAverage(tNanos, samplesIntervalNanos, startNanos, ticksTotalCount());
-  }
+  double rateAverage(final long tNanos);
 
   /**
    * Acts just like {@link #rateAverage(long)} but the result is measured in {@code unit}<sup>-1</sup>
    * instead of samplesInterval<sup>-1</sup>.
    *
-   * @param tNanos MUST NOT be less than {@link #rightSamplesWindowBoundary()}.
+   * @param tNanos
    * @param unit A time interval to use as a unit.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
    * @return Average rate of ticks measured in {@code unit}<sup>-1</sup>.
@@ -161,10 +178,10 @@ public interface RateMeter {
    * Calculates current rate of ticks.
    * Current rate is the ratio of {@link #ticksCount()} to {@link #getSamplesInterval()}
    * measured in samplesInterval<sup>-1</sup>,
-   * so this method returns exactly the same value as {@link #ticksCount()},
+   * so this method returns the same value as {@link #ticksCount()},
    * and was added just for the sake of API completeness.
    *
-   * @return The same value as {@link #ticksCount()} and essentially the same value as
+   * @return The same value as {@link #ticksCount()} and
    * {@link #rate(long) rate}{@code (}{@link #rightSamplesWindowBoundary()}{@code )}.
    */
   default long rate() {
@@ -187,18 +204,23 @@ public interface RateMeter {
   /**
    * Calculates rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * as if {@code tNanos} were the right boundary of a samples window
-   * if {@code tNanos} is greater than or equal to {@link #rightSamplesWindowBoundary()},
-   * otherwise returns {@link #rateAverage()}.
+   * if {@code tNanos} is greater than {@link #rightSamplesWindowBoundary()} - {@link #getSamplesInterval()},
+   * otherwise returns {@link #rateAverage(long)}.
+   * <p>
+   * <b>Implementation considerations</b><br>
+   * This method may produce inaccurate results.
+   * Generally the closer {@code tNanos} to {@link #rightSamplesWindowBoundary()},
+   * the more accurate the result is.
    *
-   * @param tNanos The right boundary of a samples window.
+   * @param tNanos An effective (imaginary) right boundary of a samples window.
    */
-  double rate(long tNanos);
+  double rate(long tNanos);//TODO implement the new spec change. store and use history before samples window
 
   /**
    * Acts just like {@link #rate(long)} but the result is measured in {@code unit}<sup>-1</sup>
    * instead of samplesInterval<sup>-1</sup>.
    *
-   * @param tNanos MUST NOT be less than {@link #rightSamplesWindowBoundary()}.
+   * @param tNanos An effective (imaginary) right boundary of a samples window.
    * @param unit A time interval to use as a unit.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
    * @return Current rate of ticks measured in {@code unit}<sup>-1</sup>.

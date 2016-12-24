@@ -13,45 +13,61 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTest {
-  AbstractRateMeterParallelTest(final RateMeterCreator rateMeterCreator) {
+  private final int numberOfThreads;
+  private ExecutorService ex;
+
+  AbstractRateMeterParallelTest(final RateMeterCreator rateMeterCreator, final int numberOfThreads) {
     super(rateMeterCreator);
+    this.numberOfThreads = numberOfThreads;
   }
 
   @Test
   public final void test() throws InterruptedException {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 1; i <= 1_000; i++) {
-      final Duration samplesInterval = Duration.ofMillis(rnd.nextInt(1_000));
+      final Duration samplesInterval = Duration.ofNanos(rnd.nextInt(1, 1_000));
       final TestParams tp = new TestParams(
-              10,
-              10_000,
-              rnd.nextBoolean(),
-              rnd.nextInt(0, 10),
-              Duration.ofMillis(rnd.nextInt(1, 1_000)),
-              true
-                      ? Duration.ofNanos(1)
-                      : Duration.ofNanos((long)(ThreadLocalRandom.current().nextDouble(0.001, 0.5) * samplesInterval.toNanos())));
-      doTest(i, tp);
+          numberOfThreads,
+          2_000,
+          rnd.nextBoolean(),
+          rnd.nextInt(0, 5),
+          samplesInterval,
+          true//TODO modify test for use with time sinsitivity?
+              ? Duration.ofNanos(1)
+              : Duration.ofNanos((long) (ThreadLocalRandom.current().nextDouble(0.001, 0.5) * samplesInterval.toNanos())));
+      doTest(i, tp, ex);
     }
   }
 
-  private final void doTest(final int iterationIdx, final TestParams tp) {
+  @Before
+  public final void before() {
+    ex = Executors.newFixedThreadPool(numberOfThreads);
+  }
+
+  @After
+  public final void after() {
+    ex.shutdownNow();
+  }
+
+  private final void doTest(final int iterationIdx, final TestParams tp, final ExecutorService ex) {
     final long startNanos = ThreadLocalRandom.current().nextLong();
     final RateMeter rm = getRateMeterCreator().create(
-            startNanos,
-            tp.samplesInterval,
-            RateMeterConfig.newBuilder()
-                    .setCheckArguments(true)
-                    .setTimeSensitivity(tp.timeSensitivity)
-                    .build());
+        startNanos,
+        tp.samplesInterval,
+        RateMeterConfig.newBuilder()
+            .setCheckArguments(true)
+            .setTimeSensitivity(tp.timeSensitivity)
+            .build());
     final TickGenerator tickGenerator = new TickGenerator(startNanos, tp.samplesInterval, tp.numberOfSamples);
     final Collection<TickGenerator> tickGenerators = tickGenerator.split(tp.numberOfThreads);
     tickGenerators.stream()
-        .map(ticksGenerator -> ticksGenerator.sink(rm, tp.orderTicksByTime, tp.tickToRateRatio))
+        .map(ticksGenerator -> ticksGenerator.sink(rm, tp.orderTicksByTime, tp.tickToRateRatio, ex))
         .collect(Collectors.toList())
         .forEach(futureSink -> {
           try {
@@ -106,7 +122,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
 
     TickGenerator(final long startNanos, final Duration samplesInterval, final int numberOfSamples) {
       final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-      final long maxTNanos = startNanos + (long)(rnd.nextDouble(0.001, 1000) * samplesInterval.toNanos());
+      final long maxTNanos = startNanos + (long) (rnd.nextDouble(0.001, 1000) * samplesInterval.toNanos());
       samples = new TreeMap<>(NanosComparator.instance());
       samples.put(startNanos, 0L);
       for (int i = 0; i < numberOfSamples - 1; i++) {
@@ -121,26 +137,20 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
       this.samples = samples;
     }
 
-    final Future<?> sink(final RateMeter rm, boolean orderTicksByTime, int tickToRateRatio) {//TODO use ticks with the same tNanos from different threads
+    final Future<?> sink(final RateMeter rm, boolean orderTicksByTime, int tickToRateRatio, final ExecutorService ex) {//TODO use ticks with the same tNanos from different threads
       final List<Entry<Long, Long>> shuffledSamples = new ArrayList<>(samples.entrySet());
       if (!orderTicksByTime) {
         Collections.shuffle(shuffledSamples);
       }
-      final Future<?> result;
-      final ExecutorService ex = Executors.newSingleThreadExecutor();
-      try {
-        result = ex.submit(() -> {
-          int i = 0;
-          shuffledSamples.forEach(sample -> {
-            rm.tick(sample.getValue(), sample.getKey());
-            if (tickToRateRatio > 0 && i % tickToRateRatio == 0) {
-              rm.rate();
-            }
-          });
+      final Future<?> result = ex.submit(() -> {
+        int i = 0;
+        shuffledSamples.forEach(sample -> {
+          rm.tick(sample.getValue(), sample.getKey());
+          if (tickToRateRatio > 0 && i % tickToRateRatio == 0) {
+            rm.rate();
+          }
         });
-      } finally {
-        ex.shutdownNow();
-      }
+      });
       return result;
     }
 
@@ -164,16 +174,16 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
       final long rightNanos = rightmostTNanos();
       final long leftNanos = rightNanos - samplesIntervalNanos;
       return samples.subMap(leftNanos, false, rightNanos, true).values()
-              .stream()
-              .mapToLong(Long::longValue)
-              .sum();
+          .stream()
+          .mapToLong(Long::longValue)
+          .sum();
     }
 
     final long totalCount() {
       return samples.values()
-              .stream()
-              .mapToLong(Long::longValue)
-              .sum();
+          .stream()
+          .mapToLong(Long::longValue)
+          .sum();
     }
 
     final long rightmostTNanos() {
