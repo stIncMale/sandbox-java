@@ -6,6 +6,9 @@ import stinc.male.ConcurrencyTest;
 @Category(ConcurrencyTest.class)
 public final class TreeMapRateMeterSerialTest extends AbstractRateMeterParallelTest {
   public TreeMapRateMeterSerialTest() {
-    super(TreeMapRateMeter::new, 1);
+    super(
+        TreeMapRateMeter::new,
+        TreeMapRateMeter.defaultConfig().getTicksCounterSupplier(),
+        1);
   }
 }

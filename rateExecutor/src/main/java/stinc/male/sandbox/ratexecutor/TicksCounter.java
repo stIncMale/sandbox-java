@@ -5,5 +5,5 @@ public interface TicksCounter {
 
   long get();
 
-  void reset();
+  void reset();//TODO remove?
 }

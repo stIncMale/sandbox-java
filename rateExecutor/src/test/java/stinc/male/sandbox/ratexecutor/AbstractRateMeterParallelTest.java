@@ -12,35 +12,40 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import static java.time.Duration.ofNanos;
 import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTest {
+  private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final int numberOfThreads;
   private ExecutorService ex;
 
-  AbstractRateMeterParallelTest(final RateMeterCreator rateMeterCreator, final int numberOfThreads) {
+  AbstractRateMeterParallelTest(
+      final RateMeterCreator rateMeterCreator,
+      final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
+      final int numberOfThreads) {
     super(rateMeterCreator);
+    this.ticksCounterSupplier = ticksCounterSupplier;
     this.numberOfThreads = numberOfThreads;
   }
 
   @Test
   public final void test() throws InterruptedException {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    for (int i = 1; i <= 1_000; i++) {
-      final Duration samplesInterval = Duration.ofNanos(rnd.nextInt(1, 1_000));
+    for (int i = 1; i <= 1_500; i++) {
+      final Duration samplesInterval = ofNanos(rnd.nextInt(1, 1_000));
       final TestParams tp = new TestParams(
           numberOfThreads,
-          2_000,
+          1_500,
           rnd.nextBoolean(),
           rnd.nextInt(0, 5),
           samplesInterval,
-          true//TODO modify test for use with time sinsitivity?
-              ? Duration.ofNanos(1)
-              : Duration.ofNanos((long) (ThreadLocalRandom.current().nextDouble(0.001, 0.5) * samplesInterval.toNanos())));
+          rnd.nextBoolean());
       doTest(i, tp, ex);
     }
   }
@@ -56,22 +61,31 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
   }
 
   private final void doTest(final int iterationIdx, final TestParams tp, final ExecutorService ex) {
-    final long startNanos = ThreadLocalRandom.current().nextLong();
+    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    final long startNanos = rnd.nextLong();
     final RateMeter rm = getRateMeterCreator().create(
         startNanos,
         tp.samplesInterval,
         RateMeterConfig.newBuilder()
             .setCheckArguments(true)
-            .setTimeSensitivity(tp.timeSensitivity)
+            .setTimeSensitivity(ofNanos(1))
+            .setTicksCounterSupplier(ticksCounterSupplier)
             .build());
-    final TickGenerator tickGenerator = new TickGenerator(startNanos, tp.samplesInterval, tp.numberOfSamples);
-    final Collection<TickGenerator> tickGenerators = tickGenerator.split(tp.numberOfThreads);
+    final TickGenerator tickGenerator = new TickGenerator(
+        startNanos,
+        tp.repeatingInstants
+            ? startNanos + tp.samplesInterval.toNanos()//with repeating instants one can not predict the result unless all samples happen to be in the same samples window
+            : startNanos + (long) (rnd.nextDouble(0.001, 1000) * tp.samplesInterval.toNanos()),
+        tp.repeatingInstants,
+        tp.numberOfSamples,
+        tp.numberOfThreads);
+    final Collection<TickGenerator> tickGenerators = tickGenerator.split();
     tickGenerators.stream()
-        .map(ticksGenerator -> ticksGenerator.sink(rm, tp.orderTicksByTime, tp.tickToRateRatio, ex))
+        .map(ticksGenerator -> ticksGenerator.generate(rm, tp.orderTicksByTime, tp.tickToRateRatio, ex))
         .collect(Collectors.toList())
-        .forEach(futureSink -> {
+        .forEach(futureGenerate -> {
           try {
-            futureSink.get();
+            futureGenerate.get();
           } catch (final Exception e) {
             throw new RuntimeException(e);
           }
@@ -87,7 +101,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
     final boolean orderTicksByTime;
     final int tickToRateRatio;
     final Duration samplesInterval;
-    final Duration timeSensitivity;
+    final boolean repeatingInstants;
 
     TestParams(
         final int numberOfThreads,
@@ -95,13 +109,13 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
         final boolean orderTicksByTime,
         final int tickToRateRatio,
         final Duration samplesInterval,
-        final Duration timeSensitivity) {
+        final boolean repeatingInstants) {
       this.numberOfThreads = numberOfThreads;
       this.numberOfSamples = numberOfSamples;
       this.orderTicksByTime = orderTicksByTime;
       this.tickToRateRatio = tickToRateRatio;
       this.samplesInterval = samplesInterval;
-      this.timeSensitivity = timeSensitivity;
+      this.repeatingInstants = repeatingInstants;
     }
 
     @Override
@@ -112,32 +126,41 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
           + ", orderTicksByTime=" + orderTicksByTime
           + ", tickToRateRatio=" + tickToRateRatio
           + ", samplesInterval=" + samplesInterval
-          + ", timeSensitivity=" + timeSensitivity
+          + ", repeatingInstants=" + repeatingInstants
           + ')';
     }
   }
 
   private final class TickGenerator {
-    NavigableMap<Long, Long> samples;
+    private final NavigableMap<Long, Long> samples;
+    private final boolean repeatingInstants;
+    private final int splitN;
 
-    TickGenerator(final long startNanos, final Duration samplesInterval, final int numberOfSamples) {
+    TickGenerator(
+        final long startNanos,
+        final long maxTNanosInclusive,
+        final boolean repeatingInstants,
+        final int numberOfSamples,
+        final int splitN) {
       final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-      final long maxTNanos = startNanos + (long) (rnd.nextDouble(0.001, 1000) * samplesInterval.toNanos());
       samples = new TreeMap<>(NanosComparator.instance());
       samples.put(startNanos, 0L);
       for (int i = 0; i < numberOfSamples - 1; i++) {
-        samples.put(
-            rnd.nextLong(startNanos, maxTNanos),
-            rnd.nextLong(-3, 4)
-        );
+        final long tNanos = rnd.nextLong(startNanos, maxTNanosInclusive + 1);
+        final long count = rnd.nextLong(-3, 4);
+        samples.put(tNanos, count);
       }
+      this.repeatingInstants = repeatingInstants;
+      this.splitN = splitN;
     }
 
     TickGenerator(final NavigableMap<Long, Long> samples) {
       this.samples = samples;
+      repeatingInstants = false;
+      splitN = -1;
     }
 
-    final Future<?> sink(final RateMeter rm, boolean orderTicksByTime, int tickToRateRatio, final ExecutorService ex) {//TODO use ticks with the same tNanos from different threads
+    final Future<?> generate(final RateMeter rm, boolean orderTicksByTime, int tickToRateRatio, final ExecutorService ex) {
       final List<Entry<Long, Long>> shuffledSamples = new ArrayList<>(samples.entrySet());
       if (!orderTicksByTime) {
         Collections.shuffle(shuffledSamples);
@@ -147,26 +170,36 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
         shuffledSamples.forEach(sample -> {
           rm.tick(sample.getValue(), sample.getKey());
           if (tickToRateRatio > 0 && i % tickToRateRatio == 0) {
-            rm.rate();
+            if (ThreadLocalRandom.current().nextBoolean()) {
+              rm.rate();
+            } else {
+              rm.rate(rm.rightSamplesWindowBoundary());
+            }
           }
         });
       });
       return result;
     }
 
-    final Collection<TickGenerator> split(final int n) {
-      final List<NavigableMap<Long, Long>> maps = new ArrayList<>(n);
-      for (int i = 0; i < n; i++) {
-        maps.add(new TreeMap<>(NanosComparator.instance()));
+    final Collection<TickGenerator> split() {
+      final List<NavigableMap<Long, Long>> splitSamples = new ArrayList<>(splitN);
+      if (repeatingInstants) {
+        for (int i = 0; i < splitN; i++) {
+          splitSamples.add(new TreeMap<>(samples));
+        }
+      } else {
+        for (int i = 0; i < splitN; i++) {
+          splitSamples.add(new TreeMap<>(NanosComparator.instance()));
+        }
+        final List<Entry<Long, Long>> listOfSamples = new ArrayList<>(samples.entrySet());
+        for (int i = 0; i < listOfSamples.size(); i++) {
+          final Entry<Long, Long> sample = listOfSamples.get(i);
+          splitSamples.get(i % splitSamples.size())
+              .put(sample.getKey(), sample.getValue());
+        }
       }
-      final List<Entry<Long, Long>> listOfSamples = new ArrayList<>(samples.entrySet());
-      for (int i = 0; i < listOfSamples.size(); i++) {
-        final Entry<Long, Long> sample = listOfSamples.get(i);
-        maps.get(i % maps.size())
-            .put(sample.getKey(), sample.getValue());
-      }
-      return maps.stream()
-          .map(TickGenerator::new)
+      return splitSamples.stream()
+          .map(splitSample -> new TickGenerator(splitSample))
           .collect(Collectors.toList());
     }
 
@@ -176,14 +209,14 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
       return samples.subMap(leftNanos, false, rightNanos, true).values()
           .stream()
           .mapToLong(Long::longValue)
-          .sum();
+          .sum() * (repeatingInstants ? splitN : 1);
     }
 
     final long totalCount() {
       return samples.values()
           .stream()
           .mapToLong(Long::longValue)
-          .sum();
+          .sum() * (repeatingInstants ? splitN : 1);
     }
 
     final long rightmostTNanos() {

@@ -3,16 +3,22 @@ package stinc.male.sandbox.ratexecutor;
 import java.time.Duration;
 import javax.annotation.concurrent.ThreadSafe;
 
-/**
- * <p>
- * <b>Implementation considerations</b><br>
- * This is a racy implementation (see {@link RateMeter} for details).
- */
 @ThreadSafe
 public class ArrayRateMeter extends AbstractRateMeter {
+  private static final RateMeterConfig defaultInstance = RateMeterConfig.newBuilder()
+      .setTicksCounterSupplier(LongTicksCounter::new)
+      .build();
+
   private final long[] samples;
   private final long samplesWindowStepNanos;
   private long samplesWindowShiftSteps;
+
+  /**
+   * @return A reasonable configuration.
+   */
+  public static final RateMeterConfig defaultConfig() {
+    return defaultInstance;
+  }
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -36,6 +42,14 @@ public class ArrayRateMeter extends AbstractRateMeter {
     samplesWindowShiftSteps = 0;
   }
 
+  /**
+   * Acts like {@link #ArrayRateMeter(long, Duration, RateMeterConfig)} with {@link #defaultConfig()}
+   * as the third argument.
+   */
+  public ArrayRateMeter(final long startNanos, final Duration samplesInterval) {
+    this(startNanos, samplesInterval, defaultConfig());
+  }
+
   @Override
   public long rightSamplesWindowBoundary() {
     return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
@@ -44,7 +58,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
   @Override
   public long ticksCount() {
     long result = 0;
-    for (int samplesIdx = 0; samplesIdx < samples.length; samplesIdx++) {
+    for (int samplesIdx = 0; samplesIdx < samples.length; samplesIdx++) {//TODO iterate from leftIdx to rightIdx?
       result += samples[samplesIdx];
     }
     return result;
@@ -88,7 +102,19 @@ public class ArrayRateMeter extends AbstractRateMeter {
       count = ticksTotalCount();
       effectiveTNanos = tNanos;
     } else {//tNanos is within the samples window
-      count = ticksTotalCount() - 0;//TODO use count(tNanos, rightNanos) instead of 0
+      final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+      long subtractCount = 0;//TODO create count(tNanos, rightNanos)
+      final long effectiveSubstractSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos + samplesIntervalNanos);
+      final int rightSamplesIdx = rightSamplesIdx(samplesWindowShiftSteps);
+      for (int samplesIdx = leftSamplesIdx(effectiveSubstractSamplesWindowShiftSteps), i = 0;
+          i < samples.length;
+          samplesIdx = nextSamplesIdx(samplesIdx), i++) {//iterate from leftSamplesIdx (inclusive) to effectiveSubstractRightSamplesIdx (inclusive) but not more than samples.length iterations
+        subtractCount += samples[samplesIdx];
+        if (samplesIdx == rightSamplesIdx) {
+          break;
+        }
+      }
+      count = ticksTotalCount() - subtractCount;
       effectiveTNanos = tNanos;
     }
     return RateMeterMath.rateAverage(effectiveTNanos, samplesIntervalNanos, getStartNanos(), count);
@@ -105,15 +131,19 @@ public class ArrayRateMeter extends AbstractRateMeter {
       final long samplesIntervalNanos = getSamplesIntervalNanos();
       final long effectiveRightNanos = NanosComparator.max(rightNanos, tNanos);
       final long effectiveLeftNanos = effectiveRightNanos - samplesIntervalNanos;
-      if (effectiveLeftNanos >= rightNanos) {//the are no samples for the requested tNanos
+      if (NanosComparator.compare(effectiveLeftNanos, rightNanos) >= 0) {//the are no samples for the requested tNanos
         result = 0;
       } else {
         final long effectiveSamplesWindowShiftSteps = samplesWindowShiftSteps(effectiveRightNanos);
+        final int effectiveRightSamplesIdx = rightSamplesIdx(effectiveSamplesWindowShiftSteps);
         long count = 0;
         for (int samplesIdx = leftSamplesIdx(effectiveSamplesWindowShiftSteps), i = 0;
-             i < effectiveSamplesWindowShiftSteps;
-             samplesIdx = nextSamplesIdx(samplesIdx), i++) {
+             i < samples.length;
+             samplesIdx = nextSamplesIdx(samplesIdx), i++) {//iterate from leftSamplesIdx (inclusive) to effectiveRightSamplesIdx (inclusive) but not more than samples.length iterations
           count += samples[samplesIdx];
+          if (samplesIdx == effectiveRightSamplesIdx) {
+            break;
+          }
         }
         result = count;
       }
@@ -122,7 +152,10 @@ public class ArrayRateMeter extends AbstractRateMeter {
   }
 
   private final long samplesWindowShiftSteps(final long tNanos) {
-    return (tNanos - getStartNanos()) / samplesWindowStepNanos + 1;
+    final long samplesWindowShiftNanos = tNanos - getStartNanos();
+    return samplesWindowShiftNanos % samplesWindowStepNanos == 0
+        ? samplesWindowShiftNanos / samplesWindowStepNanos
+        : samplesWindowShiftNanos / samplesWindowStepNanos + 1;
   }
 
   private final int rightSamplesIdx(final long samplesWindowShiftSteps) {

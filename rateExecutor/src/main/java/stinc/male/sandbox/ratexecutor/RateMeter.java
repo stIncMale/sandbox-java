@@ -55,7 +55,7 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * The obvious difficulty in thread-safe implementation of this interface is the fact that samples window
  * may be moved by running {@link #tick(long, long)} method while some other method
  * (e.g. {@link #ticksCount()}) tries to count ticks. And because it is impossible to always store all the accounted samples,
- * some history may be lost while it is still needed causing some results to be undervalued.
+ * some history may be lost while it is still needed causing some results to be inaccurate.
  * So implementations have two choices: be linearizable, or be racy.
  * A linearizable implementation can produce accurate results and is theoretically possible
  * (the simplest obvious implementation would use a copy-on-write approach).
