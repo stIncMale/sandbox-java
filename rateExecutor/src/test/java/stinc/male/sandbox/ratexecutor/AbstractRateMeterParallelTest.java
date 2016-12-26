@@ -37,7 +37,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
   @Test
   public final void test() throws InterruptedException {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    for (int i = 1; i <= 1_500; i++) {
+    for (int i = 1; i <= 5_000; i++) {
       final Duration samplesInterval = ofNanos(rnd.nextInt(1, 1_000));
       final TestParams tp = new TestParams(
           numberOfThreads,
@@ -73,9 +73,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
             .build());
     final TickGenerator tickGenerator = new TickGenerator(
         startNanos,
-        tp.repeatingInstants
-            ? startNanos + tp.samplesInterval.toNanos()//with repeating instants one can not predict the result unless all samples happen to be in the same samples window
-            : startNanos + (long) (rnd.nextDouble(0.001, 1000) * tp.samplesInterval.toNanos()),
+        startNanos + (long) (rnd.nextDouble(0, 500) * tp.samplesInterval.toNanos()),
         tp.repeatingInstants,
         tp.numberOfSamples,
         tp.numberOfThreads);

@@ -58,7 +58,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
   @Override
   public long ticksCount() {
     long result = 0;
-    for (int samplesIdx = 0; samplesIdx < samples.length; samplesIdx++) {//TODO iterate from leftIdx to rightIdx?
+    for (int samplesIdx = 0; samplesIdx < samples.length; samplesIdx++) {
       result += samples[samplesIdx];
     }
     return result;

@@ -5,9 +5,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * <p>
- * <b>Implementation considerations</b><br>
- * This is a racy implementation (see {@link RateMeter} for details).
+ * This implementation of {@link RateMeter} is not linearizable (see {@link RateMeter} for details).
  */
 @ThreadSafe
 public class ConcurrentSkipListMapRateMeter extends AbstractNavigableMapRateMeter<ConcurrentSkipListMap<Long, TicksCounter>> {

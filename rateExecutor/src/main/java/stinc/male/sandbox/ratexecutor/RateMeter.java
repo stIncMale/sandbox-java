@@ -52,20 +52,19 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * (comparison according to {@link System#nanoTime()}).
  * <p>
  * <b>Implementation considerations</b><br>
- * The obvious difficulty in thread-safe implementation of this interface is the fact that samples window
+ * The obvious difficulty in concurrent implementation of this interface is the fact that samples window
  * may be moved by running {@link #tick(long, long)} method while some other method
  * (e.g. {@link #ticksCount()}) tries to count ticks. And because it is impossible to always store all the accounted samples,
  * some history may be lost while it is still needed causing some results to be inaccurate.
- * So implementations have two choices: be linearizable, or be racy.
- * A linearizable implementation can produce accurate results and is theoretically possible
- * (the simplest obvious implementation would use a copy-on-write approach).
- * A racy implementation on the other hand may be much more performant and yet may produce accurate results in practice
- * (the longer history the implementation stores the more probable accurate results are).
+ * So implementations have two choices: to be linearizable, or not to be.
+ * A linearizable implementation can produce accurate results,
+ * while not linearizable implementation may be more performant and yet may produce accurate results in practice
+ * (e.g. the longer history the implementation maintains, the more probable accurate results are).
  * <p>
- * All methods, that don't have a default implementation and may produce inaccurate results are specifically marked as such.
+ * All methods that don't have a default implementation and may produce inaccurate results are specifically marked as such.
  * All methods with default implementation that depend on the mentioned methods are implied to be allowed to produce inaccurate results.
  * Implementations are recommended to aim for accuracy on the best effort basis.
- * Implementations also must specify is they are linearizable, or racy (this does not concern single-threaded implementations).
+ * Implementations also must specify is they are linearizable, or not (this obviously does not concern single-threaded implementations).
  */
 public interface RateMeter {
   /**
@@ -209,8 +208,6 @@ public interface RateMeter {
    * <p>
    * <b>Implementation considerations</b><br>
    * This method may produce inaccurate results.
-   * Generally the closer {@code tNanos} to {@link #rightSamplesWindowBoundary()},
-   * the more accurate the result is.
    *
    * @param tNanos An effective (imaginary) right boundary of a samples window.
    */
