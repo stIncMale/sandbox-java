@@ -55,16 +55,16 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * The obvious difficulty in concurrent implementation of this interface is the fact that samples window
  * may be moved by running {@link #tick(long, long)} method while some other method
  * (e.g. {@link #ticksCount()}) tries to count ticks. And because it is impossible to always store all the accounted samples,
- * some history may be lost while it is still needed causing some results to be inaccurate.
+ * some history may be lost while it is still needed, causing some results to be inaccurate.
  * So implementations have two choices: to be linearizable, or not to be.
- * A linearizable implementation can produce accurate results,
- * while not linearizable implementation may be more performant and yet may produce accurate results in practice
- * (e.g. the longer history the implementation maintains, the more probable accurate results are).
- * <p>
- * All methods that don't have a default implementation and may produce inaccurate results are specifically marked as such.
- * All methods with default implementation that depend on the mentioned methods are implied to be allowed to produce inaccurate results.
+ * A linearizable implementation can and must produce accurate results, however it inherently imposes
+ * performance restrictions. Implementations with weaker guarantees on the other hand may be more performant,
+ * may sacrifice theoretical accuracy for the sake of performance and yet may produce accurate results in practice.
  * Implementations are recommended to aim for accuracy on the best effort basis.
- * Implementations also must specify is they are linearizable, or not (this obviously does not concern single-threaded implementations).
+ * Implementations also must specify is they are linearizable, or not (this obviously does not concern single-threaded implementations),
+ * and specify if there are guarantees that they produce theoretically accurate results, or not.
+ * <p>
+ * Here is a list of methods that are allowed to produce inaccurate results: {@link #ticksCount()}, all {@code rate...} methods.
  */
 public interface RateMeter {
   /**
@@ -92,9 +92,6 @@ public interface RateMeter {
 
   /**
    * Calculates the number of ticks inside the samples window (current ticks).
-   * <p>
-   * <b>Implementation considerations</b><br>
-   * This method may produce inaccurate results.
    *
    * @return Number of current ticks.
    */
@@ -147,10 +144,6 @@ public interface RateMeter {
   /**
    * Calculates average rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * from the {@linkplain #getStartNanos() start} till the {@code tNanos}.
-   * <p>
-   * <b>Implementation considerations</b><br>
-   * This method may produce inaccurate results
-   * if {@code tNanos} is lower than {@link #rightSamplesWindowBoundary()}.
    *
    * @return Average rate of ticks or 0 if {@code tNanos} is equal to {@link #getStartNanos()}.
    */
@@ -205,9 +198,6 @@ public interface RateMeter {
    * as if {@code tNanos} were the right boundary of a samples window
    * if {@code tNanos} is greater than {@link #rightSamplesWindowBoundary()} - {@link #getSamplesInterval()},
    * otherwise returns {@link #rateAverage(long)}.
-   * <p>
-   * <b>Implementation considerations</b><br>
-   * This method may produce inaccurate results.
    *
    * @param tNanos An effective (imaginary) right boundary of a samples window.
    */

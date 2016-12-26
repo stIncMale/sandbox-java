@@ -1,9 +1,9 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import javax.annotation.concurrent.ThreadSafe;
+import javax.annotation.concurrent.NotThreadSafe;
 
-@ThreadSafe
+@NotThreadSafe
 public class ArrayRateMeter extends AbstractRateMeter {
   private static final RateMeterConfig defaultInstance = RateMeterConfig.newBuilder()
       .setTicksCounterSupplier(LongTicksCounter::new)

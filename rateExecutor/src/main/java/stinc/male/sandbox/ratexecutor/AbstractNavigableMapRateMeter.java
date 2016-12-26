@@ -10,7 +10,8 @@ import javax.annotation.Nullable;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
 /**
- * This implementation of {@link RateMeter} is not linearizable (see {@link RateMeter} for details).
+ * This implementation of {@link RateMeter} is not linearizable and may produce inaccurate results if used concurrently
+ * (see {@link RateMeter} for details).
  * @param <T>
  */
 public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {//TODO implement linearizable RateMeter and create test which compares racy implementations with linearizable
