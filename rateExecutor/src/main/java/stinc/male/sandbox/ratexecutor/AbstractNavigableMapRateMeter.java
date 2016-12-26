@@ -14,7 +14,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * (see {@link RateMeter} for details).
  * @param <T>
  */
-public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {//TODO implement linearizable RateMeter and create test which compares racy implementations with linearizable
+public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
   private final T samples;
   private final long timeSensitivityNanos;
   private final AtomicBoolean gcInProgress;
