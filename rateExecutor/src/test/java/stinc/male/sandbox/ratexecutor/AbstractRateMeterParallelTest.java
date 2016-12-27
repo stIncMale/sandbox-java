@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -38,10 +39,10 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
   public final void test() throws InterruptedException {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 1; i <= 5_000; i++) {
-      final Duration samplesInterval = ofNanos(rnd.nextInt(1, 1_000));
+      final Duration samplesInterval = ofNanos(rnd.nextInt(1, 400));
       final TestParams tp = new TestParams(
           numberOfThreads,
-          1_500,
+          2_500,
           rnd.nextBoolean(),
           rnd.nextInt(0, 5),
           samplesInterval,
@@ -78,8 +79,9 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
         tp.numberOfSamples,
         tp.numberOfThreads);
     final Collection<TickGenerator> tickGenerators = tickGenerator.split();
+    final CountDownLatch latch = new CountDownLatch(tickGenerators.size());
     tickGenerators.stream()
-        .map(ticksGenerator -> ticksGenerator.generate(rm, tp.orderTicksByTime, tp.tickToRateRatio, ex))
+        .map(ticksGenerator -> ticksGenerator.generate(rm, tp.orderTicksByTime, tp.tickToRateRatio, ex, latch))
         .collect(Collectors.toList())
         .forEach(futureGenerate -> {
           try {
@@ -158,7 +160,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
       splitN = -1;
     }
 
-    final Future<?> generate(final RateMeter rm, boolean orderTicksByTime, int tickToRateRatio, final ExecutorService ex) {
+    final Future<?> generate(final RateMeter rm, boolean orderTicksByTime, int tickToRateRatio, final ExecutorService ex, final CountDownLatch latch) {
       final List<Entry<Long, Long>> shuffledSamples = new ArrayList<>(samples.entrySet());
       if (!orderTicksByTime) {
         Collections.shuffle(shuffledSamples);
@@ -166,6 +168,12 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
       final Future<?> result = ex.submit(() -> {
         int i = 0;
         shuffledSamples.forEach(sample -> {
+          latch.countDown();
+          try {
+            latch.await();
+          } catch (final InterruptedException e) {
+            throw new RuntimeException("Unexpected interruption");
+          }
           rm.tick(sample.getValue(), sample.getKey());
           if (tickToRateRatio > 0 && i % tickToRateRatio == 0) {
             if (ThreadLocalRandom.current().nextBoolean()) {

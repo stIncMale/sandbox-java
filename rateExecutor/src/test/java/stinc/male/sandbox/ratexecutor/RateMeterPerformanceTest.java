@@ -24,7 +24,7 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
 @Category(PerformanceTest.class)
 public class RateMeterPerformanceTest {
-  private static final Duration samplesInterval = Duration.ofMillis(100);
+  private static final Duration samplesInterval = Duration.ofMillis(100);//TODO test with smaller windows, like 1ms
   private static final Duration timeSensitivity = Duration.ofMillis(10);
   private static final boolean server = true;
   private static final boolean quick = false;

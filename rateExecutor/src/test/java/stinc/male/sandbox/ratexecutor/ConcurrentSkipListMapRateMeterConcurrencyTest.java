@@ -9,6 +9,6 @@ public final class ConcurrentSkipListMapRateMeterConcurrencyTest extends Abstrac
     super(
         ConcurrentSkipListMapRateMeter::new,
         ConcurrentSkipListMapRateMeter.defaultConfig().getTicksCounterSupplier(),
-        10);
+        4);
   }
 }
