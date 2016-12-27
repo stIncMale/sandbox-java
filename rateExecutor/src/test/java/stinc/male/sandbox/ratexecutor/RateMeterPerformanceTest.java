@@ -13,6 +13,7 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -27,7 +28,7 @@ public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.ofMillis(100);//TODO test with smaller windows, like 1ms
   private static final Duration timeSensitivity = Duration.ofMillis(10);
   private static final boolean server = true;
-  private static final boolean quick = false;
+  private static final boolean quick = true;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)
         .jvmArgsPrepend(server ? "-server" : "-client")
@@ -103,7 +104,7 @@ public class RateMeterPerformanceTest {
   }
 
   @Test
-  public void parallelTest() throws RunnerException {
+  public void parallelConcurrentSkipListMapRateMeter() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
         .include(getClass().getName() + ".parallel_.*concurrentSkipListMapRateMeter")
         .threads(4)
@@ -295,12 +296,12 @@ public class RateMeterPerformanceTest {
   private static final void tickAndRate(final RateMeter rm, final Blackhole bh, final int counter, final int tickToRateRatio) {
     rm.tick(1, nanoTime());
     if (counter % tickToRateRatio == 0) {
-      bh.consume(rm.rate());
+      rate(rm, bh);
     }
   }
 
   private static final void rateAndTick(final RateMeter rm, final Blackhole bh, final int counter, final int rateToTickRatio) {
-    bh.consume(rm.rate());
+    rate(rm, bh);
     if (counter % rateToTickRatio == 0) {
       rm.tick(1, nanoTime());
     }
@@ -349,6 +350,11 @@ public class RateMeterPerformanceTest {
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
+    }
+
+    @TearDown(Level.Trial)
+    public final void tearDown() {
+      //assertEquals(0, concurrentSkipListMapRateMeter.failedAccuracyEventsCount(), 10);
     }
   }
 

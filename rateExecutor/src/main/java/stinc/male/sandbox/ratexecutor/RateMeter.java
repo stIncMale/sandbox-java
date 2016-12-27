@@ -56,15 +56,20 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * may be moved by running {@link #tick(long, long)} method while some other method
  * (e.g. {@link #ticksCount()}) tries to count ticks. And because it is impossible to always store all the accounted samples,
  * some history may be lost while it is still needed, causing some results to be inaccurate.
- * So implementations have two choices: to be linearizable, or not to be.
- * A linearizable implementation can and must produce accurate results, however it inherently imposes
- * performance restrictions. Implementations with weaker guarantees on the other hand may be more performant,
- * may sacrifice theoretical accuracy for the sake of performance and yet may produce accurate results in practice.
- * Implementations are recommended to aim for accuracy on the best effort basis.
- * Implementations also must specify is they are linearizable, or not (this obviously does not concern single-threaded implementations),
- * and specify if there are guarantees that they produce theoretically accurate results, or not.
+ * Another obvious difficulty is that the number of current ticks may be changed while some method tries
+ * to calculate it.
  * <p>
- * Here is a list of methods that are allowed to produce inaccurate results: {@link #ticksCount()}, all {@code rate...} methods.
+ * There may be a bunch of challenges like the ones mentioned above. And one can say that
+ * implementations have two choices: to be linearizable, or not to be (there could be many other correctness conditions).
+ * A linearizable implementation can and must produce accurate results, however it inherently imposes
+ * performance restrictions. Implementations with weaker guarantees may be more performant because they
+ * can sacrifice theoretical accuracy for the sake of performance and yet may produce sufficiently accurate results in practice.
+ * Implementations are recommended to aim for accuracy on the best effort basis.
+ * Implementations also must specify is they are linearizable
+ * (this obviously does not concern single-threaded implementations, which just must specify that they are not thread-safe),
+ * and specify concerns about accuracy.
+ * <p>
+ * All {@code ...Count} and all {@code rate...} methods are allowed to produce approximate results.
  */
 public interface RateMeter {
   /**

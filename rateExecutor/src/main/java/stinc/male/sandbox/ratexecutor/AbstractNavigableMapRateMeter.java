@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
@@ -14,10 +15,14 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * @param <T>
  */
 public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
+  private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 3;
+
   private final T samples;
   private final long timeSensitivityNanos;
   private final AtomicBoolean gcInProgress;
   private volatile long gcLastRightSamplesWindowBoundary;
+  private final LongAdder failedAccuracyEventsCount;
+
   /**
    * (0,Double.MAX_VALUE]<br>
    * The bigger, the less frequently GC happens, but the more elements are maintained in samples.
@@ -49,6 +54,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     Preconditions.checkArgument(timeSensitivityNanos <= getSamplesIntervalNanos(), "config",
         () -> String.format("timeSensitivityNanos = %s must be not greater than getSamplesIntervalNanos() = %s",
             timeSensitivityNanos, getSamplesIntervalNanos()));
+    failedAccuracyEventsCount = new LongAdder();
   }
 
   @Override
@@ -58,8 +64,23 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
 
   @Override
   public long ticksCount() {
-    final long rightNanos = rightSamplesWindowBoundary();
-    return count(rightNanos - getSamplesIntervalNanos(), rightNanos);
+    long result = 0;
+    final long samplesIntervalNanos = getSamplesIntervalNanos();
+    long rightNanos = rightSamplesWindowBoundary();
+    for (int i = 0; i < MAX_OPTIMISTIC_READ_ATTEMPTS; i++) {
+      final long leftNanos = rightNanos - samplesIntervalNanos;
+      result = count(leftNanos, rightNanos);
+      final long newRightNanos = rightSamplesWindowBoundary();
+      if (NanosComparator.compare(newRightNanos - 2 * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but result is still correct
+        break;
+      } else {//the samples window has been moved too far
+        rightNanos = newRightNanos;
+        if (i == MAX_OPTIMISTIC_READ_ATTEMPTS - 1) {
+          failedAccuracyEventsCount.increment();
+        }
+      }
+    }
+    return result;
   }
 
   @Override
@@ -68,7 +89,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();
       final long leftNanos = rightNanos - getSamplesIntervalNanos();
-      if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is not behind the samples window (i.e. within or ahead)
+      if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is not behind the samples window (i.e. within or ahead of)
         @Nullable
         final TicksCounter existingSample;
         if (timeSensitivityNanos == 1) {
@@ -99,25 +120,33 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   public double rateAverage(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final long rightNanos = rightSamplesWindowBoundary();
+    long rightNanos = rightSamplesWindowBoundary();
     final long leftNanos = rightNanos - samplesIntervalNanos;
     final long count;
     final long effectiveTNanos;
     if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
       count = ticksTotalCount();
       effectiveTNanos = rightNanos;
-    } else if (NanosComparator.compare(tNanos, rightNanos) >= 0) {//tNanos is ahead the samples window or exactly on the right border
+    } else if (NanosComparator.compare(rightNanos, tNanos) <= 0) {//tNanos is ahead of the samples window or exactly on the right border
       count = ticksTotalCount();
       effectiveTNanos = tNanos;
     } else {//tNanos is within the samples window and not on the right border
-      count = ticksTotalCount() - count(tNanos, rightNanos);
-      effectiveTNanos = tNanos;
+      final long substractCount = count(tNanos, rightNanos);
+      final long newRightNanos = rightSamplesWindowBoundary();
+      if (NanosComparator.compare(newRightNanos - 2 * samplesIntervalNanos, tNanos) <= 0) {//the samples window may has been moved while we were counting, but substractCount is still correct
+        count = ticksTotalCount() - substractCount;
+        effectiveTNanos = tNanos;
+      } else {//the samples window has been moved too far, so average over all samples is the best we can do
+        failedAccuracyEventsCount.increment();
+        count = ticksTotalCount();
+        effectiveTNanos = newRightNanos;
+      }
     }
     return RateMeterMath.rateAverage(effectiveTNanos, samplesIntervalNanos, getStartNanos(), count);
   }
 
   @Override
-  public double rate(final long tNanos) {
+  public double rate(final long tNanos) {//TODO specify that the closer tNanos to the right border, the more accurate the result
     checkArgument(tNanos, "tNanos");
     final double result;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
@@ -125,19 +154,40 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     final long leftNanos = rightNanos - samplesIntervalNanos;
     if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
       result = RateMeterMath.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
-    } else {
-      final long effectiveRightNanos = NanosComparator.max(rightNanos, tNanos);
-      final long effectiveLeftNanos = effectiveRightNanos - samplesIntervalNanos;
-      if (effectiveLeftNanos >= rightNanos) {//tNanos is way too ahead the samples window and the are no samples for the requested tNanos
+    } else {//tNanos is within or ahead of the samples window
+      if (NanosComparator.compare(rightNanos, NanosComparator.max(rightNanos, tNanos) - samplesIntervalNanos) <= 0) {//tNanos is way too ahead of the samples window and the are no samples for the requested tNanos
         result = 0;
       } else {
-        result = count(effectiveLeftNanos, effectiveRightNanos);
+        final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
+        long count = count(tNanos - samplesIntervalNanos, tNanos);
+        final long newRightNanos = rightSamplesWindowBoundary();
+        final long safeLeft = newRightNanos - 2 * samplesIntervalNanos;
+        if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
+          result = count;
+        } else {//the samples window has been moved too far
+          failedAccuracyEventsCount.increment();
+          if (NanosComparator.compare(tNanos, rightNanos) < 0 && NanosComparator.compare(safeLeft, leftNanos) <= 0) {//tNanos is within the samples window and we still have a chance to calculate rate for rightNanos
+            count = count(leftNanos, rightNanos);
+            final long newNewRightNanos = rightSamplesWindowBoundary();
+            if (NanosComparator.compare(newNewRightNanos - 2 * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
+              result = count;
+            } else {//average over all samples is the best we can do
+              result = RateMeterMath.rateAverage(newNewRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
+            }
+          } else {//average over all samples is the best we can do
+            result = RateMeterMath.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
+          }
+        }
       }
     }
     return result;
   }
 
-  private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {//TODO check if we still inside the window, otherwise ? Count such fails
+  public final long failedAccuracyEventsCount() {
+    return failedAccuracyEventsCount.sum();
+  }
+
+  private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {
     return samples.subMap(fromExclusiveNanos, false, toInclusiveNanos, true)
         .values()
         .stream()
@@ -148,7 +198,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   private final boolean gcRequired(final long rightSamplesWindowBoundary) {
     final long samplesWindowShiftNanos = rightSamplesWindowBoundary - gcLastRightSamplesWindowBoundary;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final boolean result = (double)samplesWindowShiftNanos / samplesIntervalNanos >= 2 + gcFactor;//2 is required to maintain history of duration 2 * samplesIntervalNanos
+    final boolean result = (double)samplesWindowShiftNanos / samplesIntervalNanos >= 2 + gcFactor;//2 is required to maintain history span of 2 * samplesIntervalNanos
     return result;
   }
 
@@ -156,7 +206,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     if (gcInProgress.compareAndSet(false, true)) {
       try {
         gcLastRightSamplesWindowBoundary = rightSamplesWindowBoundary;
-        final long leftNanos = rightSamplesWindowBoundary - 2 * getSamplesIntervalNanos();//2 is required to maintain history of duration 2 * samplesIntervalNanos
+        final long leftNanos = rightSamplesWindowBoundary - 2 * getSamplesIntervalNanos();//2 is required to maintain history span 2 * samplesIntervalNanos
         @Nullable
         final Long firstNanos = samples.firstKey();
         if (firstNanos != null && NanosComparator.compare(firstNanos.longValue(), leftNanos) < 0) {

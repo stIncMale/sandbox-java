@@ -38,7 +38,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
   @Test
   public final void test() throws InterruptedException {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    for (int i = 1; i <= 5_000; i++) {
+    for (int i = 1; i <= 10_000; i++) {
       final Duration samplesInterval = ofNanos(rnd.nextInt(1, 400));
       final TestParams tp = new TestParams(
           numberOfThreads,
@@ -79,6 +79,7 @@ public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTes
         tp.numberOfSamples,
         tp.numberOfThreads);
     final Collection<TickGenerator> tickGenerators = tickGenerator.split();
+    assertEquals(tp.numberOfThreads, tickGenerators.size());
     final CountDownLatch latch = new CountDownLatch(tickGenerators.size());
     tickGenerators.stream()
         .map(ticksGenerator -> ticksGenerator.generate(rm, tp.orderTicksByTime, tp.tickToRateRatio, ex, latch))
