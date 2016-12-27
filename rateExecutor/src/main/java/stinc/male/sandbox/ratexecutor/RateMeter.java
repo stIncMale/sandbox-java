@@ -203,7 +203,7 @@ public interface RateMeter {
    *
    * @param tNanos An effective (imaginary) right boundary of a samples window.
    */
-  double rate(long tNanos);//TODO implement the new spec change. store and use history before samples window
+  double rate(long tNanos);//TODO implement the new spec change. store and use history before samples window; test this
 
   /**
    * Acts just like {@link #rate(long)} but the result is measured in {@code unit}<sup>-1</sup>

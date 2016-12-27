@@ -1,7 +1,6 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,9 +28,10 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
    * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
-   * @param samplesSuppplier Specifies a supplier to use to create an object that will be returned by {@link #getSamples()}.
-   * The {@link NavigableMap} provided by this supplier MUST use {@link NavigableMap#comparator() comparator}
-   * that compares nanoseconds according to {@link System#nanoTime()} specification.
+   * @param samplesSuppplier Specifies a supplier to use to create an object that will be
+   *                         used to store samples and will be returned by {@link #getSamples()}.
+   *                         The {@link NavigableMap} provided by this supplier must use {@link NanosComparator}
+   *                         as {@link NavigableMap#comparator() comparator}.
    */
   public AbstractNavigableMapRateMeter(
       final long startNanos,
@@ -41,6 +41,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     super(startNanos, samplesInterval, config);
     checkNotNull(samplesSuppplier, "samplesSuppplier");
     samples = samplesSuppplier.get();
+    Preconditions.checkArgument(samples.comparator() instanceof NanosComparator, "samplesSupplier", "The comparator used by samples map must be of type NanosComparator");
     samples.put(startNanos, config.getTicksCounterSupplier().apply(0L));
     gcInProgress = new AtomicBoolean();
     gcLastRightSamplesWindowBoundary = getStartNanos();
@@ -67,7 +68,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();
       final long leftNanos = rightNanos - getSamplesIntervalNanos();
-      if (samples.comparator().compare(leftNanos, tNanos) < 0) {//tNanos is not behind the samples window (i.e. within or ahead)
+      if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is not behind the samples window (i.e. within or ahead)
         @Nullable
         final TicksCounter existingSample;
         if (timeSensitivityNanos == 1) {
@@ -102,11 +103,10 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     final long leftNanos = rightNanos - samplesIntervalNanos;
     final long count;
     final long effectiveTNanos;
-    final Comparator<? super Long> comparator = samples.comparator();//TODO store in a separate variable, check is comparator is NanosComparator and use it instead of Comparator
-    if (comparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
+    if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
       count = ticksTotalCount();
       effectiveTNanos = rightNanos;
-    } else if (comparator.compare(tNanos, rightNanos) >= 0) {//tNanos is ahead the samples window or exactly on the right border
+    } else if (NanosComparator.compare(tNanos, rightNanos) >= 0) {//tNanos is ahead the samples window or exactly on the right border
       count = ticksTotalCount();
       effectiveTNanos = tNanos;
     } else {//tNanos is within the samples window and not on the right border
@@ -123,11 +123,10 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     final long rightNanos = rightSamplesWindowBoundary();
     final long leftNanos = rightNanos - samplesIntervalNanos;
-    final Comparator<? super Long> comparator = samples.comparator();
-    if (comparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
-      result = rateAverage();//TODO create rateAvg (internal implementation) and use it
+    if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
+      result = RateMeterMath.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
     } else {
-      final long effectiveRightNanos = maxTNanos(rightNanos, tNanos, comparator);
+      final long effectiveRightNanos = NanosComparator.max(rightNanos, tNanos);
       final long effectiveLeftNanos = effectiveRightNanos - samplesIntervalNanos;
       if (effectiveLeftNanos >= rightNanos) {//tNanos is way too ahead the samples window and the are no samples for the requested tNanos
         result = 0;
@@ -160,7 +159,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
         final long leftNanos = rightSamplesWindowBoundary - 2 * getSamplesIntervalNanos();//2 is required to maintain history of duration 2 * samplesIntervalNanos
         @Nullable
         final Long firstNanos = samples.firstKey();
-        if (firstNanos != null && samples.comparator().compare(firstNanos, leftNanos) < 0) {
+        if (firstNanos != null && NanosComparator.compare(firstNanos.longValue(), leftNanos) < 0) {
           samples.subMap(firstNanos, true, leftNanos, false)//do not delete sample at leftNanos, because we still need it
               .clear();
         }
@@ -179,9 +178,5 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
    */
   protected T getSamples() {
     return samples;
-  }
-
-  private static final long maxTNanos(final long v1, final long v2, final Comparator<? super Long> comparator) {
-    return comparator.compare(v1, v2) >= 0 ? v1 : v2;
   }
 }
