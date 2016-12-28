@@ -9,7 +9,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
       .setTicksCounterSupplier(LongTicksCounter::new)
       .build();
 
-  private final long[] samples;
+  private final long[] samples;//length is even
   private final long samplesWindowStepNanos;
   private long samplesWindowShiftSteps;
 
@@ -32,13 +32,13 @@ public class ArrayRateMeter extends AbstractRateMeter {
     super(startNanos, samplesInterval, config);
     final long sensitivityNanos = config.getTimeSensitivity().toNanos();
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final int samplesArrayLength = (int)(samplesIntervalNanos / sensitivityNanos);
-    Preconditions.checkArgument(samplesIntervalNanos / samplesArrayLength * samplesArrayLength == samplesIntervalNanos, "samplesInterval",
+    final int samplesIntervalArrayLength = (int)(samplesIntervalNanos / sensitivityNanos);
+    Preconditions.checkArgument(samplesIntervalNanos / samplesIntervalArrayLength * samplesIntervalArrayLength == samplesIntervalNanos, "samplesInterval",
         () -> String.format(
             "The specified samplesInterval %snanos and timeSensitivity %snanos can not be used together because samplesInterval can not be devided evenly by timeSensitivity",
-            samplesArrayLength, sensitivityNanos));
-    samplesWindowStepNanos = samplesIntervalNanos / samplesArrayLength;
-    samples = new long[samplesArrayLength];
+            samplesIntervalArrayLength, sensitivityNanos));
+    samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
+    samples = new long[2 * samplesIntervalArrayLength];
     samplesWindowShiftSteps = 0;
   }
 
@@ -58,7 +58,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
   @Override
   public long ticksCount() {
     long result = 0;
-    for (int samplesIdx = 0; samplesIdx < samples.length; samplesIdx++) {
+    for (int samplesIdx = 0; samplesIdx < samples.length / 2; samplesIdx++) {
       result += samples[samplesIdx];
     }
     return result;
@@ -159,14 +159,14 @@ public class ArrayRateMeter extends AbstractRateMeter {
   }
 
   private final int rightSamplesIdx(final long samplesWindowShiftSteps) {
-    return (int)((samplesWindowShiftSteps + samples.length - 1) % samples.length);//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int)((samplesWindowShiftSteps + samples.length / 2 - 1) % (samples.length / 2));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int leftSamplesIdx(final long samplesWindowShiftSteps) {
-    return (int)(samplesWindowShiftSteps % samples.length);//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int)(samplesWindowShiftSteps % (samples.length / 2));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int nextSamplesIdx(final int samplesIdx) {
-    return (samplesIdx + 1) % samples.length;
+    return (samplesIdx + 1) % (samples.length / 2);
   }
 }

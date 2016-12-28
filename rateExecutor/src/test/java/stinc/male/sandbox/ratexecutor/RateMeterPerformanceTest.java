@@ -21,6 +21,7 @@ import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import stinc.male.PerformanceTest;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
+import static org.junit.Assert.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
 @Category(PerformanceTest.class)
@@ -291,6 +292,8 @@ public class RateMeterPerformanceTest {
 
   private static final void rate(final RateMeter rm, final Blackhole bh) {
     bh.consume(rm.rate());
+//    bh.consume(rm.rate(nanoTime()));
+//    bh.consume(rm.rate(rm.rightSamplesWindowBoundary()));
   }
 
   private static final void tickAndRate(final RateMeter rm, final Blackhole bh, final int counter, final int tickToRateRatio) {
@@ -309,6 +312,7 @@ public class RateMeterPerformanceTest {
 
   private static final long nanoTime() {
     return System.nanoTime();
+//    return TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
   }
 
   @State(Scope.Thread)
@@ -354,7 +358,7 @@ public class RateMeterPerformanceTest {
 
     @TearDown(Level.Trial)
     public final void tearDown() {
-      //assertEquals(0, concurrentSkipListMapRateMeter.failedAccuracyEventsCount(), 10);
+      assertEquals(0, concurrentSkipListMapRateMeter.failedAccuracyEventsCount(), 1);
     }
   }
 
