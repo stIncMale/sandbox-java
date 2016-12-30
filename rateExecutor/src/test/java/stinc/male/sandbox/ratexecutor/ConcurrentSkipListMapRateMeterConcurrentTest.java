@@ -4,8 +4,8 @@ import org.junit.experimental.categories.Category;
 import stinc.male.ConcurrencyTest;
 
 @Category(ConcurrencyTest.class)
-public final class ConcurrentSkipListMapRateMeterConcurrencyTest extends AbstractRateMeterParallelTest {
-  public ConcurrentSkipListMapRateMeterConcurrencyTest() {
+public final class ConcurrentSkipListMapRateMeterConcurrentTest extends AbstractRateMeterConcurrentTest {
+  public ConcurrentSkipListMapRateMeterConcurrentTest() {
     super(
         ConcurrentSkipListMapRateMeter::new,
         ConcurrentSkipListMapRateMeter.defaultConfig().getTicksCounterSupplier(),

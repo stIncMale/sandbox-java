@@ -21,12 +21,12 @@ import org.junit.Test;
 import static java.time.Duration.ofNanos;
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractRateMeterParallelTest extends AbstractRateMeterTest {
+public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterTest {
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final int numberOfThreads;
   private ExecutorService ex;
 
-  AbstractRateMeterParallelTest(
+  AbstractRateMeterConcurrentTest(
       final RateMeterCreator rateMeterCreator,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final int numberOfThreads) {
