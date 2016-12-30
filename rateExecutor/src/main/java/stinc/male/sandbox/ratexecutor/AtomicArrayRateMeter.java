@@ -152,7 +152,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   }
 
   @Override
-  public double rate(final long tNanos) {
+  public double rate(final long tNanos) {//TODO refactor to check if reads/counts were successful
     checkArgument(tNanos, "tNanos");
     final double result;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
