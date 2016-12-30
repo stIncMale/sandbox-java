@@ -76,7 +76,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long leftNanos = rightNanos - samplesIntervalNanos;
       result = count(leftNanos, rightNanos);
     } else {
-      for (int i = 0; i < MAX_OPTIMISTIC_READ_ATTEMPTS; i++) {
+      for (int ri = 0; ri < MAX_OPTIMISTIC_READ_ATTEMPTS; ri++) {
         final long leftNanos = rightNanos - samplesIntervalNanos;
         result = count(leftNanos, rightNanos);
         final long newRightNanos = rightSamplesWindowBoundary();
@@ -84,7 +84,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
           break;
         } else {//the samples window has been moved too far
           rightNanos = newRightNanos;
-          if (i == MAX_OPTIMISTIC_READ_ATTEMPTS - 1) {
+          if (ri == MAX_OPTIMISTIC_READ_ATTEMPTS - 1) {//all read attempts have been exhausted, return what we have
             failedAccuracyEventsCount.increment();
           }
         }

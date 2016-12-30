@@ -173,7 +173,7 @@ public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterT
           latch.countDown();
           try {
             if (!latch.await(1, TimeUnit.SECONDS)) {
-              throw new RuntimeException("Time is out");
+              throw new RuntimeException("Time is out");//TODO to something with this shit
             }
           } catch (final InterruptedException e) {
             throw new RuntimeException("Unexpected interruption");

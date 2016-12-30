@@ -195,6 +195,25 @@ public abstract class AbstractRateMeterUnitTest extends AbstractRateMeterTest {/
 
   @Test
   public final void rate4() {
+    final RateMeter rm = newRateMeter(-2, ofNanos(3));
+    rm.tick(3, 0);
+    rm.tick(1, 1);
+    rm.tick(0, 1);
+    rm.tick(2, 2);
+    assertDoubleEquals((3d + 1 + 2), rm.rate(2));
+    assertDoubleEquals((3d + 1 + 2) / (3d / 17), rm.rate(2, ofNanos(17)));
+    rm.tick(3, 3);
+    assertDoubleEquals((1 + 2 + 3), rm.rate(3));
+    assertDoubleEquals((1d + 2 + 3) / (3d / 15), rm.rate(3, ofNanos(15)));
+    rm.tick(-2, 5);
+    rm.tick(1, 3);
+    rm.tick(-1, 6);
+    assertDoubleEquals((-2 - 1), rm.rate(7));
+    assertDoubleEquals((-2d - 1) / (3d / 15), rm.rate(7, ofNanos(15)));
+  }
+
+  @Test
+  public final void rate5() {
     final RateMeter rm = newRateMeter(-2, ofNanos(30));
     rm.tick(1, -1);
     rm.tick(3, 0);
