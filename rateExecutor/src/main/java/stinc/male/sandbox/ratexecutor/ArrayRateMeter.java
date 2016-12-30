@@ -96,30 +96,20 @@ public class ArrayRateMeter extends AbstractRateMeter {
   public double rateAverage(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final long rightNanos = rightSamplesWindowBoundary();
+    final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+    final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
     final long leftNanos = rightNanos - samplesIntervalNanos;
     final long count;
     final long effectiveTNanos;
-    if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is left from samples window
+    if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
       count = ticksTotalCount();
       effectiveTNanos = rightNanos;
-    } else if (NanosComparator.compare(tNanos, rightNanos) >= 0) {//tNanos is right from samples window or exactly on the right border
+    } else if (NanosComparator.compare(rightNanos, tNanos) <= 0) {//tNanos is ahead of the samples window or exactly on the right border
       count = ticksTotalCount();
       effectiveTNanos = tNanos;
-    } else {//tNanos is within the samples window
-      final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
-      long subtractCount = 0;//TODO create count(tNanos, rightNanos)
-      final long effectiveSubstractSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos + samplesIntervalNanos);
-      final int rightSamplesIdx = rightSamplesWindowIdx(samplesWindowShiftSteps);
-      for (int samplesIdx = leftSamplesWindowIdx(effectiveSubstractSamplesWindowShiftSteps), i = 0;
-           i < samples.length;
-           samplesIdx = nextSamplesWindowIdx(samplesIdx), i++) {//iterate from leftSamplesIdx (inclusive) to effectiveSubstractRightSamplesIdx (inclusive) but not more than samples.length iterations
-        subtractCount += samples[samplesIdx];
-        if (samplesIdx == rightSamplesIdx) {
-          break;
-        }
-      }
-      count = ticksTotalCount() - subtractCount;
+    } else {//tNanos is within the samples window and not on the right border
+      final long substractCount = count(tNanos, rightNanos);
+      count = ticksTotalCount() - substractCount;
       effectiveTNanos = tNanos;
     }
     return RateMeterMath.rateAverage(effectiveTNanos, samplesIntervalNanos, getStartNanos(), count);
@@ -129,28 +119,18 @@ public class ArrayRateMeter extends AbstractRateMeter {
   public double rate(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final double result;
-    final long rightNanos = rightSamplesWindowBoundary();
-    if (NanosComparator.compare(tNanos, rightNanos) < 0) {
-      result = rateAverage();
-    } else {
-      final long samplesIntervalNanos = getSamplesIntervalNanos();
-      final long effectiveRightNanos = NanosComparator.max(rightNanos, tNanos);
-      final long effectiveLeftNanos = effectiveRightNanos - samplesIntervalNanos;
-      if (NanosComparator.compare(effectiveLeftNanos, rightNanos) >= 0) {//the are no samples for the requested tNanos
+    final long samplesIntervalNanos = getSamplesIntervalNanos();
+    final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+    final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
+    final long leftNanos = rightNanos - samplesIntervalNanos;
+    if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
+      result = RateMeterMath.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
+    } else {//tNanos is within or ahead of the samples window
+      final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
+      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and the are no samples for the requested tNanos
         result = 0;
       } else {
-        final long effectiveSamplesWindowShiftSteps = samplesWindowShiftSteps(effectiveRightNanos);
-        final int effectiveRightSamplesIdx = rightSamplesWindowIdx(effectiveSamplesWindowShiftSteps);
-        long count = 0;
-        for (int samplesIdx = leftSamplesWindowIdx(effectiveSamplesWindowShiftSteps), i = 0;
-             i < samples.length;
-             samplesIdx = nextSamplesWindowIdx(samplesIdx), i++) {//iterate from leftSamplesIdx (inclusive) to effectiveRightSamplesIdx (inclusive) but not more than samples.length iterations
-          count += samples[samplesIdx];
-          if (samplesIdx == effectiveRightSamplesIdx) {
-            break;
-          }
-        }
-        result = count;
+        result = count(effectiveLeftNanos, tNanos);
       }
     }
     return result;
@@ -158,6 +138,19 @@ public class ArrayRateMeter extends AbstractRateMeter {
 
   public long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
     return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
+  }
+
+  private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {
+    final long fromInclusiveNanos = fromExclusiveNanos + 1;
+    final long fromInclusiveSamplesWindowShiftSteps = samplesWindowShiftSteps(fromInclusiveNanos);
+    final long toInclusiveSamplesWindowShiftSteps = samplesWindowShiftSteps(toInclusiveNanos);
+    long result = 0;
+    for (int idx = rightSamplesWindowIdx(fromInclusiveSamplesWindowShiftSteps), i = 0;
+         i < toInclusiveSamplesWindowShiftSteps - fromInclusiveSamplesWindowShiftSteps + 1;
+         idx = nextSamplesWindowIdx(idx), i++) {
+      result += samples[idx];
+    }
+    return result;
   }
 
   private final long samplesWindowShiftSteps(final long tNanos) {
@@ -168,11 +161,11 @@ public class ArrayRateMeter extends AbstractRateMeter {
   }
 
   private final int leftSamplesWindowIdx(final long samplesWindowShiftSteps) {
-    return (int)((samplesWindowShiftSteps + samples.length / 2) % samples.length);//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int)(Math.abs((samplesWindowShiftSteps + samples.length / 2) % samples.length));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int rightSamplesWindowIdx(final long samplesWindowShiftSteps) {
-    return (int)((samplesWindowShiftSteps + samples.length - 1) % samples.length);//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int)(Math.abs((samplesWindowShiftSteps + samples.length - 1) % samples.length));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int nextSamplesWindowIdx(final int idx) {

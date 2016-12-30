@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.After;
@@ -80,7 +81,7 @@ public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterT
         tp.numberOfThreads);
     final Collection<TickGenerator> tickGenerators = tickGenerator.split();
     assertEquals(tp.numberOfThreads, tickGenerators.size());
-    final CountDownLatch latch = new CountDownLatch(tickGenerators.size());
+    final CountDownLatch latch = new CountDownLatch(tp.numberOfThreads);
     tickGenerators.stream()
         .map(ticksGenerator -> ticksGenerator.generate(rm, tp.orderTicksByTime, tp.tickToRateRatio, ex, latch))
         .collect(Collectors.toList())
@@ -171,7 +172,9 @@ public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterT
         shuffledSamples.forEach(sample -> {
           latch.countDown();
           try {
-            latch.await();
+            if (!latch.await(1, TimeUnit.SECONDS)) {
+              throw new RuntimeException("Time is out");
+            }
           } catch (final InterruptedException e) {
             throw new RuntimeException("Unexpected interruption");
           }

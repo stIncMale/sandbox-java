@@ -4,8 +4,8 @@ import org.junit.experimental.categories.Category;
 import stinc.male.ConcurrencyTest;
 
 @Category(ConcurrencyTest.class)
-public final class ArrayRateMeterSerialTest extends AbstractRateMeterConcurrentTest {
-  public ArrayRateMeterSerialTest() {
+public final class ArrayRateMeterSequentialTest extends AbstractRateMeterConcurrentTest {
+  public ArrayRateMeterSequentialTest() {
     super(
         ArrayRateMeter::new,
         ArrayRateMeter.defaultConfig().getTicksCounterSupplier(),

@@ -17,7 +17,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
   private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 3;
 
-  private final boolean singleThreaded;
+  private final boolean sequential;
   private final T samples;
   private final long timeSensitivityNanos;
   private final AtomicBoolean gcInProgress;
@@ -39,14 +39,14 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
    *                         used to store samples and will be returned by {@link #getSamples()}.
    *                         The {@link NavigableMap} provided by this supplier must use {@link NanosComparator}
    *                         as {@link NavigableMap#comparator() comparator}.
-   * @param singleThreaded
+   * @param sequential
    */
   public AbstractNavigableMapRateMeter(
       final long startNanos,
       final Duration samplesInterval,
       final RateMeterConfig config,
       final Supplier<T> samplesSuppplier,
-      final boolean singleThreaded) {
+      final boolean sequential) {
     super(startNanos, samplesInterval, config);
     checkNotNull(samplesSuppplier, "samplesSuppplier");
     samples = samplesSuppplier.get();
@@ -58,8 +58,8 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     Preconditions.checkArgument(timeSensitivityNanos <= getSamplesIntervalNanos(), "config",
         () -> String.format("timeSensitivityNanos = %s must be not greater than getSamplesIntervalNanos() = %s",
             timeSensitivityNanos, getSamplesIntervalNanos()));
-    this.singleThreaded = singleThreaded;
-    failedAccuracyEventsCount = singleThreaded ? null : new LongAdder();
+    this.sequential = sequential;
+    failedAccuracyEventsCount = sequential ? null : new LongAdder();
   }
 
   @Override
@@ -72,7 +72,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     long result = 0;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     long rightNanos = rightSamplesWindowBoundary();
-    if (singleThreaded) {
+    if (sequential) {
       final long leftNanos = rightNanos - samplesIntervalNanos;
       result = count(leftNanos, rightNanos);
     } else {
@@ -142,7 +142,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       effectiveTNanos = tNanos;
     } else {//tNanos is within the samples window and not on the right border
       final long substractCount = count(tNanos, rightNanos);
-      if (singleThreaded) {
+      if (sequential) {
         count = ticksTotalCount() - substractCount;
         effectiveTNanos = tNanos;
       } else {
@@ -170,11 +170,11 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
       result = RateMeterMath.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
     } else {//tNanos is within or ahead of the samples window
-      if (NanosComparator.compare(rightNanos, NanosComparator.max(rightNanos, tNanos) - samplesIntervalNanos) <= 0) {//tNanos is way too ahead of the samples window and the are no samples for the requested tNanos
+      final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
+      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and the are no samples for the requested tNanos
         result = 0;
       } else {
-        final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
-        if (singleThreaded) {
+        if (sequential) {
           result = count(effectiveLeftNanos, tNanos);
         } else {
           long count = count(effectiveLeftNanos, tNanos);
