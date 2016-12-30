@@ -77,6 +77,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
       if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
         final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
         if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//we need to move the samples window
+          this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
           final long numberOfStepsToMove = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
           final long numberOfIterations = Math.min(samples.length, numberOfStepsToMove);
           for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
@@ -84,7 +85,6 @@ public class ArrayRateMeter extends AbstractRateMeter {
                idx = nextSamplesWindowIdx(idx), i++) {//reset moved samples
             samples[idx] = 0;
           }
-          this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
         }
         samples[rightSamplesWindowIdx(targetSamplesWindowShiftSteps)] += count;
       }

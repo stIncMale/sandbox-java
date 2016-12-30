@@ -146,7 +146,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
         count = ticksTotalCount() - substractCount;
         effectiveTNanos = tNanos;
       } else {
-        final long newRightNanos = rightSamplesWindowBoundary();
+        final long newRightNanos = rightSamplesWindowBoundary();//TODO is this check correct?
         if (NanosComparator.compare(newRightNanos - 2 * samplesIntervalNanos, tNanos) <= 0) {//the samples window may has been moved while we were counting, but substractCount is still correct
           count = ticksTotalCount() - substractCount;
           effectiveTNanos = tNanos;

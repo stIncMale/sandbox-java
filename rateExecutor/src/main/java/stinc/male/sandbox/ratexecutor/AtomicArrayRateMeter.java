@@ -3,7 +3,7 @@ package stinc.male.sandbox.ratexecutor;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.LongAdder;
-import javax.annotation.Nullable;
+import java.util.concurrent.locks.StampedLock;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -21,6 +21,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   private final long samplesWindowStepNanos;
   private volatile long samplesWindowShiftSteps;
   private final LongAdder failedAccuracyEventsCount;
+  private final StampedLock samplesWindowMotionLock;
 
   /**
    * @return A reasonable configuration.
@@ -50,6 +51,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     samples = new AtomicLongArray(2 * samplesIntervalArrayLength);
     samplesWindowShiftSteps = 0;
     failedAccuracyEventsCount = new LongAdder();
+    samplesWindowMotionLock = new StampedLock();
   }
 
   /**
@@ -79,7 +81,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
            idx = nextSamplesWindowIdx(idx), i++) {
         result += samples.get(idx);
       }
-      final long newRightNanos = rightSamplesWindowBoundary();
+      final long newRightNanos = rightSamplesWindowBoundary();//TODO use shift steps instead of nanos (is is cheaper)
       if (NanosComparator.compare(newRightNanos - 2 * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but result is still correct
         break;
       } else {//the samples window has been moved too far
@@ -96,23 +98,30 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   public void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
-      final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+      long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
       final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
       final long leftNanos = rightNanos - getSamplesIntervalNanos();
       if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
         final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
         if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//we need to move the samples window
-          final long numberOfStepsToMove = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
-          final long numberOfIterations = Math.min(samples.length(), numberOfStepsToMove);
-          for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
-               i < numberOfIterations;
-               idx = nextSamplesWindowIdx(idx), i++) {//reset moved samples
-            samples.set(idx, 0);
-            //samples[idx] = 0;
-          }
           this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
+          final long lockStamp = samplesWindowMotionLock.writeLock();
+          try {
+            samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+            if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//double check if we still need to move the samples window
+              final long numberOfStepsToMove = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
+              final long numberOfIterations = Math.min(samples.length(), numberOfStepsToMove);
+              for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
+                   i < numberOfIterations;
+                   idx = nextSamplesWindowIdx(idx), i++) {//reset moved samples
+                samples.set(idx, 0);
+              }
+            }
+          } finally {
+            samplesWindowMotionLock.unlockWrite(lockStamp);
+          }
         }
-        samples[rightSamplesWindowIdx(targetSamplesWindowShiftSteps)] += count;
+        samples.addAndGet(rightSamplesWindowIdx(targetSamplesWindowShiftSteps), count);
       }
       getTicksTotalCounter().add(count);
     }
@@ -134,6 +143,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
       count = ticksTotalCount();
       effectiveTNanos = tNanos;
     } else {//tNanos is within the samples window and not on the right border
+      //TODO check if the count was successful
       final long substractCount = count(tNanos, rightNanos);
       count = ticksTotalCount() - substractCount;
       effectiveTNanos = tNanos;
