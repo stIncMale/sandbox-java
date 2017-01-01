@@ -69,23 +69,20 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
 
   @Override
   public long ticksCount() {
-    final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+    long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
     long result = 0;
-    long rightNanos = rightSamplesWindowBoundary();
     for (int ri = 0; ri < MAX_OPTIMISTIC_READ_ATTEMPTS; ri++) {
-      final long leftNanos = rightNanos - getSamplesIntervalNanos();
       result = 0;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
            i < samples.length() / 2;
            idx = nextSamplesWindowIdx(idx), i++) {
         result += samples.get(idx);
       }
-      final long newRightNanos = rightSamplesWindowBoundary();//TODO use shift steps instead of nanos (is is cheaper)
-      if (NanosComparator.compare(newRightNanos - 2 * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but result is still correct
+      final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps;
+      if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length() / 2) {//the samples window may has been moved while we were counting, but result is still correct
         break;
       } else {//the samples window has been moved too far
-        rightNanos = newRightNanos;
+        samplesWindowShiftSteps = newSamplesWindowShiftSteps;
         if (ri == MAX_OPTIMISTIC_READ_ATTEMPTS - 1) {//all read attempts have been exhausted, return what we have
           failedAccuracyEventsCount.increment();
         }
