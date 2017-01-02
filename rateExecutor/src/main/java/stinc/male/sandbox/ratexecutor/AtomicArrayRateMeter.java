@@ -153,10 +153,17 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
       count = ticksTotalCount();
       effectiveTNanos = tNanos;
     } else {//tNanos is within the samples window and not on the right border
-      //TODO check if the count was successful
+      final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
       final long substractCount = count(tNanos, rightNanos);
-      count = ticksTotalCount() - substractCount;
-      effectiveTNanos = tNanos;
+      final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps;
+      if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but substractCount is still correct
+        count = ticksTotalCount() - substractCount;
+        effectiveTNanos = rightSamplesWindowBoundary(tNanosSamplesWindowShiftSteps);
+      } else {//the samples window has been moved too far, so average over all samples is the best we can do
+        failedAccuracyEventsCount.increment();
+        count = ticksTotalCount();
+        effectiveTNanos = rightSamplesWindowBoundary(newSamplesWindowShiftSteps);
+      }
     }
     return RateMeterMath.rateAverage(effectiveTNanos, samplesIntervalNanos, getStartNanos(), count);
   }
