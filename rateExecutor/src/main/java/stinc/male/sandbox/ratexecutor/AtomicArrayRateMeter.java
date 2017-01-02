@@ -99,26 +99,39 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
       final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
       final long leftNanos = rightNanos - getSamplesIntervalNanos();
       if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
-        final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
-        if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//we need to move the samples window
-          this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
-          final long lockStamp = samplesWindowMotionLock.writeLock();
-          try {
+        boolean exclusiveLock = false;
+        long lockStamp = samplesWindowMotionLock.readLock();
+        try {
+          final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
+          if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//we need to move the samples window
+            exclusiveLock = true;
+            final long upgradedLockStamp = samplesWindowMotionLock.tryConvertToWriteLock(lockStamp);
+            if (upgradedLockStamp == 0) {//failed to upgrade the lock
+              samplesWindowMotionLock.unlockRead(lockStamp);
+              lockStamp = samplesWindowMotionLock.writeLock();
+            } else {
+              lockStamp = upgradedLockStamp;
+            }
             samplesWindowShiftSteps = this.samplesWindowShiftSteps;
             if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//double check if we still need to move the samples window
+              this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
               final long numberOfStepsToMove = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
               final long numberOfIterations = Math.min(samples.length(), numberOfStepsToMove);
               for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
-                   i < numberOfIterations;
-                   idx = nextSamplesWindowIdx(idx), i++) {//reset moved samples
+                  i < numberOfIterations;
+                  idx = nextSamplesWindowIdx(idx), i++) {//reset moved samples
                 samples.set(idx, 0);
               }
             }
-          } finally {
+          }
+          samples.addAndGet(rightSamplesWindowIdx(targetSamplesWindowShiftSteps), count);
+        } finally {
+          if (exclusiveLock) {
             samplesWindowMotionLock.unlockWrite(lockStamp);
+          } else {
+            samplesWindowMotionLock.unlockRead(lockStamp);
           }
         }
-        samples.addAndGet(rightSamplesWindowIdx(targetSamplesWindowShiftSteps), count);
       }
       getTicksTotalCounter().add(count);
     }
@@ -163,7 +176,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
       if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and the are no samples for the requested tNanos
         result = 0;
       } else {
-        result = count(effectiveLeftNanos, tNanos);
+        result = count(effectiveLeftNanos, rightNanos);
       }
     }
     return result;
