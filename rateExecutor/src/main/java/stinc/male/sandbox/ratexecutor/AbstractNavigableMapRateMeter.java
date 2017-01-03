@@ -99,7 +99,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();
       final long leftNanos = rightNanos - getSamplesIntervalNanos();
-      if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
+      if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window TODO score the sample even if it's behind the samples window but within the history
         @Nullable
         final TicksCounter existingSample;
         if (timeSensitivityNanos == 1) {

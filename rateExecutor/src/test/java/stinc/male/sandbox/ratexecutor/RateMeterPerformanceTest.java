@@ -31,9 +31,9 @@ public class RateMeterPerformanceTest {
   private static final boolean server = true;
   private static final boolean quick = false;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
-    final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)
+    final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.AverageTime)
         .jvmArgsPrepend(server ? "-server" : "-client")
-        .timeUnit(TimeUnit.MILLISECONDS)
+        .timeUnit(TimeUnit.NANOSECONDS)
         .syncIterations(true)
         .shouldFailOnError(true)
         .shouldDoGC(true)
@@ -126,6 +126,15 @@ public class RateMeterPerformanceTest {
   public void parallelAtomicArrayRateMeterRateMeter() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
         .include(getClass().getName() + ".parallel_.*atomicArrayRateMeter")
+        .threads(4)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void parallelNEWAtomicArrayRateMeterRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .include(getClass().getName() + ".parallel_.*NEWatomicArrayRateMeter")
         .threads(4)
         .build())
         .run();
@@ -427,6 +436,104 @@ public class RateMeterPerformanceTest {
     rate(state.atomicArrayRateMeter, bh);
   }
 
+  @Benchmark
+  @Group("parallel_1_tick_NEWatomicArrayRateMeter")
+  @GroupThreads(1)
+  public void parallel_1_tick_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state) {
+    tick(state.NEWatomicArrayRateMeter);
+  }
+
+  @Benchmark
+  @Group("parallel_2_tick_NEWatomicArrayRateMeter")
+  @GroupThreads(2)
+  public void parallel_2_tick_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state) {
+    tick(state.NEWatomicArrayRateMeter);
+  }
+
+  @Benchmark
+  @Group("parallel_4_tick_NEWatomicArrayRateMeter")
+  @GroupThreads(4)
+  public void parallel_4_tick_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state) {
+    tick(state.NEWatomicArrayRateMeter);
+  }
+
+  @Benchmark
+  @Group("parallel_1_tick$10rate$1_NEWatomicArrayRateMeter")
+  @GroupThreads(1)
+  public void parallel_1_tick$10rate$1_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.NEWatomicArrayRateMeter, bh, counter.v++, 10);
+  }
+
+  @Benchmark
+  @Group("parallel_2_tick$10rate$1_NEWatomicArrayRateMeter")
+  @GroupThreads(2)
+  public void parallel_2_tick$10rate$1_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.NEWatomicArrayRateMeter, bh, counter.v++, 10);
+  }
+
+  @Benchmark
+  @Group("parallel_4_tick$10rate$1_NEWatomicArrayRateMeter")
+  @GroupThreads(4)
+  public void parallel_4_tick$10rate$1_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.NEWatomicArrayRateMeter, bh, counter.v++, 10);
+  }
+
+  @Benchmark
+  @Group("parallel_1_tick$1rate$1_NEWatomicArrayRateMeter")
+  @GroupThreads(1)
+  public void parallel_1_tick$1rate$1_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.NEWatomicArrayRateMeter, bh, counter.v++, 1);
+  }
+
+  @Benchmark
+  @Group("parallel_2_tick$1rate$1_NEWatomicArrayRateMeter")
+  @GroupThreads(2)
+  public void parallel_2_tick$1rate$1_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.NEWatomicArrayRateMeter, bh, counter.v++, 1);
+  }
+
+  @Benchmark
+  @Group("parallel_4_tick$1rate$1_NEWatomicArrayRateMeter")
+  @GroupThreads(4)
+  public void parallel_4_tick$1rate$1_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.NEWatomicArrayRateMeter, bh, counter.v++, 1);
+  }
+
+  @Benchmark
+  @Group("parallel_1_tick$1rate$10_NEWatomicArrayRateMeter")
+  @GroupThreads(1)
+  public void parallel_1_tick$1rate$10_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    rateAndTick(state.NEWatomicArrayRateMeter, bh, counter.v++, 10);
+  }
+
+  @Benchmark
+  @Group("parallel_2_tick$1rate$10_atomicArrayRateMeter")
+  @GroupThreads(2)
+  public void parallel_2_tick$1rate$10_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    rateAndTick(state.NEWatomicArrayRateMeter, bh, counter.v++, 10);
+  }
+
+  @Benchmark
+  @Group("parallel_4_tick$1rate$10_atomicArrayRateMeter")
+  @GroupThreads(4)
+  public void parallel_4_tick$1rate$10_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    rateAndTick(state.NEWatomicArrayRateMeter, bh, counter.v++, 10);
+  }
+
+  @Benchmark
+  @Group("parallel_4_tick$1_rate$1_NEWatomicArrayRateMeter")
+  @GroupThreads(2)
+  public void parallel_2_TICK$1_rate$1_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state) {
+    tick(state.NEWatomicArrayRateMeter);
+  }
+
+  @Benchmark
+  @Group("parallel_4_tick$1_rate$1_NEWatomicArrayRateMeter")
+  @GroupThreads(2)
+  public void parallel_2_tick$1_RATE$1_NEWatomicArrayRateMeter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.atomicArrayRateMeter, bh);
+  }
+
   private static final void tick(final RateMeter rm) {
     rm.tick(1, nanoTime());
   }
@@ -491,6 +598,7 @@ public class RateMeterPerformanceTest {
   public static class RateMeterContainer_GroupScope {
     ConcurrentSkipListMapRateMeter concurrentSkipListMapRateMeter;
     AtomicArrayRateMeter atomicArrayRateMeter;
+    NEW_AtomicArrayRateMeter NEWatomicArrayRateMeter;
 
     public RateMeterContainer_GroupScope() {
     }
@@ -505,12 +613,17 @@ public class RateMeterPerformanceTest {
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
+      NEWatomicArrayRateMeter = new NEW_AtomicArrayRateMeter(nanoTime(), samplesInterval,
+          rateMeterConfigBuilderSuppplier.get()
+              .setTicksCounterSupplier(LongAdderTicksCounter::new)
+              .build());
     }
 
     @TearDown(Level.Trial)
     public final void tearDown() {
       assertEquals(0, concurrentSkipListMapRateMeter.failedAccuracyEventsCount(), 1);
       assertEquals(0, atomicArrayRateMeter.failedAccuracyEventsCount(), 1);
+      assertEquals(0, NEWatomicArrayRateMeter.failedAccuracyEventsCount(), 1);
     }
   }
 

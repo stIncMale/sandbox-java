@@ -1,9 +1,11 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.LongAdder;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -18,6 +20,8 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
   private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 3;
 
   private final AtomicLongArray samples;//length is even
+  @Nullable
+  private final AtomicBoolean[] abaLocks;//same length as samples; required to overcome the ABA problem with CAS in the tick method
   private final long samplesWindowStepNanos;
   private AtomicLong samplesWindowShiftSteps;
   private AtomicLong completedSamplesWindowShiftSteps;
@@ -49,6 +53,14 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
             samplesIntervalArrayLength, sensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samples = new AtomicLongArray(2 * samplesIntervalArrayLength);
+    if (true) {
+      abaLocks = new AtomicBoolean[samples.length()];
+      for (int idx = 0; idx < abaLocks.length; idx++) {
+        abaLocks[idx] = new AtomicBoolean();
+      }
+    } else {
+      abaLocks = null;
+    }
     samplesWindowShiftSteps = new AtomicLong();
     completedSamplesWindowShiftSteps = new AtomicLong();
     failedAccuracyEventsCount = new LongAdder();
@@ -96,16 +108,17 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
   public void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
+      final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
       long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-      final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
-      final long leftNanos = rightNanos - getSamplesIntervalNanos();
-      if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
-        final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
+      if (samplesWindowShiftSteps - samples.length() / 2 < targetSamplesWindowShiftSteps) {//tNanos is within or ahead of the samples window
         boolean moved = false;
         while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps
-            && !(moved == this.samplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//move the samples window if we we need to
+            && !(moved = this.samplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//move the samples window if we we need to
           samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
         }
+        final int targetIdx = rightSamplesWindowIdx(targetSamplesWindowShiftSteps);
+        @Nullable
+        final AtomicBoolean targetAbaLock = abaLocks == null ? null : abaLocks[targetIdx];
         if (moved) {
           final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
@@ -113,18 +126,68 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
             for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
                 i < numberOfSteps;
                 idx = nextSamplesWindowIdx(idx), i++) {
-              samples.set(idx, 0);
+              while (targetAbaLock != null && !targetAbaLock.compareAndSet(false, true)) {
+                Thread.yield();
+              }
+              try {
+                if (idx == targetIdx) {
+                  samples.set(idx, count);
+                } else {
+                  samples.set(idx, 0);
+                }
+              } finally {
+                if (targetAbaLock != null) {
+                  targetAbaLock.set(false);
+                }
+              }
+              final long expectedCompletedSamplesWindowShiftSteps = samplesWindowShiftSteps + i;
+              this.completedSamplesWindowShiftSteps.compareAndSet(expectedCompletedSamplesWindowShiftSteps, expectedCompletedSamplesWindowShiftSteps + 1);//complete the reset step
             }
           } else {//reset all samples
             for (int idx = 0; idx < samples.length(); idx++) {
-              samples.set(idx, 0);
+              while (targetAbaLock != null && !targetAbaLock.compareAndSet(false, true)) {
+                Thread.yield();
+              }
+              try {
+                if (idx == targetIdx) {
+                  samples.set(idx, count);
+                } else {
+                  samples.set(idx, 0);
+                }
+              } finally {
+                if (targetAbaLock != null) {
+                  targetAbaLock.set(false);
+                }
+              }
             }
-            this.completedSamplesWindowShiftSteps.set(targetSamplesWindowShiftSteps);
+            long completedSamplesWindowShiftSteps = this.completedSamplesWindowShiftSteps.get();
+            while (completedSamplesWindowShiftSteps < targetSamplesWindowShiftSteps
+                && !(this.completedSamplesWindowShiftSteps.compareAndSet(completedSamplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//complete steps
+              completedSamplesWindowShiftSteps = this.completedSamplesWindowShiftSteps.get();
+            }
           }
         } else {
           waitForCompletedWindowShiftSteps(targetSamplesWindowShiftSteps);
+          while (targetAbaLock != null && !targetAbaLock.compareAndSet(false, true)) {
+            Thread.yield();
+          }
+          try {
+            if (targetAbaLock == null) {
+              samples.getAndAdd(targetIdx, count);
+              if (targetSamplesWindowShiftSteps < this.samplesWindowShiftSteps.get() - samples.length() / 2) {//we could have accounted the sample at the incorrect instant because of the ABA problem
+                this.failedAccuracyEventsCount.increment();
+              }
+            } else {
+              if (this.samplesWindowShiftSteps.get() - samples.length() / 2 < targetSamplesWindowShiftSteps) {//tNanos is still within or ahead of the samples window
+                samples.set(targetIdx, samples.get(targetIdx) + count);
+              }
+            }
+          } finally {
+            if (targetAbaLock != null) {
+              targetAbaLock.set(false);
+            }
+          }
         }
-        samples.getAndAdd(rightSamplesWindowIdx(targetSamplesWindowShiftSteps), count);
       }
       getTicksTotalCounter().add(count);
     }
@@ -209,7 +272,9 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
   }
 
   private final void waitForCompletedWindowShiftSteps(final long samplesWindowShiftSteps) {
-    while (this.completedSamplesWindowShiftSteps.get() < samplesWindowShiftSteps) ;
+    while (this.completedSamplesWindowShiftSteps.get() < samplesWindowShiftSteps) {
+      Thread.yield();
+    }
   }
 
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {
