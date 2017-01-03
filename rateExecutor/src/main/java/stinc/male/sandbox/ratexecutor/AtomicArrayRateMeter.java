@@ -211,6 +211,10 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
   }
 
+  public final long failedAccuracyEventsCount() {
+    return failedAccuracyEventsCount.sum();
+  }
+
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {
     final long fromInclusiveNanos = fromExclusiveNanos + 1;
     final long fromInclusiveSamplesWindowShiftSteps = samplesWindowShiftSteps(fromInclusiveNanos);

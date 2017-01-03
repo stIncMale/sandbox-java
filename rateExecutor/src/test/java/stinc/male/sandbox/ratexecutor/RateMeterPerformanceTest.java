@@ -510,6 +510,7 @@ public class RateMeterPerformanceTest {
     @TearDown(Level.Trial)
     public final void tearDown() {
       assertEquals(0, concurrentSkipListMapRateMeter.failedAccuracyEventsCount(), 1);
+      assertEquals(0, atomicArrayRateMeter.failedAccuracyEventsCount(), 1);
     }
   }
 
