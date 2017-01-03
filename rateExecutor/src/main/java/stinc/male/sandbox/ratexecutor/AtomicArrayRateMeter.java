@@ -92,11 +92,11 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   }
 
   @Override
-  public synchronized void tick(final long count, final long tNanos) {
+  public void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
       boolean exclusiveLock = false;
-//      long lockStamp = samplesWindowMotionLock.readLock();
+      long lockStamp = samplesWindowMotionLock.readLock();
       try {
         long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
         final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
@@ -104,14 +104,14 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
         if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
           final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
           if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//we need to move the samples window
-//            exclusiveLock = true;
-//            final long upgradedLockStamp = samplesWindowMotionLock.tryConvertToWriteLock(lockStamp);
-//            if (upgradedLockStamp == 0) {//failed to upgrade the lock
-//              samplesWindowMotionLock.unlockRead(lockStamp);
-//              lockStamp = samplesWindowMotionLock.writeLock();
-//            } else {
-//              lockStamp = upgradedLockStamp;
-//            }
+            exclusiveLock = true;
+            final long upgradedLockStamp = samplesWindowMotionLock.tryConvertToWriteLock(lockStamp);
+            if (upgradedLockStamp == 0) {//failed to upgrade the lock
+              samplesWindowMotionLock.unlockRead(lockStamp);
+              lockStamp = samplesWindowMotionLock.writeLock();
+            } else {
+              lockStamp = upgradedLockStamp;
+            }
             samplesWindowShiftSteps = this.samplesWindowShiftSteps;
             if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//double check if we still need to move the samples window
               this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
@@ -127,11 +127,11 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
           samples.addAndGet(rightSamplesWindowIdx(targetSamplesWindowShiftSteps), count);
         }
       } finally {
-//        if (exclusiveLock) {
-//          samplesWindowMotionLock.unlockWrite(lockStamp);
-//        } else {
-//          samplesWindowMotionLock.unlockRead(lockStamp);
-//        }
+        if (exclusiveLock) {
+          samplesWindowMotionLock.unlockWrite(lockStamp);
+        } else {
+          samplesWindowMotionLock.unlockRead(lockStamp);
+        }
       }
       getTicksTotalCounter().add(count);
     }

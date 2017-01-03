@@ -75,7 +75,7 @@ public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterT
             .build());
     final TickGenerator tickGenerator = new TickGenerator(
         startNanos,
-        startNanos + (long) (rnd.nextDouble(0, 500) * tp.samplesInterval.toNanos()),
+        startNanos + 3 * tp.samplesInterval.toNanos(),//startNanos + (long) (rnd.nextDouble(0, 500) * tp.samplesInterval.toNanos()),
         tp.repeatingInstants,
         tp.numberOfSamples,
         tp.numberOfThreads);
@@ -168,16 +168,16 @@ public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterT
         Collections.shuffle(shuffledSamples);
       }
       final Future<?> result = ex.submit(() -> {
+        latch.countDown();
+        try {
+          if (!latch.await(1, TimeUnit.SECONDS)) {
+            throw new RuntimeException("Time is out");
+          }
+        } catch (final InterruptedException e) {
+          throw new RuntimeException("Unexpected interruption");
+        }
         int i = 0;
         shuffledSamples.forEach(sample -> {
-          latch.countDown();
-          try {
-            if (!latch.await(1, TimeUnit.SECONDS)) {
-              throw new RuntimeException("Time is out");//TODO to something with this shit
-            }
-          } catch (final InterruptedException e) {
-            throw new RuntimeException("Unexpected interruption");
-          }
           rm.tick(sample.getValue(), sample.getKey());
           if (tickToRateRatio > 0 && i % tickToRateRatio == 0) {
             if (ThreadLocalRandom.current().nextBoolean()) {
