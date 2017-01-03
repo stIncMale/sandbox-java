@@ -33,7 +33,7 @@ public class RateMeterPerformanceTest {
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)
         .jvmArgsPrepend(server ? "-server" : "-client")
-        .timeUnit(TimeUnit.NANOSECONDS)
+        .timeUnit(TimeUnit.MILLISECONDS)
         .syncIterations(true)
         .shouldFailOnError(true)
         .shouldDoGC(true)
@@ -125,7 +125,8 @@ public class RateMeterPerformanceTest {
   @Test
   public void parallelAtomicArrayRateMeterRateMeter() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
-        .include(getClass().getName() + ".parallel_.*atomicArrayRateMeter")
+//        .include(getClass().getName() + ".parallel_.*atomicArrayRateMeter")
+        .include(getClass().getName() + ".parallel_4_tick_atomicArrayRateMeter")
         .threads(4)
         .build())
         .run();

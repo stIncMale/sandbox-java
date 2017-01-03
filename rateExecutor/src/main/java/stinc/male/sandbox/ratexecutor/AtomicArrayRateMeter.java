@@ -110,15 +110,13 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     if (count != 0) {
       final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
       long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-      if (samplesWindowShiftSteps - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is within or ahead of the samples history
+      if (samplesWindowShiftSteps - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is within the samples history
         boolean moved = false;
         while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps
             && !(moved = this.samplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//move the samples window if we we need to
           samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
         }
         final int targetIdx = rightSamplesWindowIdx(targetSamplesWindowShiftSteps);
-        @Nullable
-        final AtomicBoolean targetTickLock = tickLocks == null ? null : tickLocks[targetIdx];
         if (moved) {
           final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
@@ -126,13 +124,13 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
             for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
                 i < numberOfSteps;
                 idx = nextSamplesWindowIdx(idx), i++) {
-              tickResetSample(idx, idx == targetIdx ? count : 0, targetTickLock);
+              tickResetSample(idx, idx == targetIdx ? count : 0, tickLock(idx));
               final long expectedCompletedSamplesWindowShiftSteps = samplesWindowShiftSteps + i;
               this.completedSamplesWindowShiftSteps.compareAndSet(expectedCompletedSamplesWindowShiftSteps, expectedCompletedSamplesWindowShiftSteps + 1);//complete the reset step
             }
           } else {//reset all samples
             for (int idx = 0; idx < samples.length(); idx++) {
-              tickResetSample(idx, idx == targetIdx ? count : 0, targetTickLock);
+              tickResetSample(idx, idx == targetIdx ? count : 0, tickLock(idx));
             }
             long completedSamplesWindowShiftSteps = this.completedSamplesWindowShiftSteps.get();
             while (completedSamplesWindowShiftSteps < targetSamplesWindowShiftSteps
@@ -142,7 +140,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
           }
         } else {
           waitForCompletedWindowShiftSteps(targetSamplesWindowShiftSteps);
-          tickAccumulateSample(targetIdx, count, targetTickLock, targetSamplesWindowShiftSteps);
+          tickAccumulateSample(targetIdx, count, tickLock(targetIdx), targetSamplesWindowShiftSteps);
         }
       }
       getTicksTotalCounter().add(count);
@@ -227,6 +225,11 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     return failedAccuracyEventsCount.sum();
   }
 
+  @Nullable
+  private final AtomicBoolean tickLock(final int idx) {
+    return tickLocks == null ? null : tickLocks[idx];
+  }
+
   private final void tickResetSample(final int idx, final long value, @Nullable final AtomicBoolean lock) {
     while (lock != null && !lock.compareAndSet(false, true)) {
       Thread.yield();
@@ -251,8 +254,8 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
           this.failedAccuracyEventsCount.increment();
         }
       } else {
-        if (this.samplesWindowShiftSteps.get() - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is still within or ahead of the samples history
-          samples.set(targetIdx, samples.get(targetIdx) + delta);
+        if (this.samplesWindowShiftSteps.get() - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is still within the samples history
+          samples.set(targetIdx, samples.get(targetIdx) + delta);//we are under lock, so no need in CAS
         }
       }
     } finally {
