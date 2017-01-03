@@ -149,8 +149,7 @@ public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterT
       samples.put(startNanos, 0L);
       for (int i = 0; i < numberOfSamples - 1; i++) {
         final long tNanos = rnd.nextLong(startNanos, maxTNanosInclusive + 1);
-//        final long count = rnd.nextLong(-3, 4);TODO
-        final long count = rnd.nextLong(0, 4);
+        final long count = rnd.nextLong(-3, 4);
         samples.put(tNanos, count);
       }
       this.repeatingInstants = repeatingInstants;

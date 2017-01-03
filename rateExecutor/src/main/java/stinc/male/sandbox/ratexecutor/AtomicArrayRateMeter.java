@@ -124,7 +124,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
               }
             }
           }
-          samples.addAndGet(rightSamplesWindowIdx(targetSamplesWindowShiftSteps), count);
+          samples.getAndAdd(rightSamplesWindowIdx(targetSamplesWindowShiftSteps), count);
         }
       } finally {
         if (exclusiveLock) {
