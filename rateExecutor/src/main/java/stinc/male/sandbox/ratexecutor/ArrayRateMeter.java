@@ -73,7 +73,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
     if (count != 0) {
       final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
       final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
-      final long leftNanos = rightNanos - getSamplesIntervalNanos();
+      final long leftNanos = rightNanos - getSamplesIntervalNanos();//TODO improve the check as in AtomicArrayRateMeter (check we are inside the history, not within samples window)
       if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
         final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
         if (samplesWindowShiftSteps < targetSamplesWindowShiftSteps) {//we need to move the samples window

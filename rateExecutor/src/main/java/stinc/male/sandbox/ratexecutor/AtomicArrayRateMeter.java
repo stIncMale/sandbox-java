@@ -1,9 +1,11 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.StampedLock;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -15,13 +17,15 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   private static final RateMeterConfig defaultInstance = RateMeterConfig.newBuilder()
       .setTicksCounterSupplier(LongAdderTicksCounter::new)
       .build();
-  private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 3;
+  private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 3;//TODO config
 
   private final AtomicLongArray samples;//length is even
+  @Nullable
+  private final AtomicBoolean[] tickLocks;//same length as samples; required to overcome problem which arises when the samples window moved too far while we were executing tick method
   private final long samplesWindowStepNanos;
-  private volatile long samplesWindowShiftSteps;
+  private AtomicLong samplesWindowShiftSteps;
+  private AtomicLong completedSamplesWindowShiftSteps;
   private final LongAdder failedAccuracyEventsCount;
-  private final StampedLock samplesWindowMotionLock;
 
   /**
    * @return A reasonable configuration.
@@ -49,9 +53,17 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
             samplesIntervalArrayLength, sensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samples = new AtomicLongArray(2 * samplesIntervalArrayLength);
-    samplesWindowShiftSteps = 0;
+    if (true) {//TODO config
+      tickLocks = new AtomicBoolean[samples.length()];
+      for (int idx = 0; idx < tickLocks.length; idx++) {
+        tickLocks[idx] = new AtomicBoolean();
+      }
+    } else {
+      tickLocks = null;
+    }
+    samplesWindowShiftSteps = new AtomicLong();
+    completedSamplesWindowShiftSteps = new AtomicLong();
     failedAccuracyEventsCount = new LongAdder();
-    samplesWindowMotionLock = new StampedLock();
   }
 
   /**
@@ -64,21 +76,22 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
 
   @Override
   public long rightSamplesWindowBoundary() {
-    return rightSamplesWindowBoundary(samplesWindowShiftSteps);
+    return rightSamplesWindowBoundary(samplesWindowShiftSteps.get());
   }
 
   @Override
   public long ticksCount() {
-    long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+    long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
     long result = 0;
     for (int ri = 0; ri < MAX_OPTIMISTIC_READ_ATTEMPTS; ri++) {
       result = 0;
+      waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
           i < samples.length() / 2;
           idx = nextSamplesWindowIdx(idx), i++) {
         result += samples.get(idx);
       }
-      final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps;
+      final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
       if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length() / 2) {//the samples window may has been moved while we were counting, but result is still correct
         break;
       } else {//the samples window has been moved too far
@@ -95,42 +108,41 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   public void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
-      boolean exclusiveLock = false;
-      long lockStamp = samplesWindowMotionLock.readLock();
-      try {
-        long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
-        final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
-        final long leftNanos = rightNanos - getSamplesIntervalNanos();
-        if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
-          final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
-          if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//we need to move the samples window
-            exclusiveLock = true;
-            final long upgradedLockStamp = samplesWindowMotionLock.tryConvertToWriteLock(lockStamp);
-            if (upgradedLockStamp == 0) {//failed to upgrade the lock
-              samplesWindowMotionLock.unlockRead(lockStamp);
-              lockStamp = samplesWindowMotionLock.writeLock();
-            } else {
-              lockStamp = upgradedLockStamp;
+      final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
+      long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
+      if (samplesWindowShiftSteps - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is within or ahead of the samples history
+        boolean moved = false;
+        while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps
+            && !(moved = this.samplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//move the samples window if we we need to
+          samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
+        }
+        final int targetIdx = rightSamplesWindowIdx(targetSamplesWindowShiftSteps);
+        @Nullable
+        final AtomicBoolean targetTickLock = tickLocks == null ? null : tickLocks[targetIdx];
+        if (moved) {
+          final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
+          waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
+          if (numberOfSteps <= samples.length()) {//reset some samples
+            for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
+                i < numberOfSteps;
+                idx = nextSamplesWindowIdx(idx), i++) {
+              tickResetSample(idx, idx == targetIdx ? count : 0, targetTickLock);
+              final long expectedCompletedSamplesWindowShiftSteps = samplesWindowShiftSteps + i;
+              this.completedSamplesWindowShiftSteps.compareAndSet(expectedCompletedSamplesWindowShiftSteps, expectedCompletedSamplesWindowShiftSteps + 1);//complete the reset step
             }
-            samplesWindowShiftSteps = this.samplesWindowShiftSteps;
-            if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//double check if we still need to move the samples window
-              this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
-              final long numberOfStepsToMove = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
-              final long numberOfIterations = Math.min(samples.length(), numberOfStepsToMove);
-              for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
-                  i < numberOfIterations;
-                  idx = nextSamplesWindowIdx(idx), i++) {//reset moved samples
-                samples.set(idx, 0);
-              }
+          } else {//reset all samples
+            for (int idx = 0; idx < samples.length(); idx++) {
+              tickResetSample(idx, idx == targetIdx ? count : 0, targetTickLock);
+            }
+            long completedSamplesWindowShiftSteps = this.completedSamplesWindowShiftSteps.get();
+            while (completedSamplesWindowShiftSteps < targetSamplesWindowShiftSteps
+                && !(this.completedSamplesWindowShiftSteps.compareAndSet(completedSamplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//complete steps
+              completedSamplesWindowShiftSteps = this.completedSamplesWindowShiftSteps.get();
             }
           }
-          samples.getAndAdd(rightSamplesWindowIdx(targetSamplesWindowShiftSteps), count);
-        }
-      } finally {
-        if (exclusiveLock) {
-          samplesWindowMotionLock.unlockWrite(lockStamp);
         } else {
-          samplesWindowMotionLock.unlockRead(lockStamp);
+          waitForCompletedWindowShiftSteps(targetSamplesWindowShiftSteps);
+          tickAccumulateSample(targetIdx, count, targetTickLock, targetSamplesWindowShiftSteps);
         }
       }
       getTicksTotalCounter().add(count);
@@ -141,7 +153,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   public double rateAverage(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+    final long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
     final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
     final long leftNanos = rightNanos - samplesIntervalNanos;
     final long count;
@@ -155,7 +167,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     } else {//tNanos is within the samples window and not on the right border
       final long substractCount = count(tNanos, rightNanos);
       final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
-      final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps;
+      final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
       if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but substractCount is still correct
         count = ticksTotalCount() - substractCount;
         effectiveTNanos = rightSamplesWindowBoundary(tNanosSamplesWindowShiftSteps);
@@ -173,7 +185,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     checkArgument(tNanos, "tNanos");
     final double result;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+    final long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
     final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
     final long leftNanos = rightNanos - samplesIntervalNanos;
     if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
@@ -185,14 +197,14 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
       } else {
         long count = count(effectiveLeftNanos, rightNanos);
         final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
-        long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps;
+        long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
         if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but count is still correct
           result = count;
         } else {//the samples window has been moved too far
           failedAccuracyEventsCount.increment();
           if (NanosComparator.compare(tNanos, rightNanos) < 0 && newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length()) {//tNanos is within the samples window and we still have a chance to calculate rate for rightNanos
             count = count(leftNanos, rightNanos);
-            newSamplesWindowShiftSteps = this.samplesWindowShiftSteps;
+            newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
             if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but count is still correct
               result = count;
             } else {//average over all samples is the best we can do
@@ -211,13 +223,55 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
   }
 
-  public final long failedAccuracyEventsCount() {
+  public final long failedAccuracyEventsCount() {//TODO interface
     return failedAccuracyEventsCount.sum();
+  }
+
+  private final void tickResetSample(final int idx, final long value, @Nullable final AtomicBoolean lock) {
+    while (lock != null && !lock.compareAndSet(false, true)) {
+      Thread.yield();
+    }
+    try {
+      samples.set(idx, value);
+    } finally {
+      if (lock != null) {
+        lock.set(false);
+      }
+    }
+  }
+
+  private final void tickAccumulateSample(final int targetIdx, final long delta, @Nullable final AtomicBoolean lock, final long targetSamplesWindowShiftSteps) {
+    while (lock != null && !lock.compareAndSet(false, true)) {
+      Thread.yield();
+    }
+    try {
+      if (lock == null) {
+        samples.getAndAdd(targetIdx, delta);
+        if (targetSamplesWindowShiftSteps < this.samplesWindowShiftSteps.get() - samples.length()) {//we could have accounted the sample at the incorrect instant because samples window was moved too far
+          this.failedAccuracyEventsCount.increment();
+        }
+      } else {
+        if (this.samplesWindowShiftSteps.get() - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is still within or ahead of the samples history
+          samples.set(targetIdx, samples.get(targetIdx) + delta);
+        }
+      }
+    } finally {
+      if (lock != null) {
+        lock.set(false);
+      }
+    }
+  }
+
+  private final void waitForCompletedWindowShiftSteps(final long samplesWindowShiftSteps) {
+    while (this.completedSamplesWindowShiftSteps.get() < samplesWindowShiftSteps) {
+      Thread.yield();
+    }
   }
 
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {
     final long fromInclusiveNanos = fromExclusiveNanos + 1;
     final long fromInclusiveSamplesWindowShiftSteps = samplesWindowShiftSteps(fromInclusiveNanos);
+    waitForCompletedWindowShiftSteps(fromInclusiveSamplesWindowShiftSteps);
     final long toInclusiveSamplesWindowShiftSteps = samplesWindowShiftSteps(toInclusiveNanos);
     long result = 0;
     for (int idx = rightSamplesWindowIdx(fromInclusiveSamplesWindowShiftSteps), i = 0;

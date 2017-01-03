@@ -17,11 +17,11 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
   private static final RateMeterConfig defaultInstance = RateMeterConfig.newBuilder()
       .setTicksCounterSupplier(LongAdderTicksCounter::new)
       .build();
-  private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 3;
+  private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 3;//TODO config
 
   private final AtomicLongArray samples;//length is even
   @Nullable
-  private final AtomicBoolean[] abaLocks;//same length as samples; required to overcome the ABA problem with CAS in the tick method
+  private final AtomicBoolean[] tickLocks;//same length as samples; required to overcome problem which arises when the samples window moved too far while we were executing tick method
   private final long samplesWindowStepNanos;
   private AtomicLong samplesWindowShiftSteps;
   private AtomicLong completedSamplesWindowShiftSteps;
@@ -53,13 +53,13 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
             samplesIntervalArrayLength, sensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samples = new AtomicLongArray(2 * samplesIntervalArrayLength);
-    if (true) {
-      abaLocks = new AtomicBoolean[samples.length()];
-      for (int idx = 0; idx < abaLocks.length; idx++) {
-        abaLocks[idx] = new AtomicBoolean();
+    if (true) {//TODO config
+      tickLocks = new AtomicBoolean[samples.length()];
+      for (int idx = 0; idx < tickLocks.length; idx++) {
+        tickLocks[idx] = new AtomicBoolean();
       }
     } else {
-      abaLocks = null;
+      tickLocks = null;
     }
     samplesWindowShiftSteps = new AtomicLong();
     completedSamplesWindowShiftSteps = new AtomicLong();
@@ -110,7 +110,7 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
     if (count != 0) {
       final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
       long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-      if (samplesWindowShiftSteps - samples.length() / 2 < targetSamplesWindowShiftSteps) {//tNanos is within or ahead of the samples window
+      if (samplesWindowShiftSteps - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is within or ahead of the samples history
         boolean moved = false;
         while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps
             && !(moved = this.samplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//move the samples window if we we need to
@@ -118,7 +118,7 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
         }
         final int targetIdx = rightSamplesWindowIdx(targetSamplesWindowShiftSteps);
         @Nullable
-        final AtomicBoolean targetAbaLock = abaLocks == null ? null : abaLocks[targetIdx];
+        final AtomicBoolean targetTickLock = tickLocks == null ? null : tickLocks[targetIdx];
         if (moved) {
           final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
@@ -126,39 +126,13 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
             for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
                 i < numberOfSteps;
                 idx = nextSamplesWindowIdx(idx), i++) {
-              while (targetAbaLock != null && !targetAbaLock.compareAndSet(false, true)) {
-                Thread.yield();
-              }
-              try {
-                if (idx == targetIdx) {
-                  samples.set(idx, count);
-                } else {
-                  samples.set(idx, 0);
-                }
-              } finally {
-                if (targetAbaLock != null) {
-                  targetAbaLock.set(false);
-                }
-              }
+              tickResetSample(idx, idx == targetIdx ? count : 0, targetTickLock);
               final long expectedCompletedSamplesWindowShiftSteps = samplesWindowShiftSteps + i;
               this.completedSamplesWindowShiftSteps.compareAndSet(expectedCompletedSamplesWindowShiftSteps, expectedCompletedSamplesWindowShiftSteps + 1);//complete the reset step
             }
           } else {//reset all samples
             for (int idx = 0; idx < samples.length(); idx++) {
-              while (targetAbaLock != null && !targetAbaLock.compareAndSet(false, true)) {
-                Thread.yield();
-              }
-              try {
-                if (idx == targetIdx) {
-                  samples.set(idx, count);
-                } else {
-                  samples.set(idx, 0);
-                }
-              } finally {
-                if (targetAbaLock != null) {
-                  targetAbaLock.set(false);
-                }
-              }
+              tickResetSample(idx, idx == targetIdx ? count : 0, targetTickLock);
             }
             long completedSamplesWindowShiftSteps = this.completedSamplesWindowShiftSteps.get();
             while (completedSamplesWindowShiftSteps < targetSamplesWindowShiftSteps
@@ -168,25 +142,7 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
           }
         } else {
           waitForCompletedWindowShiftSteps(targetSamplesWindowShiftSteps);
-          while (targetAbaLock != null && !targetAbaLock.compareAndSet(false, true)) {
-            Thread.yield();
-          }
-          try {
-            if (targetAbaLock == null) {
-              samples.getAndAdd(targetIdx, count);
-              if (targetSamplesWindowShiftSteps < this.samplesWindowShiftSteps.get() - samples.length() / 2) {//we could have accounted the sample at the incorrect instant because of the ABA problem
-                this.failedAccuracyEventsCount.increment();
-              }
-            } else {
-              if (this.samplesWindowShiftSteps.get() - samples.length() / 2 < targetSamplesWindowShiftSteps) {//tNanos is still within or ahead of the samples window
-                samples.set(targetIdx, samples.get(targetIdx) + count);
-              }
-            }
-          } finally {
-            if (targetAbaLock != null) {
-              targetAbaLock.set(false);
-            }
-          }
+          tickAccumulateSample(targetIdx, count, targetTickLock, targetSamplesWindowShiftSteps);
         }
       }
       getTicksTotalCounter().add(count);
@@ -267,8 +223,43 @@ public class NEW_AtomicArrayRateMeter extends AbstractRateMeter {
     return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
   }
 
-  public final long failedAccuracyEventsCount() {
+  public final long failedAccuracyEventsCount() {//TODO interface
     return failedAccuracyEventsCount.sum();
+  }
+
+  private final void tickResetSample(final int idx, final long value, @Nullable final AtomicBoolean lock) {
+    while (lock != null && !lock.compareAndSet(false, true)) {
+      Thread.yield();
+    }
+    try {
+      samples.set(idx, value);
+    } finally {
+      if (lock != null) {
+        lock.set(false);
+      }
+    }
+  }
+
+  private final void tickAccumulateSample(final int targetIdx, final long delta, @Nullable final AtomicBoolean lock, final long targetSamplesWindowShiftSteps) {
+    while (lock != null && !lock.compareAndSet(false, true)) {
+      Thread.yield();
+    }
+    try {
+      if (lock == null) {
+        samples.getAndAdd(targetIdx, delta);
+        if (targetSamplesWindowShiftSteps < this.samplesWindowShiftSteps.get() - samples.length()) {//we could have accounted the sample at the incorrect instant because samples window was moved too far
+          this.failedAccuracyEventsCount.increment();
+        }
+      } else {
+        if (this.samplesWindowShiftSteps.get() - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is still within or ahead of the samples history
+          samples.set(targetIdx, samples.get(targetIdx) + delta);
+        }
+      }
+    } finally {
+      if (lock != null) {
+        lock.set(false);
+      }
+    }
   }
 
   private final void waitForCompletedWindowShiftSteps(final long samplesWindowShiftSteps) {
