@@ -76,7 +76,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
       final long leftNanos = rightNanos - getSamplesIntervalNanos();
       if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
         final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
-        if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//we need to move the samples window
+        if (samplesWindowShiftSteps < targetSamplesWindowShiftSteps) {//we need to move the samples window
           this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
           final long numberOfStepsToMove = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
           final long numberOfIterations = Math.min(samples.length, numberOfStepsToMove);

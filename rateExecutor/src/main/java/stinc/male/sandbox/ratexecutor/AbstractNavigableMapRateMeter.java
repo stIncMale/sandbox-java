@@ -29,7 +29,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
    * (0,Double.MAX_VALUE]<br>
    * The bigger, the less frequently GC happens, but the more elements are maintained in samples.
    */
-  private final double gcFactor = 0.3;
+  private final double gcRatio = 0.3;
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -217,7 +217,8 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   private final boolean gcRequired(final long rightSamplesWindowBoundary) {
     final long samplesWindowShiftNanos = rightSamplesWindowBoundary - gcLastRightSamplesWindowBoundary;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final boolean result = (double)samplesWindowShiftNanos / samplesIntervalNanos >= 2 + gcFactor;//2 is required to maintain history span of 2 * samplesIntervalNanos
+    final double maxRatio = 2 + gcRatio;
+    final boolean result = maxRatio <= (double)samplesWindowShiftNanos / samplesIntervalNanos;//2 is required to maintain history span of 2 * samplesIntervalNanos
     return result;
   }
 
