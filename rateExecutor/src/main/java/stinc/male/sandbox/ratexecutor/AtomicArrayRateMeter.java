@@ -42,7 +42,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     super(startNanos, samplesInterval, config);
     final long sensitivityNanos = config.getTimeSensitivity().toNanos();
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final int samplesIntervalArrayLength = (int)(samplesIntervalNanos / sensitivityNanos);
+    final int samplesIntervalArrayLength = (int) (samplesIntervalNanos / sensitivityNanos);
     Preconditions.checkArgument(samplesIntervalNanos / samplesIntervalArrayLength * samplesIntervalArrayLength == samplesIntervalNanos, "samplesInterval",
         () -> String.format(
             "The specified samplesInterval %snanos and timeSensitivity %snanos can not be used together because samplesInterval can not be devided evenly by timeSensitivity",
@@ -74,8 +74,8 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     for (int ri = 0; ri < MAX_OPTIMISTIC_READ_ATTEMPTS; ri++) {
       result = 0;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
-           i < samples.length() / 2;
-           idx = nextSamplesWindowIdx(idx), i++) {
+          i < samples.length() / 2;
+          idx = nextSamplesWindowIdx(idx), i++) {
         result += samples.get(idx);
       }
       final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps;
@@ -92,26 +92,26 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   }
 
   @Override
-  public void tick(final long count, final long tNanos) {
+  public synchronized void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
-      long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
-      final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
-      final long leftNanos = rightNanos - getSamplesIntervalNanos();
-      if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
-        boolean exclusiveLock = false;
-        long lockStamp = samplesWindowMotionLock.readLock();
-        try {
+      boolean exclusiveLock = false;
+//      long lockStamp = samplesWindowMotionLock.readLock();
+      try {
+        long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+        final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
+        final long leftNanos = rightNanos - getSamplesIntervalNanos();
+        if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
           final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
           if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//we need to move the samples window
-            exclusiveLock = true;
-            final long upgradedLockStamp = samplesWindowMotionLock.tryConvertToWriteLock(lockStamp);
-            if (upgradedLockStamp == 0) {//failed to upgrade the lock
-              samplesWindowMotionLock.unlockRead(lockStamp);
-              lockStamp = samplesWindowMotionLock.writeLock();
-            } else {
-              lockStamp = upgradedLockStamp;
-            }
+//            exclusiveLock = true;
+//            final long upgradedLockStamp = samplesWindowMotionLock.tryConvertToWriteLock(lockStamp);
+//            if (upgradedLockStamp == 0) {//failed to upgrade the lock
+//              samplesWindowMotionLock.unlockRead(lockStamp);
+//              lockStamp = samplesWindowMotionLock.writeLock();
+//            } else {
+//              lockStamp = upgradedLockStamp;
+//            }
             samplesWindowShiftSteps = this.samplesWindowShiftSteps;
             if (targetSamplesWindowShiftSteps > samplesWindowShiftSteps) {//double check if we still need to move the samples window
               this.samplesWindowShiftSteps = targetSamplesWindowShiftSteps;
@@ -125,13 +125,13 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
             }
           }
           samples.addAndGet(rightSamplesWindowIdx(targetSamplesWindowShiftSteps), count);
-        } finally {
-          if (exclusiveLock) {
-            samplesWindowMotionLock.unlockWrite(lockStamp);
-          } else {
-            samplesWindowMotionLock.unlockRead(lockStamp);
-          }
         }
+      } finally {
+//        if (exclusiveLock) {
+//          samplesWindowMotionLock.unlockWrite(lockStamp);
+//        } else {
+//          samplesWindowMotionLock.unlockRead(lockStamp);
+//        }
       }
       getTicksTotalCounter().add(count);
     }
@@ -153,8 +153,8 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
       count = ticksTotalCount();
       effectiveTNanos = tNanos;
     } else {//tNanos is within the samples window and not on the right border
-      final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
       final long substractCount = count(tNanos, rightNanos);
+      final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
       final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps;
       if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but substractCount is still correct
         count = ticksTotalCount() - substractCount;
@@ -169,7 +169,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   }
 
   @Override
-  public double rate(final long tNanos) {//TODO refactor to check if reads/counts were successful
+  public double rate(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final double result;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
@@ -183,7 +183,25 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
       if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and the are no samples for the requested tNanos
         result = 0;
       } else {
-        result = count(effectiveLeftNanos, rightNanos);
+        long count = count(effectiveLeftNanos, rightNanos);
+        final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
+        long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps;
+        if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but count is still correct
+          result = count;
+        } else {//the samples window has been moved too far
+          failedAccuracyEventsCount.increment();
+          if (NanosComparator.compare(tNanos, rightNanos) < 0 && newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length()) {//tNanos is within the samples window and we still have a chance to calculate rate for rightNanos
+            count = count(leftNanos, rightNanos);
+            newSamplesWindowShiftSteps = this.samplesWindowShiftSteps;
+            if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but count is still correct
+              result = count;
+            } else {//average over all samples is the best we can do
+              result = RateMeterMath.rateAverage(rightSamplesWindowBoundary(newSamplesWindowShiftSteps), samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
+            }
+          } else {//average over all samples is the best we can do
+            result = RateMeterMath.rateAverage(rightSamplesWindowBoundary(newSamplesWindowShiftSteps), samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
+          }
+        }
       }
     }
     return result;
@@ -199,8 +217,8 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     final long toInclusiveSamplesWindowShiftSteps = samplesWindowShiftSteps(toInclusiveNanos);
     long result = 0;
     for (int idx = rightSamplesWindowIdx(fromInclusiveSamplesWindowShiftSteps), i = 0;
-         i < toInclusiveSamplesWindowShiftSteps - fromInclusiveSamplesWindowShiftSteps + 1;
-         idx = nextSamplesWindowIdx(idx), i++) {
+        i < toInclusiveSamplesWindowShiftSteps - fromInclusiveSamplesWindowShiftSteps + 1;
+        idx = nextSamplesWindowIdx(idx), i++) {
       result += samples.get(idx);
     }
     return result;
@@ -214,11 +232,11 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   }
 
   private final int leftSamplesWindowIdx(final long samplesWindowShiftSteps) {
-    return (int)(Math.abs((samplesWindowShiftSteps + samples.length() / 2) % samples.length()));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int) (Math.abs((samplesWindowShiftSteps + samples.length() / 2) % samples.length()));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int rightSamplesWindowIdx(final long samplesWindowShiftSteps) {
-    return (int)(Math.abs((samplesWindowShiftSteps + samples.length() - 1) % samples.length()));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int) (Math.abs((samplesWindowShiftSteps + samples.length() - 1) % samples.length()));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int nextSamplesWindowIdx(final int idx) {

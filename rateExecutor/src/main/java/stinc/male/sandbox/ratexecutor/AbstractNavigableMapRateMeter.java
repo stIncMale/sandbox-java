@@ -178,7 +178,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
           result = count(effectiveLeftNanos, tNanos);
         } else {
           long count = count(effectiveLeftNanos, tNanos);
-          final long newRightNanos = rightSamplesWindowBoundary();
+          long newRightNanos = rightSamplesWindowBoundary();
           final long safeLeft = newRightNanos - 2 * samplesIntervalNanos;
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
             result = count;
@@ -186,14 +186,14 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
             failedAccuracyEventsCount.increment();
             if (NanosComparator.compare(tNanos, rightNanos) < 0 && NanosComparator.compare(safeLeft, leftNanos) <= 0) {//tNanos is within the samples window and we still have a chance to calculate rate for rightNanos
               count = count(leftNanos, rightNanos);
-              final long newNewRightNanos = rightSamplesWindowBoundary();
-              if (NanosComparator.compare(newNewRightNanos - 2 * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
+              newRightNanos = rightSamplesWindowBoundary();
+              if (NanosComparator.compare(newRightNanos - 2 * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
                 result = count;
               } else {//average over all samples is the best we can do
-                result = RateMeterMath.rateAverage(newNewRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
+                result = RateMeterMath.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
               }
             } else {//average over all samples is the best we can do
-              result = RateMeterMath.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
+              result = RateMeterMath.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
             }
           }
         }
