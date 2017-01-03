@@ -75,7 +75,7 @@ public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterT
             .build());
     final TickGenerator tickGenerator = new TickGenerator(
         startNanos,
-        startNanos + 3 * tp.samplesInterval.toNanos(),//startNanos + (long) (rnd.nextDouble(0, 500) * tp.samplesInterval.toNanos()),
+        startNanos + (long) (rnd.nextDouble(0, 500) * tp.samplesInterval.toNanos()),
         tp.repeatingInstants,
         tp.numberOfSamples,
         tp.numberOfThreads);
