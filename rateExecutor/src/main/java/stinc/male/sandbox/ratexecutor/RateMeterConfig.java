@@ -40,7 +40,7 @@ public class RateMeterConfig {
    * {@link AbstractRateMeter} MUST do this checking, or MUST omit it.
    * @return {@code false} by default.
    */
-  public final boolean isCheckArguments() {//TODO test performance with and without it
+  public final boolean isCheckArguments() {
     return checkArguments;
   }
 
