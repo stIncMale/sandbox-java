@@ -38,7 +38,6 @@ public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterT
 
   @Test
   public final void test() throws InterruptedException {
-    if (getClass() != AtomicArrayRateMeterConcurrentTest.class) return;
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 1; i <= 10_000; i++) {
       final Duration samplesInterval = ofNanos(rnd.nextInt(1, 400));

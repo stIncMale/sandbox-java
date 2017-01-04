@@ -17,7 +17,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   private static final RateMeterConfig defaultInstance = RateMeterConfig.newBuilder()
       .setTicksCounterSupplier(LongAdderTicksCounter::new)
       .build();
-  private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 3;//TODO config
+  private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 100;//TODO config
 
   private final AtomicLongArray samples;//length is even
   @Nullable
@@ -87,18 +87,26 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
       result = 0;
       waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
       final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
-      for (int idx = leftSamplesWindowIdx, i = 0;
-          i < samples.length() / 2;
-          idx = nextSamplesWindowIdx(idx), i++) {
-        result += samples.get(idx);
-      }
-      final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-      if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length() / 2) {//the samples window may has been moved while we were counting, but result is still correct
-        break;
-      } else {//the samples window has been moved too far
-        samplesWindowShiftSteps = newSamplesWindowShiftSteps;
-        if (ri == MAX_OPTIMISTIC_READ_ATTEMPTS - 1) {//all read attempts have been exhausted, return what we have
-          failedAccuracyEventsCount.increment();
+      if (ri > 0) {//not the first attempt
+        lock(leftSamplesWindowIdx);//this lock decreases a race condition window
+      } try {
+        for (int idx = leftSamplesWindowIdx, i = 0;
+            i < samples.length() / 2;
+            idx = nextSamplesWindowIdx(idx), i++) {
+          result += samples.get(idx);
+        }
+      } finally {
+        final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
+        if (ri > 0) {
+          unlock(leftSamplesWindowIdx);
+        }
+        if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length() / 2) {//the samples window may has been moved while we were counting, but result is still correct
+          break;
+        } else {//the samples window has been moved too far
+          samplesWindowShiftSteps = newSamplesWindowShiftSteps;
+          if (ri == MAX_OPTIMISTIC_READ_ATTEMPTS - 1) {//all read attempts have been exhausted, return what we have
+            failedAccuracyEventsCount.increment();
+          }
         }
       }
     }
@@ -201,7 +209,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
           result = count;
         } else {//the samples window has been moved too far
           failedAccuracyEventsCount.increment();
-          if (NanosComparator.compare(tNanos, rightNanos) < 0 && newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length()) {//tNanos is within the samples window and we still have a chance to calculate rate for rightNanos
+          if (NanosComparator.compare(tNanos, rightNanos) < 0 && newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length()) {//tNanos is within the samples window and we still have a chance to calculate rate for rightNanos TODO remove this option
             count = count(leftNanos, rightNanos);
             newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
             if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but count is still correct
