@@ -13,7 +13,7 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @ThreadSafe
 public class AtomicArrayRateMeter extends AbstractRateMeter {
-  private static final RateMeterConfig defaultInstance = RateMeterConfig.newBuilder()
+  private static final ConcurrentRingBufferRateMeterConfig defaultInstance = ConcurrentRingBufferRateMeterConfig.newBuilder()
       .setTicksCounterSupplier(LongAdderTicksCounter::new)
       .build();
   private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 100;//TODO config
@@ -28,7 +28,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   /**
    * @return A reasonable configuration.
    */
-  public static final RateMeterConfig defaultConfig() {
+  public static final ConcurrentRingBufferRateMeterConfig defaultConfig() {
     return defaultInstance;
   }
 
@@ -40,7 +40,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   public AtomicArrayRateMeter(
       final long startNanos,
       final Duration samplesInterval,
-      final RateMeterConfig config) {
+      final ConcurrentRingBufferRateMeterConfig config) {
     super(startNanos, samplesInterval, config);
     final long sensitivityNanos = config.getTimeSensitivity().toNanos();
     final long samplesIntervalNanos = getSamplesIntervalNanos();
@@ -51,7 +51,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
             samplesIntervalArrayLength, sensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samples = new AtomicLongArray(2 * samplesIntervalArrayLength);
-    if (true) {//TODO config
+    if (config.isStrictTick()) {
       tickLocks = new AtomicBoolean[samples.length()];
       for (int idx = 0; idx < tickLocks.length; idx++) {
         tickLocks[idx] = new AtomicBoolean();
@@ -64,7 +64,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   }
 
   /**
-   * Acts like {@link #AtomicArrayRateMeter(long, Duration, RateMeterConfig)} with {@link #defaultConfig()}
+   * Acts like {@link #AtomicArrayRateMeter(long, Duration, ConcurrentRingBufferRateMeterConfig)} with {@link #defaultConfig()}
    * as the third argument.
    */
   public AtomicArrayRateMeter(final long startNanos, final Duration samplesInterval) {

@@ -1,13 +1,14 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
+import java.util.function.Supplier;
 import org.junit.Test;
 import static java.time.Duration.ofNanos;
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractRateMeterUnitTest extends AbstractRateMeterTest {//TODO add tests for RateMeter with timeSensitivity > 1nanos
-  AbstractRateMeterUnitTest(final RateMeterCreator rateMeterCreator) {
-    super(rateMeterCreator);
+public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {//TODO add tests for RateMeter with timeSensitivity > 1nanos
+  AbstractRateMeterUnitTest(final Supplier<B> rateMeterConfigBuilderSupplier, final RateMeterCreator<C> rateMeterCreator) {
+    super(rateMeterConfigBuilderSupplier, rateMeterCreator);
   }
 
   @Test
@@ -233,13 +234,16 @@ public abstract class AbstractRateMeterUnitTest extends AbstractRateMeterTest {/
   }
 
   private final RateMeter newRateMeter(final long startNanos, final Duration samplesInterval) {
+    @SuppressWarnings("unchecked")
+    final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
+        .get()
+        .setCheckArguments(true)
+        .setTimeSensitivity(ofNanos(1))
+        .build();
     return getRateMeterCreator().create(
         startNanos,
         samplesInterval,
-        RateMeterConfig.newBuilder()
-            .setCheckArguments(true)
-            .setTimeSensitivity(ofNanos(1))
-            .build());
+        rateMeterConfig);
   }
 
   private static final void assertDoubleEquals(final double extected, final double actual) {

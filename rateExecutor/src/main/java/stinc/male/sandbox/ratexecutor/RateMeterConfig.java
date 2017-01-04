@@ -93,10 +93,10 @@ public class RateMeterConfig {
 
   @NotThreadSafe
   public static class Builder {
-    private boolean checkArguments;
-    private Function<Long, ? extends TicksCounter> ticksCounterSupplier;
-    private Duration timeSensitivity;
-    private boolean collectStats;
+    protected boolean checkArguments;
+    protected Function<Long, ? extends TicksCounter> ticksCounterSupplier;
+    protected Duration timeSensitivity;
+    protected boolean collectStats;
 
     protected Builder() {
       checkArguments = false;
@@ -106,15 +106,16 @@ public class RateMeterConfig {
     }
 
     protected Builder(final RateMeterConfig config) {
-      checkArguments = config.checkArguments;
-      ticksCounterSupplier = config.ticksCounterSupplier;
-      timeSensitivity = config.timeSensitivity;
+      checkArguments = config.isCheckArguments();
+      ticksCounterSupplier = config.getTicksCounterSupplier();
+      timeSensitivity = config.getTimeSensitivity();
+      collectStats = config.isCollectStats();
     }
 
     /**
      * @see RateMeterConfig#isCheckArguments()
      */
-    public final Builder setCheckArguments(final boolean checkArguments) {
+    public Builder setCheckArguments(final boolean checkArguments) {
       this.checkArguments = checkArguments;
       return this;
     }
@@ -123,7 +124,7 @@ public class RateMeterConfig {
      * @param ticksCounterSupplier Must be immutable.
      * @see RateMeterConfig#getTicksCounterSupplier()
      */
-    public final Builder setTicksCounterSupplier(final Function<Long, ? extends TicksCounter> ticksCounterSupplier) {
+    public Builder setTicksCounterSupplier(final Function<Long, ? extends TicksCounter> ticksCounterSupplier) {
       checkNotNull(ticksCounterSupplier, "ticksCounterSupplier");
       this.ticksCounterSupplier = ticksCounterSupplier;
       return this;
@@ -133,7 +134,7 @@ public class RateMeterConfig {
      * @param timeSensitivity Must be positive (not {@linkplain Duration#isNegative() negative} and not {@linkplain Duration#isZero() zero}).
      * @see RateMeterConfig#getTimeSensitivity()
      */
-    public final Builder setTimeSensitivity(final Duration timeSensitivity) {
+    public Builder setTimeSensitivity(final Duration timeSensitivity) {
       checkNotNull(timeSensitivity, "timeSensitivity");
       checkArgument(!timeSensitivity.isNegative(), "timeSensitivity", "Must be positive");
       checkArgument(!timeSensitivity.isZero(), "timeSensitivity", "Must not be zero");
@@ -144,7 +145,7 @@ public class RateMeterConfig {
     /**
      * @see RateMeterConfig#isCollectStats()
      */
-    public final Builder setCollectStats(final boolean collectStats) {
+    public Builder setCollectStats(final boolean collectStats) {
       this.collectStats = collectStats;
       return this;
     }

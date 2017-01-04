@@ -1,7 +1,9 @@
 package stinc.male.sandbox.ratexecutor;
 
-public final class AtomicArrayRateMeterTest extends AbstractRateMeterUnitTest {
+public final class AtomicArrayRateMeterTest extends AbstractRateMeterUnitTest<ConcurrentRingBufferRateMeterConfig.Builder, ConcurrentRingBufferRateMeterConfig> {
   public AtomicArrayRateMeterTest() {
-    super(AtomicArrayRateMeter::new);
+    super(
+        ConcurrentRingBufferRateMeterConfig.Builder::new,
+        AtomicArrayRateMeter::new);
   }
 }

@@ -15,6 +15,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
@@ -22,16 +23,17 @@ import org.junit.Test;
 import static java.time.Duration.ofNanos;
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterTest {
+public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig.Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final int numberOfThreads;
   private ExecutorService ex;
 
-  AbstractRateMeterConcurrentTest(
-      final RateMeterCreator rateMeterCreator,
+  AbstractRateMeterConcurrencyTest(
+      final Supplier<B> rateMeterConfigBuilderSupplier,
+      final RateMeterCreator<C> rateMeterCreator,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final int numberOfThreads) {
-    super(rateMeterCreator);
+    super(rateMeterConfigBuilderSupplier, rateMeterCreator);
     this.ticksCounterSupplier = ticksCounterSupplier;
     this.numberOfThreads = numberOfThreads;
   }
@@ -65,14 +67,17 @@ public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterT
   private final void doTest(final int iterationIdx, final TestParams tp, final ExecutorService ex) {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     final long startNanos = rnd.nextLong();
+    @SuppressWarnings("unchecked")
+    final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
+        .get()
+        .setCheckArguments(true)
+        .setTimeSensitivity(ofNanos(1))
+        .setTicksCounterSupplier(ticksCounterSupplier)
+        .build();
     final RateMeter rm = getRateMeterCreator().create(
         startNanos,
         tp.samplesInterval,
-        RateMeterConfig.newBuilder()
-            .setCheckArguments(true)
-            .setTimeSensitivity(ofNanos(1))
-            .setTicksCounterSupplier(ticksCounterSupplier)
-            .build());
+        rateMeterConfig);
     final TickGenerator tickGenerator = new TickGenerator(
         startNanos,
         startNanos + (long) (rnd.nextDouble(0, 500) * tp.samplesInterval.toNanos()),

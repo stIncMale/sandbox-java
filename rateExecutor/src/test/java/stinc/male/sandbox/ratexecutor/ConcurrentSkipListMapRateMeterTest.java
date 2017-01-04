@@ -1,7 +1,9 @@
 package stinc.male.sandbox.ratexecutor;
 
-public final class ConcurrentSkipListMapRateMeterTest extends AbstractRateMeterUnitTest {
+public final class ConcurrentSkipListMapRateMeterTest extends AbstractRateMeterUnitTest<RateMeterConfig.Builder, RateMeterConfig> {
   public ConcurrentSkipListMapRateMeterTest() {
-    super(ConcurrentSkipListMapRateMeter::new);
+    super(
+        RateMeterConfig.Builder::new,
+        ConcurrentSkipListMapRateMeter::new);
   }
 }

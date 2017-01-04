@@ -484,7 +484,7 @@ public class RateMeterPerformanceTest {
               .setTicksCounterSupplier(LongTicksCounter::new)
               .build());
       atomicArrayRateMeter = new AtomicArrayRateMeter(nanoTime(), samplesInterval,
-          rateMeterConfigBuilderSuppplier.get()
+          ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build())
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
     }
@@ -505,7 +505,7 @@ public class RateMeterPerformanceTest {
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
       atomicArrayRateMeter = new AtomicArrayRateMeter(nanoTime(), samplesInterval,
-          rateMeterConfigBuilderSuppplier.get()
+          ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build())
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
     }

@@ -1,7 +1,9 @@
 package stinc.male.sandbox.ratexecutor;
 
-public final class TreeMapRateMeterTest extends AbstractRateMeterUnitTest {
+public final class TreeMapRateMeterTest extends AbstractRateMeterUnitTest<RateMeterConfig.Builder, RateMeterConfig> {
   public TreeMapRateMeterTest() {
-    super(TreeMapRateMeter::new);
+    super(
+        RateMeterConfig.Builder::new,
+        TreeMapRateMeter::new);
   }
 }

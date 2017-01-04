@@ -1,7 +1,9 @@
 package stinc.male.sandbox.ratexecutor;
 
-public final class ArrayRateMeterTest extends AbstractRateMeterUnitTest {
+public final class ArrayRateMeterTest extends AbstractRateMeterUnitTest<RateMeterConfig.Builder, RateMeterConfig> {
   public ArrayRateMeterTest() {
-    super(ArrayRateMeter::new);
+    super(
+        RateMeterConfig.Builder::new,
+        ArrayRateMeter::new);
   }
 }
