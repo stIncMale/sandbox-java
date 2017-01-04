@@ -40,7 +40,7 @@ public abstract class AbstractRateMeterConcurrentTest extends AbstractRateMeterT
   public final void test() throws InterruptedException {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 1; i <= 10_000; i++) {
-      final Duration samplesInterval = ofNanos(rnd.nextInt(1, 400));
+      final Duration samplesInterval = i == 1 ? ofNanos(1) : ofNanos(rnd.nextInt(1, 400));
       final TestParams tp = new TestParams(
           numberOfThreads,
           2_500,
