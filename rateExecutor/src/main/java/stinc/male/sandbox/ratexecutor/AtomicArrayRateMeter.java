@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.concurrent.atomic.LongAdder;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -25,7 +24,6 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   private final long samplesWindowStepNanos;
   private AtomicLong samplesWindowShiftSteps;
   private AtomicLong completedSamplesWindowShiftSteps;
-  private final LongAdder failedAccuracyEventsCount;
 
   /**
    * @return A reasonable configuration.
@@ -63,7 +61,6 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     }
     samplesWindowShiftSteps = new AtomicLong();
     completedSamplesWindowShiftSteps = new AtomicLong();
-    failedAccuracyEventsCount = new LongAdder();
   }
 
   /**
@@ -105,7 +102,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
         } else {//the samples window has been moved too far
           samplesWindowShiftSteps = newSamplesWindowShiftSteps;
           if (ri == MAX_OPTIMISTIC_READ_ATTEMPTS - 1) {//all read attempts have been exhausted, return what we have
-            failedAccuracyEventsCount.increment();
+            getStats().accountFailedAccuracyEventForTicksCount();
           }
         }
       }
@@ -179,7 +176,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
         count = ticksTotalCount() - substractCount;
         effectiveTNanos = rightSamplesWindowBoundary(tNanosSamplesWindowShiftSteps);
       } else {//the samples window has been moved too far, so average over all samples is the best we can do
-        failedAccuracyEventsCount.increment();
+        getStats().accountFailedAccuracyEventForRateAverage();
         count = ticksTotalCount();
         effectiveTNanos = rightSamplesWindowBoundary(newSamplesWindowShiftSteps);
       }
@@ -208,7 +205,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
         if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but count is still correct
           result = count;
         } else {//the samples window has been moved too far
-          failedAccuracyEventsCount.increment();
+          getStats().accountFailedAccuracyEventForRate();
           if (NanosComparator.compare(tNanos, rightNanos) < 0 && newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length()) {//tNanos is within the samples window and we still have a chance to calculate rate for rightNanos TODO remove this option
             count = count(leftNanos, rightNanos);
             newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
@@ -228,10 +225,6 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
 
   public long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
     return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
-  }
-
-  public final long failedAccuracyEventsCount() {//TODO interface
-    return failedAccuracyEventsCount.sum();
   }
 
   private final void lock(final int idx) {
@@ -260,8 +253,8 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     try {
       if (tickLocks == null) {//there is no actual locking
         samples.getAndAdd(targetIdx, delta);
-        if (targetSamplesWindowShiftSteps < this.samplesWindowShiftSteps.get() - samples.length()) {//we could have accounted the sample at the incorrect instant because samples window was moved too far
-          this.failedAccuracyEventsCount.increment();
+        if (targetSamplesWindowShiftSteps < this.samplesWindowShiftSteps.get() - samples.length()) {//we could have accounted (but it is not guaranteed) the sample at the incorrect instant because samples window had been moved too far
+          getStats().accountFailedAccuracyEventForTick();
         }
       } else {
         if (this.samplesWindowShiftSteps.get() - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is still within the samples history

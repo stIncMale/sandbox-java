@@ -28,17 +28,18 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.ofMillis(100);
   private static final Duration timeSensitivity = Duration.ofMillis(10);
-  private static final boolean server = true;
-  private static final boolean quick = false;
+  private static final boolean SERVER = true;
+  private static final boolean QUICK = false;
+  private static final long ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT = 0;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)
-        .jvmArgsPrepend(server ? "-server" : "-client")
+        .jvmArgsPrepend(SERVER ? "-server" : "-client")
         .timeUnit(TimeUnit.MILLISECONDS)
         .syncIterations(true)
         .shouldFailOnError(true)
         .shouldDoGC(true)
         .timeout(milliseconds(30_000));
-    if (quick) {
+    if (QUICK) {
       result.warmupTime(milliseconds(samplesInterval.toMillis()))
           .warmupIterations(1)
           .measurementTime(milliseconds(1_000))
@@ -511,8 +512,12 @@ public class RateMeterPerformanceTest {
 
     @TearDown(Level.Trial)
     public final void tearDown() {
-      assertEquals(0, concurrentSkipListMapRateMeter.failedAccuracyEventsCount(), 0);
-      assertEquals(0, atomicArrayRateMeter.failedAccuracyEventsCount(), 0);
+      assertEquals(0, concurrentSkipListMapRateMeter.stats().failedAccuracyEventsCountForTicksCount(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
+      assertEquals(0, concurrentSkipListMapRateMeter.stats().failedAccuracyEventsCountForRateAverage(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
+      assertEquals(0, concurrentSkipListMapRateMeter.stats().failedAccuracyEventsCountForRate(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
+      assertEquals(0, atomicArrayRateMeter.stats().failedAccuracyEventsCountForTicksCount(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
+      assertEquals(0, atomicArrayRateMeter.stats().failedAccuracyEventsCountForRateAverage(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
+      assertEquals(0, atomicArrayRateMeter.stats().failedAccuracyEventsCountForRate(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
     }
   }
 

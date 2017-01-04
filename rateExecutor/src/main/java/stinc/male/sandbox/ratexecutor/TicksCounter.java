@@ -4,6 +4,4 @@ public interface TicksCounter {
   void add(long delta);
 
   long get();
-
-  void reset();//TODO remove?
 }

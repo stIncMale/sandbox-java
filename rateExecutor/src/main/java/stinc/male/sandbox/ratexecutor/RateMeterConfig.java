@@ -16,14 +16,17 @@ public class RateMeterConfig {
   private final boolean checkArguments;
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final Duration timeSensitivity;
+  private final boolean collectStats;
 
   protected RateMeterConfig(
       final boolean checkArguments,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
-      final Duration timeSensitivity) {
+      final Duration timeSensitivity,
+      final boolean collectStats) {
     this.checkArguments = checkArguments;
     this.ticksCounterSupplier = ticksCounterSupplier;
     this.timeSensitivity = timeSensitivity;
+    this.collectStats = collectStats;
   }
 
   public static Builder newBuilder() {
@@ -69,12 +72,22 @@ public class RateMeterConfig {
     return timeSensitivity;
   }
 
+  /**
+   * This configuration parameter specifies if
+   * {@link AbstractRateMeter} must collect stats.
+   * @return {@code true} by default.
+   */
+  public final boolean isCollectStats() {
+    return collectStats;
+  }
+
   @Override
   public String toString() {
     return getClass().getSimpleName()
         + "(checkArguments=" + checkArguments
         + ", ticksCounterSupplier=" + ticksCounterSupplier
         + ", timeSensitivity=" + timeSensitivity
+        + ", collectStats=" + collectStats
         + ')';
   }
 
@@ -83,11 +96,13 @@ public class RateMeterConfig {
     private boolean checkArguments;
     private Function<Long, ? extends TicksCounter> ticksCounterSupplier;
     private Duration timeSensitivity;
+    private boolean collectStats;
 
     protected Builder() {
       checkArguments = false;
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = Duration.ofNanos(50);
+      collectStats = true;
     }
 
     protected Builder(final RateMeterConfig config) {
@@ -126,8 +141,20 @@ public class RateMeterConfig {
       return this;
     }
 
+    /**
+     * @see RateMeterConfig#isCollectStats()
+     */
+    public final Builder setCollectStats(final boolean collectStats) {
+      this.collectStats = collectStats;
+      return this;
+    }
+
     public RateMeterConfig build() {
-      return new RateMeterConfig(checkArguments, ticksCounterSupplier, timeSensitivity);
+      return new RateMeterConfig(
+          checkArguments,
+          ticksCounterSupplier,
+          timeSensitivity,
+          collectStats);
     }
   }
 }

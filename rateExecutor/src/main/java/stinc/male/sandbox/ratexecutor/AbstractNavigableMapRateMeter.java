@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
@@ -18,16 +17,14 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 3;
 
   private final boolean sequential;
-  private final T samples;
+  private final T samples;//storage for samples history
   private final long timeSensitivityNanos;
   private final AtomicBoolean gcInProgress;
   private volatile long gcLastRightSamplesWindowBoundary;
-  @Nullable
-  private final LongAdder failedAccuracyEventsCount;//null if singleThreaded == true
 
   /**
    * (0,Double.MAX_VALUE]<br>
-   * The bigger, the less frequently GC happens, but the more elements are maintained in samples.
+   * The bigger, the less frequently GC happens, but the more elements are maintained in the samples history.
    */
   private final double gcRatio = 0.3;
 
@@ -59,7 +56,6 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
         () -> String.format("timeSensitivityNanos = %s must be not greater than getSamplesIntervalNanos() = %s",
             timeSensitivityNanos, getSamplesIntervalNanos()));
     this.sequential = sequential;
-    failedAccuracyEventsCount = sequential ? null : new LongAdder();
   }
 
   @Override
@@ -85,7 +81,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
         } else {//the samples window has been moved too far
           rightNanos = newRightNanos;
           if (ri == MAX_OPTIMISTIC_READ_ATTEMPTS - 1) {//all read attempts have been exhausted, return what we have
-            failedAccuracyEventsCount.increment();
+            getStats().accountFailedAccuracyEventForTicksCount();
           }
         }
       }
@@ -151,7 +147,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
           count = ticksTotalCount() - substractCount;
           effectiveTNanos = tNanos;
         } else {//the samples window has been moved too far, so average over all samples is the best we can do
-          failedAccuracyEventsCount.increment();
+          getStats().accountFailedAccuracyEventForRateAverage();
           count = ticksTotalCount();
           effectiveTNanos = newRightNanos;
         }
@@ -183,7 +179,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
             result = count;
           } else {//the samples window has been moved too far
-            failedAccuracyEventsCount.increment();
+            getStats().accountFailedAccuracyEventForRate();
             if (NanosComparator.compare(tNanos, rightNanos) < 0 && NanosComparator.compare(safeLeft, leftNanos) <= 0) {//tNanos is within the samples window and we still have a chance to calculate rate for rightNanos
               count = count(leftNanos, rightNanos);
               newRightNanos = rightSamplesWindowBoundary();
@@ -200,10 +196,6 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       }
     }
     return result;
-  }
-
-  public final long failedAccuracyEventsCount() {
-    return failedAccuracyEventsCount.sum();
   }
 
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {

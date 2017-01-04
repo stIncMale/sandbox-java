@@ -11,6 +11,7 @@ abstract class AbstractRateMeter implements RateMeter {
   private final Duration samplesInterval;
   private final long samplesIntervalNanos;
   private final long maxTNanos;
+  private final ConcurrentRateMeterStats stats;
   private final RateMeterConfig config;
 
   /**
@@ -31,20 +32,21 @@ abstract class AbstractRateMeter implements RateMeter {
     maxTNanos = RateMeterMath.maxTNanos(startNanos, samplesIntervalNanos);
     this.config = config;
     ticksTotal = config.getTicksCounterSupplier().apply(0L);
+    stats = config.isCollectStats() ? new ConcurrentRateMeterStats(true) : ConcurrentRateMeterStats.disabledInstance();
   }
 
   @Override
-  public long getStartNanos() {
+  public final long getStartNanos() {
     return startNanos;
   }
 
   @Override
-  public Duration getSamplesInterval() {
+  public final Duration getSamplesInterval() {
     return samplesInterval;
   }
 
   @Override
-  public long ticksTotalCount() {
+  public final long ticksTotalCount() {
     return ticksTotal.get();
   }
 
@@ -72,34 +74,43 @@ abstract class AbstractRateMeter implements RateMeter {
     return convertRate(rate(tNanos), samplesIntervalNanos, unit.toNanos());
   }
 
-  protected TicksCounter getTicksTotalCounter() {
+  @Override
+  public final RateMeterStats stats() {
+    return stats;
+  }
+
+  protected final ConcurrentRateMeterStats getStats() {
+    return stats;
+  }
+
+  protected final TicksCounter getTicksTotalCounter() {
     return ticksTotal;
   }
 
   /**
    * @return {@link #getSamplesInterval()} in nanoseconds.
    */
-  protected long getSamplesIntervalNanos() {
+  protected final long getSamplesIntervalNanos() {
     return samplesIntervalNanos;
   }
 
-  protected RateMeterConfig getConfig() {
+  protected final RateMeterConfig getConfig() {
     return config;
   }
 
-  protected void checkArgument(final long tNanos, final String safeParamName) throws IllegalArgumentException {
+  protected final void checkArgument(final long tNanos, final String safeParamName) throws IllegalArgumentException {
     if (config.isCheckArguments()) {
       RateMeterMath.checkTNanos(tNanos, startNanos, maxTNanos, safeParamName);
     }
   }
 
-  protected void checkArgument(final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
+  protected final void checkArgument(final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
     if (config.isCheckArguments()) {
       checkUnit(unit, safeUnitParamName);
     }
   }
 
-  protected void checkArguments(
+  protected final void checkArguments(
       final long tNanos, final String safeTNanosParamName,
       final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
     if (config.isCheckArguments()) {
@@ -114,6 +125,7 @@ abstract class AbstractRateMeter implements RateMeter {
         + "(startNanos=" + startNanos
         + ", samplesIntervalNanos=" + samplesIntervalNanos
         + ", config=" + config
+        + ", stats=" + stats
         + ')';
   }
 }

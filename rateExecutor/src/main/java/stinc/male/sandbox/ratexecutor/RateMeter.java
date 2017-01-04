@@ -226,4 +226,11 @@ public interface RateMeter {
     checkUnit(unit, "unit");
     return convertRate(rate(tNanos), samplesIntervalNanos, unit.toNanos());
   }
+
+  /**
+   * @return Statistics which may be {@linkplain RateMeterStats#isEmpty() empty} if the {@link RateMeter}
+   * does not collects it.
+   */
+  RateMeterStats stats();
+  //TODO add methods rate(Result{rate, time, failedAccuracy}), rateAverage(Result), ticksCount(Result) that will allow to get not only rate but also time in a garbage-free manner
 }
