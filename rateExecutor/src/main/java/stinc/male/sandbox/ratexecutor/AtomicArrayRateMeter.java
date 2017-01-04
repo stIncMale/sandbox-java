@@ -86,7 +86,8 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     for (int ri = 0; ri < MAX_OPTIMISTIC_READ_ATTEMPTS; ri++) {
       result = 0;
       waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
-      for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
+      final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
+      for (int idx = leftSamplesWindowIdx, i = 0;
           i < samples.length() / 2;
           idx = nextSamplesWindowIdx(idx), i++) {
         result += samples.get(idx);
@@ -124,13 +125,13 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
             for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
                 i < numberOfSteps;
                 idx = nextSamplesWindowIdx(idx), i++) {
-              tickResetSample(idx, idx == targetIdx ? count : 0, tickLock(idx));
+              tickResetSample(idx, idx == targetIdx ? count : 0);
               final long expectedCompletedSamplesWindowShiftSteps = samplesWindowShiftSteps + i;
               this.completedSamplesWindowShiftSteps.compareAndSet(expectedCompletedSamplesWindowShiftSteps, expectedCompletedSamplesWindowShiftSteps + 1);//complete the reset step
             }
           } else {//reset all samples
             for (int idx = 0; idx < samples.length(); idx++) {
-              tickResetSample(idx, idx == targetIdx ? count : 0, tickLock(idx));
+              tickResetSample(idx, idx == targetIdx ? count : 0);
             }
             long completedSamplesWindowShiftSteps = this.completedSamplesWindowShiftSteps.get();
             while (completedSamplesWindowShiftSteps < targetSamplesWindowShiftSteps
@@ -140,7 +141,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
           }
         } else {
           waitForCompletedWindowShiftSteps(targetSamplesWindowShiftSteps);
-          tickAccumulateSample(targetIdx, count, tickLock(targetIdx), targetSamplesWindowShiftSteps);
+          tickAccumulateSample(targetIdx, count, targetSamplesWindowShiftSteps);
         }
       }
       getTicksTotalCounter().add(count);
@@ -225,30 +226,31 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
     return failedAccuracyEventsCount.sum();
   }
 
-  @Nullable
-  private final AtomicBoolean tickLock(final int idx) {
-    return tickLocks == null ? null : tickLocks[idx];
-  }
-
-  private final void tickResetSample(final int idx, final long value, @Nullable final AtomicBoolean lock) {
-    while (lock != null && !lock.compareAndSet(false, true)) {
+  private final void lock(final int idx) {
+    while (tickLocks != null && !tickLocks[idx].compareAndSet(false, true)) {
       Thread.yield();
     }
+  }
+
+  private final void unlock(final int idx) {
+    if (tickLocks != null) {
+      tickLocks[idx].set(false);
+    }
+  }
+
+  private final void tickResetSample(final int idx, final long value) {
+    lock(idx);
     try {
       samples.set(idx, value);
     } finally {
-      if (lock != null) {
-        lock.set(false);
-      }
+      unlock(idx);
     }
   }
 
-  private final void tickAccumulateSample(final int targetIdx, final long delta, @Nullable final AtomicBoolean lock, final long targetSamplesWindowShiftSteps) {
-    while (lock != null && !lock.compareAndSet(false, true)) {
-      Thread.yield();
-    }
+  private final void tickAccumulateSample(final int targetIdx, final long delta, final long targetSamplesWindowShiftSteps) {
+    lock(targetIdx);
     try {
-      if (lock == null) {
+      if (tickLocks == null) {//there is no actual locking
         samples.getAndAdd(targetIdx, delta);
         if (targetSamplesWindowShiftSteps < this.samplesWindowShiftSteps.get() - samples.length()) {//we could have accounted the sample at the incorrect instant because samples window was moved too far
           this.failedAccuracyEventsCount.increment();
@@ -259,9 +261,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
         }
       }
     } finally {
-      if (lock != null) {
-        lock.set(false);
-      }
+      unlock(targetIdx);
     }
   }
 

@@ -107,7 +107,7 @@ public class RateMeterPerformanceTest {
   @Test
   public void parallelBaseline() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
-        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
+//        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
         .threads(4)
         .build())
         .run();
@@ -125,8 +125,7 @@ public class RateMeterPerformanceTest {
   @Test
   public void parallelAtomicArrayRateMeterRateMeter() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
-//        .include(getClass().getName() + ".parallel_.*atomicArrayRateMeter")
-        .include(getClass().getName() + ".parallel_4_tick_atomicArrayRateMeter")
+        .include(getClass().getName() + ".parallel_.*atomicArrayRateMeter")
         .threads(4)
         .build())
         .run();
@@ -439,16 +438,18 @@ public class RateMeterPerformanceTest {
   }
 
   private static final void tickAndRate(final RateMeter rm, final Blackhole bh, final int counter, final int tickToRateRatio) {
-    rm.tick(1, nanoTime());
-    if (counter % tickToRateRatio == 0) {
+    if (counter % (tickToRateRatio + 1) == 0) {
       rate(rm, bh);
+    } else {
+      rm.tick(1, nanoTime());
     }
   }
 
   private static final void rateAndTick(final RateMeter rm, final Blackhole bh, final int counter, final int rateToTickRatio) {
-    rate(rm, bh);
-    if (counter % rateToTickRatio == 0) {
+    if (counter % (rateToTickRatio + 1) == 0) {
       rm.tick(1, nanoTime());
+    } else {
+      rate(rm, bh);
     }
   }
 
