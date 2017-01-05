@@ -12,7 +12,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * (see {@link RateMeter} for details).
  */
 @ThreadSafe
-public class AtomicArrayRateMeter extends AbstractRateMeter {//TODO rename to ConcurrentRingBufferRateMeter
+public class ConcurrentRingBufferRateMeter extends AbstractRateMeter {
   private static final ConcurrentRingBufferRateMeterConfig defaultConfigInstance = ConcurrentRingBufferRateMeterConfig.newBuilder()
       .setTicksCounterSupplier(LongAdderTicksCounter::new)
       .build();
@@ -36,7 +36,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {//TODO rename to Co
    * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
    */
-  public AtomicArrayRateMeter(
+  public ConcurrentRingBufferRateMeter(
       final long startNanos,
       final Duration samplesInterval,
       final ConcurrentRingBufferRateMeterConfig config) {
@@ -63,10 +63,10 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {//TODO rename to Co
   }
 
   /**
-   * Acts like {@link #AtomicArrayRateMeter(long, Duration, ConcurrentRingBufferRateMeterConfig)} with {@link #defaultConfig()}
+   * Acts like {@link #ConcurrentRingBufferRateMeter(long, Duration, ConcurrentRingBufferRateMeterConfig)} with {@link #defaultConfig()}
    * as the third argument.
    */
-  public AtomicArrayRateMeter(final long startNanos, final Duration samplesInterval) {
+  public ConcurrentRingBufferRateMeter(final long startNanos, final Duration samplesInterval) {
     this(startNanos, samplesInterval, defaultConfig());
   }
 

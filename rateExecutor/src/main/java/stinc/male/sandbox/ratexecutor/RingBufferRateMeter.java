@@ -4,7 +4,7 @@ import java.time.Duration;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
-public class ArrayRateMeter extends AbstractRateMeter {
+public class RingBufferRateMeter extends AbstractRateMeter {
   private static final RateMeterConfig defaultConfigInstance = RateMeterConfig.newBuilder()
       .setTicksCounterSupplier(LongTicksCounter::new)
       .build();
@@ -25,7 +25,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
    * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
    */
-  public ArrayRateMeter(
+  public RingBufferRateMeter(
       final long startNanos,
       final Duration samplesInterval,
       final RateMeterConfig config) {
@@ -43,10 +43,10 @@ public class ArrayRateMeter extends AbstractRateMeter {
   }
 
   /**
-   * Acts like {@link #ArrayRateMeter(long, Duration, RateMeterConfig)} with {@link #defaultConfig()}
+   * Acts like {@link #RingBufferRateMeter(long, Duration, RateMeterConfig)} with {@link #defaultConfig()}
    * as the third argument.
    */
-  public ArrayRateMeter(final long startNanos, final Duration samplesInterval) {
+  public RingBufferRateMeter(final long startNanos, final Duration samplesInterval) {
     this(startNanos, samplesInterval, defaultConfig());
   }
 

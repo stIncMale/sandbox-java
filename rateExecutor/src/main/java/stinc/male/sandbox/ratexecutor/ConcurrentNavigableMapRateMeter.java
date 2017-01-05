@@ -9,7 +9,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * (see {@link RateMeter} for details).
  */
 @ThreadSafe
-public class ConcurrentSkipListMapRateMeter extends AbstractNavigableMapRateMeter<ConcurrentSkipListMap<Long, TicksCounter>> {
+public class ConcurrentNavigableMapRateMeter extends AbstractNavigableMapRateMeter<ConcurrentSkipListMap<Long, TicksCounter>> {
   private static final RateMeterConfig defaultConfigInstance = RateMeterConfig.newBuilder()
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
           .build();
@@ -28,15 +28,15 @@ public class ConcurrentSkipListMapRateMeter extends AbstractNavigableMapRateMete
    * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
    */
-  public ConcurrentSkipListMapRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
+  public ConcurrentNavigableMapRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
     super(startNanos, samplesInterval, config, () -> new ConcurrentSkipListMap<>(NanosComparator.instance()), false);
   }
 
   /**
-   * Acts like {@link #ConcurrentSkipListMapRateMeter(long, Duration, RateMeterConfig)} with {@link #defaultConfig()}
+   * Acts like {@link #ConcurrentNavigableMapRateMeter(long, Duration, RateMeterConfig)} with {@link #defaultConfig()}
    * as the third argument.
    */
-  public ConcurrentSkipListMapRateMeter(final long startNanos, final Duration samplesInterval) {
+  public ConcurrentNavigableMapRateMeter(final long startNanos, final Duration samplesInterval) {
     this(startNanos, samplesInterval, defaultConfig());
   }
 }

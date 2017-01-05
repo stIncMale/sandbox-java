@@ -8,8 +8,8 @@ public final class ConcurrentSkipListMapRateMeterConcurrentTest extends Abstract
   public ConcurrentSkipListMapRateMeterConcurrentTest() {
     super(
         RateMeterConfig.Builder::new,
-        ConcurrentSkipListMapRateMeter::new,
-        ConcurrentSkipListMapRateMeter.defaultConfig().getTicksCounterSupplier(),
+        ConcurrentNavigableMapRateMeter::new,
+        ConcurrentNavigableMapRateMeter.defaultConfig().getTicksCounterSupplier(),
         Math.max(2, Runtime.getRuntime().availableProcessors()));
   }
 }
