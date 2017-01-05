@@ -3,9 +3,9 @@ package stinc.male.sandbox.ratexecutor;
 final class SequentialLongArray implements LongArray {
   final long[] array;
 
-  SequentialLongArray(final long[] array) {
-    Preconditions.checkNotNull(array, "array");
-    this.array = array;
+  SequentialLongArray(final int length) {
+    Preconditions.checkArgument(length > 0, "length", "Must be positive");
+    this.array = new long[length];
   }
 
   @Override

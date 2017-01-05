@@ -5,9 +5,9 @@ import java.util.concurrent.atomic.AtomicLongArray;
 final class ConcurrentLongArray implements LongArray {
   final AtomicLongArray array;
 
-  ConcurrentLongArray(final AtomicLongArray array) {
-    Preconditions.checkNotNull(array, "array");
-    this.array = array;
+  ConcurrentLongArray(final int length) {
+    Preconditions.checkArgument(length > 0, "length", "Must be positive");
+    this.array = new AtomicLongArray(length);
   }
 
   @Override
