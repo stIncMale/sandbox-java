@@ -176,19 +176,9 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
           final long safeLeft = newRightNanos - 2 * samplesIntervalNanos;
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
             result = count;
-          } else {//the samples window has been moved too far
+          } else {//the samples window has been moved too far, return average
             getStats().accountFailedAccuracyEventForRate();
-            if (NanosComparator.compare(tNanos, rightNanos) < 0 && NanosComparator.compare(safeLeft, leftNanos) <= 0) {//tNanos is within the samples window and we still have a chance to calculate rate for rightNanos
-              count = count(leftNanos, rightNanos);
-              newRightNanos = rightSamplesWindowBoundary();
-              if (NanosComparator.compare(newRightNanos - 2 * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
-                result = count;
-              } else {//average over all samples is the best we can do
-                result = RateMeterMath.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
-              }
-            } else {//average over all samples is the best we can do
-              result = RateMeterMath.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
-            }
+            result = RateMeterMath.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
           }
         }
       }

@@ -203,19 +203,9 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {//TODO rename to Co
         long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
         if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but count is still correct
           result = count;
-        } else {//the samples window has been moved too far
+        } else {//the samples window has been moved too far, return average
           getStats().accountFailedAccuracyEventForRate();
-          if (NanosComparator.compare(tNanos, rightNanos) < 0 && newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length()) {//tNanos is within the samples window and we still have a chance to calculate rate for rightNanos TODO remove this option
-            count = count(leftNanos, rightNanos);
-            newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-            if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but count is still correct
-              result = count;
-            } else {//average over all samples is the best we can do
-              result = RateMeterMath.rateAverage(rightSamplesWindowBoundary(newSamplesWindowShiftSteps), samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
-            }
-          } else {//average over all samples is the best we can do
-            result = RateMeterMath.rateAverage(rightSamplesWindowBoundary(newSamplesWindowShiftSteps), samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
-          }
+          result = RateMeterMath.rateAverage(rightSamplesWindowBoundary(newSamplesWindowShiftSteps), samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
         }
       }
     }
