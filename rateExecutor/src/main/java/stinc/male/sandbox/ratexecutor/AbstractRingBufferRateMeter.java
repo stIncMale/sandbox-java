@@ -224,10 +224,12 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
       if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
         result = 0;
       } else {
+        final long count = NanosComparator.compare(tNanos, rightNanos) <= 0
+            ? count(effectiveLeftNanos, tNanos)//tNanos is within the samples window
+            : count(effectiveLeftNanos, rightNanos);//tNanos is ahead of samples window
         if (sequential) {
-          result = count(effectiveLeftNanos, rightNanos);
+          result = count;
         } else {
-          long count = count(effectiveLeftNanos, rightNanos);
           final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
           long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
           if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samplesHistory.length()) {//the samples window may has been moved while we were counting, but count is still correct

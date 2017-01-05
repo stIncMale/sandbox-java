@@ -169,10 +169,10 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
         result = 0;
       } else {
+        final long count = count(effectiveLeftNanos, tNanos);
         if (sequential) {
-          result = count(effectiveLeftNanos, tNanos);
+          result = count;
         } else {
-          long count = count(effectiveLeftNanos, tNanos);
           long newRightNanos = rightSamplesWindowBoundary();
           final long safeLeft = newRightNanos - 2 * samplesIntervalNanos;
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
