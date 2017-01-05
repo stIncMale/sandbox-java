@@ -15,7 +15,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  */
 public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
   private final boolean sequential;
-  private final T samples;//storage for samples history
+  private final T samples;//storage for samples history TODO rename to samplesHistory
   private final long timeSensitivityNanos;
   private final AtomicBoolean gcInProgress;
   private volatile long gcLastRightSamplesWindowBoundary;

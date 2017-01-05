@@ -232,5 +232,4 @@ public interface RateMeter {
    * does not collects it.
    */
   RateMeterStats stats();
-  //TODO add methods rate(Result{rate, time, failedAccuracy}), rateAverage(Result), ticksCount(Result) that will allow to get not only rate but also time in a garbage-free manner
-}
+}//TODO add methods rate(Result{rate, time, failedAccuracy}), rateAverage(Result), ticksCount(Result) that will allow to get not only rate but also time in a garbage-free manner
