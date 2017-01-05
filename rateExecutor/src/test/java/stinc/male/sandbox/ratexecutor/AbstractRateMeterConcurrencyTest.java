@@ -100,6 +100,7 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary());
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount());
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.totalCount(), rm.ticksTotalCount());
+    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), 0, rm.stats().failedAccuracyEventsCountForTicksCount(), 0);//strictly speaking this assert may fail, but our goal is to make it never happen
   }
 
   private static final class TestParams {

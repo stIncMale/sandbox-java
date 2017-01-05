@@ -29,7 +29,7 @@ public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.ofMillis(100);
   private static final Duration timeSensitivity = Duration.ofMillis(10);
   private static final boolean SERVER = true;
-  private static final boolean QUICK = false;
+  private static final boolean QUICK = true;
   private static final long ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT = 0;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)

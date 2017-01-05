@@ -12,12 +12,14 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
       final boolean collectStats,
-      final boolean strictTick) {
+      final boolean strictTick,
+      final int maxTicksCountAttempts) {
     super(
         checkArguments,
         ticksCounterSupplier,
         timeSensitivity,
-        collectStats);
+        collectStats,
+        maxTicksCountAttempts);
     this.strictTick = strictTick;
   }
 
@@ -49,6 +51,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
         + ", ticksCounterSupplier=" + getTicksCounterSupplier()
         + ", timeSensitivity=" + getTimeSensitivity()
         + ", collectStats=" + isCollectStats()
+        + ", maxTicksCountAttempts=" + getMaxTicksCountAttempts()
         + ", strictTick=" + strictTick
         + ')';
   }
@@ -106,7 +109,8 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
           ticksCounterSupplier,
           timeSensitivity,
           collectStats,
-          strictTick);
+          strictTick,
+          maxTicksCountAttempts);
     }
   }
 }

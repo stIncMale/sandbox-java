@@ -10,7 +10,7 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @ThreadSafe
 public class ConcurrentSkipListMapRateMeter extends AbstractNavigableMapRateMeter<ConcurrentSkipListMap<Long, TicksCounter>> {
-  private static final RateMeterConfig defaultInstance = RateMeterConfig.newBuilder()
+  private static final RateMeterConfig defaultConfigInstance = RateMeterConfig.newBuilder()
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
           .build();
 
@@ -18,7 +18,7 @@ public class ConcurrentSkipListMapRateMeter extends AbstractNavigableMapRateMete
    * @return A reasonable configuration.
    */
   public static final RateMeterConfig defaultConfig() {
-    return defaultInstance;
+    return defaultConfigInstance;
   }
 
   /**

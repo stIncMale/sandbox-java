@@ -13,10 +13,9 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @ThreadSafe
 public class AtomicArrayRateMeter extends AbstractRateMeter {
-  private static final ConcurrentRingBufferRateMeterConfig defaultInstance = ConcurrentRingBufferRateMeterConfig.newBuilder()
+  private static final ConcurrentRingBufferRateMeterConfig defaultConfigInstance = ConcurrentRingBufferRateMeterConfig.newBuilder()
       .setTicksCounterSupplier(LongAdderTicksCounter::new)
       .build();
-  private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 100;//TODO config
 
   private final AtomicLongArray samples;//length is even
   @Nullable
@@ -29,7 +28,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
    * @return A reasonable configuration.
    */
   public static final ConcurrentRingBufferRateMeterConfig defaultConfig() {
-    return defaultInstance;
+    return defaultConfigInstance;
   }
 
   /**
@@ -80,7 +79,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
   public long ticksCount() {
     long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
     long result = 0;
-    for (int ri = 0; ri < MAX_OPTIMISTIC_READ_ATTEMPTS; ri++) {
+    for (int ri = 0; ri < getConfig().getMaxTicksCountAttempts(); ri++) {
       result = 0;
       waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
       final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
@@ -101,7 +100,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
           break;
         } else {//the samples window has been moved too far
           samplesWindowShiftSteps = newSamplesWindowShiftSteps;
-          if (ri == MAX_OPTIMISTIC_READ_ATTEMPTS - 1) {//all read attempts have been exhausted, return what we have
+          if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
             getStats().accountFailedAccuracyEventForTicksCount();
           }
         }

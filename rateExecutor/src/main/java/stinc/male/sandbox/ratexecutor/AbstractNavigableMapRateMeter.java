@@ -14,8 +14,6 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * @param <T>
  */
 public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
-  private static final int MAX_OPTIMISTIC_READ_ATTEMPTS = 3;
-
   private final boolean sequential;
   private final T samples;//storage for samples history
   private final long timeSensitivityNanos;
@@ -72,7 +70,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long leftNanos = rightNanos - samplesIntervalNanos;
       result = count(leftNanos, rightNanos);
     } else {
-      for (int ri = 0; ri < MAX_OPTIMISTIC_READ_ATTEMPTS; ri++) {
+      for (int ri = 0; ri < getConfig().getMaxTicksCountAttempts(); ri++) {
         final long leftNanos = rightNanos - samplesIntervalNanos;
         result = count(leftNanos, rightNanos);
         final long newRightNanos = rightSamplesWindowBoundary();
@@ -80,7 +78,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
           break;
         } else {//the samples window has been moved too far
           rightNanos = newRightNanos;
-          if (ri == MAX_OPTIMISTIC_READ_ATTEMPTS - 1) {//all read attempts have been exhausted, return what we have
+          if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
             getStats().accountFailedAccuracyEventForTicksCount();
           }
         }

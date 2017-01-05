@@ -5,7 +5,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
 public class ArrayRateMeter extends AbstractRateMeter {
-  private static final RateMeterConfig defaultInstance = RateMeterConfig.newBuilder()
+  private static final RateMeterConfig defaultConfigInstance = RateMeterConfig.newBuilder()
       .setTicksCounterSupplier(LongTicksCounter::new)
       .build();
 
@@ -17,7 +17,7 @@ public class ArrayRateMeter extends AbstractRateMeter {
    * @return A reasonable configuration.
    */
   public static final RateMeterConfig defaultConfig() {
-    return defaultInstance;
+    return defaultConfigInstance;
   }
 
   /**

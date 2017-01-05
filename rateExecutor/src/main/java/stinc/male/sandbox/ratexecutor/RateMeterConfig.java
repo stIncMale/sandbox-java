@@ -17,16 +17,19 @@ public class RateMeterConfig {
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final Duration timeSensitivity;
   private final boolean collectStats;
+  private final int maxTicksCountAttempts;
 
   protected RateMeterConfig(
       final boolean checkArguments,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
-      final boolean collectStats) {
+      final boolean collectStats,
+      final int maxTicksCountAttempts) {
     this.checkArguments = checkArguments;
     this.ticksCounterSupplier = ticksCounterSupplier;
     this.timeSensitivity = timeSensitivity;
     this.collectStats = collectStats;
+    this.maxTicksCountAttempts = maxTicksCountAttempts;
   }
 
   public static Builder newBuilder() {
@@ -81,6 +84,20 @@ public class RateMeterConfig {
     return collectStats;
   }
 
+  /**
+   * Specifies the maximum number of attempts to calculate the number of current ticks
+   * (see {@link RateMeter#ticksCount()} for example).
+   * Some implementations may allow a race condition while performing such a calculation for performance reasons
+   * (such a race may be caused by allowing to move the samples window while counting current ticks).
+   * If this limit is reached and all attempts have failed, then the
+   * {@linkplain RateMeterStats#failedAccuracyEventsCountForTicksCount() failed accuracy event}
+   * must be accounted provided that {@link #isCollectStats() stats are being collected}.
+   * @return 100 by default.
+   */
+  public final int getMaxTicksCountAttempts() {
+    return maxTicksCountAttempts;
+  }
+
   @Override
   public String toString() {
     return getClass().getSimpleName()
@@ -88,6 +105,7 @@ public class RateMeterConfig {
         + ", ticksCounterSupplier=" + ticksCounterSupplier
         + ", timeSensitivity=" + timeSensitivity
         + ", collectStats=" + collectStats
+        + ", maxTicksCountAttempts=" + maxTicksCountAttempts
         + ')';
   }
 
@@ -97,12 +115,14 @@ public class RateMeterConfig {
     protected Function<Long, ? extends TicksCounter> ticksCounterSupplier;
     protected Duration timeSensitivity;
     protected boolean collectStats;
+    protected int maxTicksCountAttempts;
 
     protected Builder() {
       checkArguments = false;
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = Duration.ofNanos(50);
       collectStats = true;
+      maxTicksCountAttempts = 100;
     }
 
     protected Builder(final RateMeterConfig config) {
@@ -110,6 +130,7 @@ public class RateMeterConfig {
       ticksCounterSupplier = config.getTicksCounterSupplier();
       timeSensitivity = config.getTimeSensitivity();
       collectStats = config.isCollectStats();
+      maxTicksCountAttempts = config.maxTicksCountAttempts;
     }
 
     /**
@@ -150,12 +171,22 @@ public class RateMeterConfig {
       return this;
     }
 
+    /**
+     * @see RateMeterConfig#getMaxTicksCountAttempts()
+     */
+    public Builder setMaxTicksCountAttempts(final int maxTicksCountAttempts) {
+      checkArgument(maxTicksCountAttempts > 0, "maxTicksCountAttempts", "Must be positive");
+      this.maxTicksCountAttempts = maxTicksCountAttempts;
+      return this;
+    }
+
     public RateMeterConfig build() {
       return new RateMeterConfig(
           checkArguments,
           ticksCounterSupplier,
           timeSensitivity,
-          collectStats);
+          collectStats,
+          maxTicksCountAttempts);
     }
   }
 }
