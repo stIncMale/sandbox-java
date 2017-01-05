@@ -71,10 +71,6 @@ public class ArrayRateMeter extends AbstractRateMeter {
   public void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
-//      final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
-//      final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
-//      final long leftNanos = rightNanos - getSamplesIntervalNanos();//TODO improve the check as in AtomicArrayRateMeter (check we are inside the history, not within samples window)
-//      if (NanosComparator.compare(leftNanos, tNanos) < 0) {//tNanos is within or ahead of the samples window
       final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
       final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
       if (samplesWindowShiftSteps - samples.length < targetSamplesWindowShiftSteps) {//tNanos is within the samples history
