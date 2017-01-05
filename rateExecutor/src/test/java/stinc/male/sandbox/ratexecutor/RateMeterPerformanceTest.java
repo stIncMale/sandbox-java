@@ -70,9 +70,9 @@ public class RateMeterPerformanceTest {
   }
 
   @Test
-  public void serialTreeMapRateMeter() throws RunnerException {
+  public void serialNavigableMapRateMeter() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
-        .include(getClass().getName() + ".serial_.*treeMapRateMeter")
+        .include(getClass().getName() + ".serial_.*navigableMapRateMeter")
         .threads(1)
         .build())
         .run();
@@ -180,23 +180,23 @@ public class RateMeterPerformanceTest {
   }
 
   @Benchmark
-  public void serial_tick_treeMapRateMeter(final RateMeterContainer_ThreadScope state) {
-    tick(state.treeMapRateMeter);
+  public void serial_tick_navigableMapRateMeter(final RateMeterContainer_ThreadScope state) {
+    tick(state.navigableMapRateMeter);
   }
 
   @Benchmark
-  public void serial_tick$10rate$1_treeMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.treeMapRateMeter, bh, counter.v++, 10);
+  public void serial_tick$10rate$1_navigableMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.navigableMapRateMeter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  public void serial_tick$1rate$1_treeMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.treeMapRateMeter, bh, counter.v++, 1);
+  public void serial_tick$1rate$1_navigableMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.navigableMapRateMeter, bh, counter.v++, 1);
   }
 
   @Benchmark
-  public void serial_tick$1rate$10_treeMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    rateAndTick(state.treeMapRateMeter, bh, counter.v++, 10);
+  public void serial_tick$1rate$10_navigableMapRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    rateAndTick(state.navigableMapRateMeter, bh, counter.v++, 10);
   }
 
   @Benchmark
@@ -432,7 +432,7 @@ public class RateMeterPerformanceTest {
 
   @State(Scope.Thread)
   public static class RateMeterContainer_ThreadScope {
-    TreeMapRateMeter treeMapRateMeter;
+    NavigableMapRateMeter navigableMapRateMeter;
     ConcurrentSkipListMapRateMeter concurrentSkipListMapRateMeter;
     ArrayRateMeter arrayRateMeter;
     AtomicArrayRateMeter atomicArrayRateMeter;
@@ -442,7 +442,7 @@ public class RateMeterPerformanceTest {
 
     @Setup(Level.Trial)
     public final void setup() {
-      treeMapRateMeter = new TreeMapRateMeter(nanoTime(), samplesInterval,
+      navigableMapRateMeter = new NavigableMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
               .build());
