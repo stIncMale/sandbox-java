@@ -18,18 +18,21 @@ public class RateMeterConfig {
   private final Duration timeSensitivity;
   private final boolean collectStats;
   private final int maxTicksCountAttempts;
+  private final int hl;
 
   protected RateMeterConfig(
       final boolean checkArguments,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
       final boolean collectStats,
-      final int maxTicksCountAttempts) {
+      final int maxTicksCountAttempts,
+      final int hl) {
     this.checkArguments = checkArguments;
     this.ticksCounterSupplier = ticksCounterSupplier;
     this.timeSensitivity = timeSensitivity;
     this.collectStats = collectStats;
     this.maxTicksCountAttempts = maxTicksCountAttempts;
+    this.hl = hl;
   }
 
   public static Builder newBuilder() {
@@ -98,6 +101,17 @@ public class RateMeterConfig {
     return maxTicksCountAttempts;
   }
 
+  /**
+   * Specifies the length of samples history measured in {@linkplain RateMeter#getSamplesInterval() samples interval units}.
+   * Note that the specification of {@link RateMeter#rate(long)} implies that any {@link RateMeter}
+   * must maintain samples history for at least 2 samples intervals.
+   * Actual samples history length maintained by {@link RateMeter} must be within [HL; HL + 1].
+   * @return 3 by default.
+   */
+  public final int getHl() {
+    return hl;
+  }
+
   @Override
   public String toString() {
     return getClass().getSimpleName()
@@ -106,6 +120,7 @@ public class RateMeterConfig {
         + ", timeSensitivity=" + timeSensitivity
         + ", collectStats=" + collectStats
         + ", maxTicksCountAttempts=" + maxTicksCountAttempts
+        + ", hl=" + hl
         + ')';
   }
 
@@ -116,6 +131,7 @@ public class RateMeterConfig {
     protected Duration timeSensitivity;
     protected boolean collectStats;
     protected int maxTicksCountAttempts;
+    protected int hl;
 
     protected Builder() {
       checkArguments = false;
@@ -123,6 +139,7 @@ public class RateMeterConfig {
       timeSensitivity = Duration.ofNanos(50);
       collectStats = true;
       maxTicksCountAttempts = 100;
+      hl = 3;
     }
 
     protected Builder(final RateMeterConfig config) {
@@ -131,6 +148,7 @@ public class RateMeterConfig {
       timeSensitivity = config.getTimeSensitivity();
       collectStats = config.isCollectStats();
       maxTicksCountAttempts = config.maxTicksCountAttempts;
+      hl = config.hl;
     }
 
     /**
@@ -172,11 +190,22 @@ public class RateMeterConfig {
     }
 
     /**
+     * @param maxTicksCountAttempts Must be positive.
      * @see RateMeterConfig#getMaxTicksCountAttempts()
      */
     public Builder setMaxTicksCountAttempts(final int maxTicksCountAttempts) {
       checkArgument(maxTicksCountAttempts > 0, "maxTicksCountAttempts", "Must be positive");
       this.maxTicksCountAttempts = maxTicksCountAttempts;
+      return this;
+    }
+
+    /**
+     * @param hl Must be greater than or equal to 2.
+     * @see RateMeterConfig#getHl()
+     */
+    public Builder setHl(final int hl) {
+      checkArgument(hl >= 2, "hl", "Must be greater than or equal to 2");
+      this.hl = hl;
       return this;
     }
 
@@ -186,7 +215,8 @@ public class RateMeterConfig {
           ticksCounterSupplier,
           timeSensitivity,
           collectStats,
-          maxTicksCountAttempts);
+          maxTicksCountAttempts,
+          hl);
     }
   }
-}//TODO add possibility to specify the lenght of the samples history in samples intervals (min 2)
+}

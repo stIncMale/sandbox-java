@@ -47,9 +47,12 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * </pre>
  * <p>
  * <b>Allowed values</b><br>
- * samplesInterval (in nanos) \u2208 [1, {@link Long#MAX_VALUE} - 1],<br>
- * tNanos \u2208 [startNanos, startNanos - 2 * samplesInterval + {@link Long#MAX_VALUE}]
- * (comparison according to {@link System#nanoTime()}).
+ * samplesInterval (in nanos) \u2208 [1, {@link Long#MAX_VALUE} / (HL + 1) - 1],<br>
+ * tNanos \u2208 [startNanos, startNanos - (HL + 1) * samplesInterval + {@link Long#MAX_VALUE}]
+ * (comparison according to {@link System#nanoTime()}),
+ * where HL is the size of samples history maintained by the {@link RateMeter} measured in samplesInterval units.
+ * Note that the specification of {@link RateMeter#rate(long)} implies that any {@link RateMeter}
+ * must maintain samples history for at least 2samplesInterval.
  * <p>
  * <b>Implementation considerations</b><br>
  * The obvious difficulty in concurrent implementation of this interface is the fact that samples window
@@ -164,7 +167,7 @@ public interface RateMeter {
   default double rateAverage(final long tNanos, final Duration unit) {
     final long startNanos = getStartNanos();
     final long samplesIntervalNanos = getSamplesInterval().toNanos();
-    checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos), "tNanos");
+    checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos, 3), "tNanos");
     checkUnit(unit, "unit");
     return convertRate(rateAverage(tNanos), getSamplesInterval().toNanos(), unit.toNanos());
   }
@@ -218,7 +221,7 @@ public interface RateMeter {
   default double rate(final long tNanos, final Duration unit) {
     final long startNanos = getStartNanos();
     final long samplesIntervalNanos = getSamplesInterval().toNanos();
-    checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos), "tNanos");
+    checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos, 3), "tNanos");
     checkUnit(unit, "unit");
     return convertRate(rate(tNanos), samplesIntervalNanos, unit.toNanos());
   }

@@ -14,7 +14,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  */
 public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends AbstractRateMeter {
   private final boolean sequential;
-  private final T samplesHistory;//length is even
+  private final T samplesHistory;//length is multiple of HL
   @Nullable
   private final AtomicBoolean[] tickLocks;//same length as samples history; required to overcome problem which arises when the samples window moved too far while we were accounting a new sample
   private final long samplesWindowStepNanos;
@@ -50,7 +50,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
             "The specified getSamplesInterval()=%snanos and getTimeSensitivity()=%snanos can not be used together because samplesInterval can not be devided evenly by timeSensitivity",
             samplesIntervalArrayLength, timeSensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
-    samplesHistory = samplesHistorySuppplier.apply(2 * samplesIntervalArrayLength);
+    samplesHistory = samplesHistorySuppplier.apply(config.getHl() * samplesIntervalArrayLength);
     if (!sequential && config.isStrictTick()) {
       tickLocks = new AtomicBoolean[samplesHistory.length()];
       for (int idx = 0; idx < tickLocks.length; idx++) {
@@ -78,7 +78,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     if (sequential) {
       final long samplesWindowShiftSteps = this.samplesWindowShiftSteps_todo;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
-          i < samplesHistory.length() / 2;
+          i < samplesHistory.length() / getConfig().getHl();
           idx = nextSamplesWindowIdx(idx), i++) {
         result += samplesHistory.get(idx);
       }
@@ -92,7 +92,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           lock(leftSamplesWindowIdx);//this lock decreases a race condition window
         } try {
           for (int idx = leftSamplesWindowIdx, i = 0;
-              i < samplesHistory.length() / 2;
+              i < samplesHistory.length() / getConfig().getHl();
               idx = nextSamplesWindowIdx(idx), i++) {
             result += samplesHistory.get(idx);
           }
@@ -101,7 +101,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           if (ri > 0) {
             unlock(leftSamplesWindowIdx);
           }
-          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() / 2) {//the samples window may has been moved while we were counting, but result is still correct
+          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {//the samples window may has been moved while we were counting, but result is still correct
             break;
           } else {//the samples window has been moved too far
             samplesWindowShiftSteps = newSamplesWindowShiftSteps;
@@ -324,7 +324,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   }
 
   private final int leftSamplesWindowIdx(final long samplesWindowShiftSteps) {
-    return (int)((samplesWindowShiftSteps + samplesHistory.length() / 2) % samplesHistory.length());//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int)((samplesWindowShiftSteps + samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) % samplesHistory.length());//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int rightSamplesWindowIdx(final long samplesWindowShiftSteps) {

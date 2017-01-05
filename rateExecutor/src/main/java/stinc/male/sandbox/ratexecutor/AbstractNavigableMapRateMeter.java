@@ -20,11 +20,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   private final AtomicBoolean gcInProgress;
   private volatile long gcLastRightSamplesWindowBoundary;
 
-  /**
-   * (0,Double.MAX_VALUE]<br>
-   * The bigger, the less frequently GC happens, but the more elements are maintained in the samples history.
-   */
-  private final double gcRatio = 0.3;
+  private final double gcRatio = 0.3;//(0,1] the bigger, the less frequently GC happens, but the older elements are maintained in the samples history.
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -75,7 +71,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
         final long leftNanos = rightNanos - samplesIntervalNanos;
         result = count(leftNanos, rightNanos);
         final long newRightNanos = rightSamplesWindowBoundary();
-        if (NanosComparator.compare(newRightNanos - 2 * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but result is still correct
+        if (NanosComparator.compare(newRightNanos - getConfig().getHl() * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but result is still correct
           break;
         } else {//the samples window has been moved too far
           rightNanos = newRightNanos;
@@ -93,7 +89,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();
-      final long leftHistoryNanos = rightNanos - 2 * getSamplesIntervalNanos();
+      final long leftHistoryNanos = rightNanos - getConfig().getHl() * getSamplesIntervalNanos();
       if (NanosComparator.compare(leftHistoryNanos, tNanos) < 0) {//tNanos is within the samples history
         @Nullable
         final TicksCounter existingSample;
@@ -142,7 +138,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
         effectiveTNanos = tNanos;
       } else {
         final long newRightNanos = rightSamplesWindowBoundary();
-        if (NanosComparator.compare(newRightNanos - 2 * samplesIntervalNanos, tNanos) <= 0) {//the samples window may has been moved while we were counting, but substractCount is still correct
+        if (NanosComparator.compare(newRightNanos - getConfig().getHl() * samplesIntervalNanos, tNanos) <= 0) {//the samples window may has been moved while we were counting, but substractCount is still correct
           count = ticksTotalCount() - substractCount;
           effectiveTNanos = tNanos;
         } else {//the samples window has been moved too far, so average over all samples is the best we can do
@@ -174,7 +170,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
           result = count;
         } else {
           long newRightNanos = rightSamplesWindowBoundary();
-          final long safeLeft = newRightNanos - 2 * samplesIntervalNanos;
+          final long safeLeft = newRightNanos - getConfig().getHl() * samplesIntervalNanos;
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
             result = count;
           } else {//the samples window has been moved too far, return average
@@ -198,8 +194,8 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   private final boolean gcRequired(final long rightSamplesWindowBoundary) {
     final long samplesWindowShiftNanos = rightSamplesWindowBoundary - gcLastRightSamplesWindowBoundary;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final double maxRatio = 2 + gcRatio;
-    final boolean result = maxRatio <= (double)samplesWindowShiftNanos / samplesIntervalNanos;//2 is required to maintain history span of 2 * samplesIntervalNanos
+    final double maxRatio = getConfig().getHl() + gcRatio;
+    final boolean result = maxRatio <= (double)samplesWindowShiftNanos / samplesIntervalNanos;
     return result;
   }
 
@@ -207,7 +203,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     if (gcInProgress.compareAndSet(false, true)) {
       try {
         gcLastRightSamplesWindowBoundary = rightSamplesWindowBoundary;
-        final long leftNanos = rightSamplesWindowBoundary - 2 * getSamplesIntervalNanos();//2 is required to maintain history span 2 * samplesIntervalNanos
+        final long leftNanos = rightSamplesWindowBoundary - getConfig().getHl() * getSamplesIntervalNanos();
         @Nullable
         final Long firstNanos = samplesHistory.firstKey();
         if (firstNanos != null && NanosComparator.compare(firstNanos.longValue(), leftNanos) < 0) {

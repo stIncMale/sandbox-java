@@ -32,8 +32,8 @@ final class RateMeterMath {
     }
     if (!ok) {
       throw new IllegalArgumentException(
-          String.format("The argument %s is illegal. Must be in [%s; %s] (comparison according to System.nanoTime()), but actual value is %s",
-              safeParamName, safeStartNanos, safeMaxTNanos, tNanos), cause);
+          String.format("The argument %s=%s is illegal. Must be in [%s; %s] (comparison according to System.nanoTime())",
+              safeParamName, tNanos, safeStartNanos, safeMaxTNanos), cause);
     }
   }
 
@@ -43,8 +43,8 @@ final class RateMeterMath {
     checkArgument(!unit.isNegative(), safeParamName, "Must be positive");
   }
 
-  static final long maxTNanos(final long startNanos, final long safeSamplesIntervalNanos) {
-    return startNanos - 2 * safeSamplesIntervalNanos + Long.MAX_VALUE;
+  static final long maxTNanos(final long startNanos, final long safeSamplesIntervalNanos, final int safeHl) {
+    return startNanos - (long)safeHl * safeSamplesIntervalNanos + Long.MAX_VALUE;
   }
 
   static final double rateAverage(
