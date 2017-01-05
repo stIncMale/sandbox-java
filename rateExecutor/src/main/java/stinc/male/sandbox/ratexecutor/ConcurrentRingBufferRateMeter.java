@@ -36,4 +36,19 @@ public class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateMeter<C
         ConcurrentLongArray::new,
         false);
   }
+
+  /**
+   * Acts like {@link #ConcurrentRingBufferRateMeter(long, Duration, ConcurrentRingBufferRateMeterConfig)} with {@link #defaultConfig()}
+   * as the third argument.
+   */
+  public ConcurrentRingBufferRateMeter(
+      final long startNanos,
+      final Duration samplesInterval) {
+    super(
+        startNanos,
+        samplesInterval,
+        defaultConfigInstance,
+        ConcurrentLongArray::new,
+        false);
+  }
 }

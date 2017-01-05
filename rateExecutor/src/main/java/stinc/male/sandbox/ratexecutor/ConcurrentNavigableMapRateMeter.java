@@ -37,6 +37,6 @@ public class ConcurrentNavigableMapRateMeter extends AbstractNavigableMapRateMet
    * as the third argument.
    */
   public ConcurrentNavigableMapRateMeter(final long startNanos, final Duration samplesInterval) {
-    this(startNanos, samplesInterval, defaultConfig());
+    this(startNanos, samplesInterval, defaultConfigInstance);
   }
 }

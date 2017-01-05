@@ -33,6 +33,6 @@ public class NavigableMapRateMeter extends AbstractNavigableMapRateMeter<TreeMap
    * as the third argument.
    */
   public NavigableMapRateMeter(final long startNanos, final Duration samplesInterval) {
-    this(startNanos, samplesInterval, defaultConfig());
+    this(startNanos, samplesInterval, defaultConfigInstance);
   }
 }

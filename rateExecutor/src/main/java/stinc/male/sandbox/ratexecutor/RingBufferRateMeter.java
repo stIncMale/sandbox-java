@@ -34,4 +34,19 @@ public class RingBufferRateMeter extends AbstractRingBufferRateMeter<SequentialL
         SequentialLongArray::new,
         true);
   }
+
+  /**
+   * Acts like {@link #RingBufferRateMeter(long, Duration, RateMeterConfig)} with {@link #defaultConfig()}
+   * as the third argument.
+   */
+  public RingBufferRateMeter(
+      final long startNanos,
+      final Duration samplesInterval) {
+    super(
+        startNanos,
+        samplesInterval,
+        defaultConfigInstance,
+        SequentialLongArray::new,
+        false);
+  }
 }
