@@ -159,11 +159,11 @@ public class ArrayRateMeter extends AbstractRateMeter {
   }
 
   private final int leftSamplesWindowIdx(final long samplesWindowShiftSteps) {
-    return (int)(Math.abs((samplesWindowShiftSteps + samples.length / 2) % samples.length));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int)((samplesWindowShiftSteps + samples.length / 2) % samples.length);//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int rightSamplesWindowIdx(final long samplesWindowShiftSteps) {
-    return (int)(Math.abs((samplesWindowShiftSteps + samples.length - 1) % samples.length));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int)((samplesWindowShiftSteps + samples.length - 1) % samples.length);//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int nextSamplesWindowIdx(final int idx) {
