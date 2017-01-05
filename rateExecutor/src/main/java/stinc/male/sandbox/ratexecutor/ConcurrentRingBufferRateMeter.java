@@ -21,8 +21,8 @@ public class ConcurrentRingBufferRateMeter extends AbstractRateMeter {
   @Nullable
   private final AtomicBoolean[] tickLocks;//same length as samples; required to overcome problem which arises when the samples window moved too far while we were executing tick method
   private final long samplesWindowStepNanos;
-  private AtomicLong samplesWindowShiftSteps;
-  private AtomicLong completedSamplesWindowShiftSteps;
+  private final AtomicLong samplesWindowShiftSteps;
+  private final AtomicLong completedSamplesWindowShiftSteps;
 
   /**
    * @return A reasonable configuration.
@@ -215,7 +215,7 @@ public class ConcurrentRingBufferRateMeter extends AbstractRateMeter {
     return result;
   }
 
-  public long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
+  private long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
     return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
   }
 

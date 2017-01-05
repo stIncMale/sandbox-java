@@ -137,7 +137,7 @@ public class RingBufferRateMeter extends AbstractRateMeter {
     return result;
   }
 
-  public long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
+  private long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
     return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
   }
 
