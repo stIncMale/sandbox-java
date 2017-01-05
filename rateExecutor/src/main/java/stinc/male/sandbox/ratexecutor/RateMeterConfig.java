@@ -189,4 +189,4 @@ public class RateMeterConfig {
           maxTicksCountAttempts);
     }
   }
-}
+}//TODO add possibility to specify the lenght of the samples history in samples intervals (min 2)

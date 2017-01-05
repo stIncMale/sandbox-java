@@ -6,9 +6,19 @@ import org.junit.Test;
 import static java.time.Duration.ofNanos;
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {//TODO add tests for RateMeter with timeSensitivity > 1nanos
+public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {
   AbstractRateMeterUnitTest(final Supplier<B> rateMeterConfigBuilderSupplier, final RateMeterCreator<C> rateMeterCreator) {
     super(rateMeterConfigBuilderSupplier, rateMeterCreator);
+  }
+
+  @Test
+  public final void create1() {
+    newRateMeter(0, ofNanos(10), ofNanos(10));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public final void create2() {
+    newRateMeter(0, ofNanos(10), ofNanos(11));
   }
 
   @Test
@@ -35,6 +45,14 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
     final long rightmost = 123;
     rm.tick(1, rightmost);
     assertEquals(rightmost, rm.rightSamplesWindowBoundary());
+  }
+
+  @Test
+  public final void rightSamplesWindowBoundary3() {
+    final RateMeter rm = newRateMeter(0, ofNanos(10), ofNanos(7));
+    final long rightmost = 123;
+    rm.tick(1, rightmost);
+    assertEquals(rightmost, rm.rightSamplesWindowBoundary(), 7);
   }
 
   @Test
@@ -234,11 +252,15 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
   }
 
   private final RateMeter newRateMeter(final long startNanos, final Duration samplesInterval) {
+    return newRateMeter(startNanos, samplesInterval, ofNanos(1));
+  }
+
+  private final RateMeter newRateMeter(final long startNanos, final Duration samplesInterval, final Duration timeSensitivity) {
     @SuppressWarnings("unchecked")
     final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
         .get()
         .setCheckArguments(true)
-        .setTimeSensitivity(ofNanos(1))
+        .setTimeSensitivity(timeSensitivity)
         .build();
     return getRateMeterCreator().create(
         startNanos,

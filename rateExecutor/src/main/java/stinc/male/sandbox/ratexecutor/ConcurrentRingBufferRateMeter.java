@@ -41,13 +41,16 @@ public class ConcurrentRingBufferRateMeter extends AbstractRateMeter {
       final Duration samplesInterval,
       final ConcurrentRingBufferRateMeterConfig config) {
     super(startNanos, samplesInterval, config);
-    final long sensitivityNanos = config.getTimeSensitivity().toNanos();
+    final long timeSensitivityNanos = config.getTimeSensitivity().toNanos();
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final int samplesIntervalArrayLength = (int) (samplesIntervalNanos / sensitivityNanos);
+    Preconditions.checkArgument(timeSensitivityNanos <= samplesIntervalNanos, "config",
+        () -> String.format("getTimeSensitivityNanos()=%s must be not greater than getSamplesIntervalNanos()=%s",
+            timeSensitivityNanos, getSamplesIntervalNanos()));
+    final int samplesIntervalArrayLength = (int) (samplesIntervalNanos / timeSensitivityNanos);
     Preconditions.checkArgument(samplesIntervalNanos / samplesIntervalArrayLength * samplesIntervalArrayLength == samplesIntervalNanos, "samplesInterval",
         () -> String.format(
             "The specified samplesInterval %snanos and timeSensitivity %snanos can not be used together because samplesInterval can not be devided evenly by timeSensitivity",
-            samplesIntervalArrayLength, sensitivityNanos));
+            samplesIntervalArrayLength, timeSensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samples = new AtomicLongArray(2 * samplesIntervalArrayLength);
     if (config.isStrictTick()) {

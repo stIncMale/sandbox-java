@@ -51,7 +51,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     gcLastRightSamplesWindowBoundary = getStartNanos();
     timeSensitivityNanos = config.getTimeSensitivity().toNanos();
     Preconditions.checkArgument(timeSensitivityNanos <= getSamplesIntervalNanos(), "config",
-        () -> String.format("timeSensitivityNanos = %s must be not greater than getSamplesIntervalNanos() = %s",
+        () -> String.format("getTimeSensitivityNanos()=%s must be not greater than getSamplesIntervalNanos()=%s",
             timeSensitivityNanos, getSamplesIntervalNanos()));
     this.sequential = sequential;
   }
@@ -155,7 +155,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   }
 
   @Override
-  public double rate(final long tNanos) {//TODO specify that the closer tNanos to the right border, the more accurate the result
+  public double rate(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final double result;
     final long samplesIntervalNanos = getSamplesIntervalNanos();

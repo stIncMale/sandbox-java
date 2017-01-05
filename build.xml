@@ -56,6 +56,7 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<configuration>
+						<trimStackTrace>false</trimStackTrace>
 						<parallel>${sandbox.maven-surefire-plugin.parallel}</parallel>
 						<threadCount>5</threadCount>
 						<groups>${sandbox.maven-surefire-plugin.groups}</groups>
