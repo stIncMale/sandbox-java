@@ -15,7 +15,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  */
 public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
   private final boolean sequential;
-  private final T samples;//storage for samples history TODO rename to samplesHistory
+  private final T samplesHistory;
   private final long timeSensitivityNanos;
   private final AtomicBoolean gcInProgress;
   private volatile long gcLastRightSamplesWindowBoundary;
@@ -30,8 +30,8 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
    * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
-   * @param samplesSuppplier Specifies a supplier to use to create an object that will be
-   *                         used to store samples and will be returned by {@link #getSamples()}.
+   * @param samplesHistorySupplier Specifies a supplier to use to create an object that will be
+   *                         used to store samples history.
    *                         The {@link NavigableMap} provided by this supplier must use {@link NanosComparator}
    *                         as {@link NavigableMap#comparator() comparator}.
    * @param sequential
@@ -40,13 +40,14 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long startNanos,
       final Duration samplesInterval,
       final RateMeterConfig config,
-      final Supplier<T> samplesSuppplier,
+      final Supplier<T> samplesHistorySupplier,
       final boolean sequential) {
     super(startNanos, samplesInterval, config);
-    checkNotNull(samplesSuppplier, "samplesSuppplier");
-    samples = samplesSuppplier.get();
-    Preconditions.checkArgument(samples.comparator() instanceof NanosComparator, "samplesSupplier", "The comparator used by samples map must be of type NanosComparator");
-    samples.put(startNanos, config.getTicksCounterSupplier().apply(0L));
+    checkNotNull(samplesHistorySupplier, "samplesHistorySupplier");
+    samplesHistory = samplesHistorySupplier.get();
+    Preconditions.checkArgument(samplesHistory.comparator() instanceof NanosComparator, "samplesSupplier",
+        () -> "The comparator used by samples history map must be of type " + NanosComparator.class.getSimpleName());
+    samplesHistory.put(startNanos, config.getTicksCounterSupplier().apply(0L));
     gcInProgress = new AtomicBoolean();
     gcLastRightSamplesWindowBoundary = getStartNanos();
     timeSensitivityNanos = config.getTimeSensitivity().toNanos();
@@ -58,7 +59,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
 
   @Override
   public long rightSamplesWindowBoundary() {
-    return samples.lastKey();
+    return samplesHistory.lastKey();
   }
 
   @Override
@@ -98,15 +99,15 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
         final TicksCounter existingSample;
         if (timeSensitivityNanos == 1) {
           final TicksCounter newSample = getConfig().getTicksCounterSupplier().apply(count);
-          existingSample = samples.putIfAbsent(tNanos, newSample);
+          existingSample = samplesHistory.putIfAbsent(tNanos, newSample);
         } else {
           @Nullable
-          final Entry<Long, TicksCounter> existingEntry = samples.floorEntry(tNanos);
+          final Entry<Long, TicksCounter> existingEntry = samplesHistory.floorEntry(tNanos);
           if (existingEntry != null && (tNanos - existingEntry.getKey()) <= timeSensitivityNanos) {
             existingSample = existingEntry.getValue();
           } else {
             final TicksCounter newSample = getConfig().getTicksCounterSupplier().apply(count);
-            existingSample = samples.putIfAbsent(tNanos, newSample);
+            existingSample = samplesHistory.putIfAbsent(tNanos, newSample);
           }
         }
         if (existingSample != null) {//we need to merge samples
@@ -165,7 +166,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       result = RateMeterMath.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
     } else {//tNanos is within or ahead of the samples window
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
-      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and the are no samples for the requested tNanos
+      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
         result = 0;
       } else {
         if (sequential) {
@@ -187,7 +188,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   }
 
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {
-    return samples.subMap(fromExclusiveNanos, false, toInclusiveNanos, true)
+    return samplesHistory.subMap(fromExclusiveNanos, false, toInclusiveNanos, true)
         .values()
         .stream()
         .mapToLong(TicksCounter::get)
@@ -208,25 +209,14 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
         gcLastRightSamplesWindowBoundary = rightSamplesWindowBoundary;
         final long leftNanos = rightSamplesWindowBoundary - 2 * getSamplesIntervalNanos();//2 is required to maintain history span 2 * samplesIntervalNanos
         @Nullable
-        final Long firstNanos = samples.firstKey();
+        final Long firstNanos = samplesHistory.firstKey();
         if (firstNanos != null && NanosComparator.compare(firstNanos.longValue(), leftNanos) < 0) {
-          samples.subMap(firstNanos, true, leftNanos, false)//do not delete sample at leftNanos, because we still need it
+          samplesHistory.subMap(firstNanos, true, leftNanos, false)//do not delete sample at leftNanos, because we still need it
               .clear();
         }
       } finally {
         gcInProgress.set(false);
       }
     }
-  }
-
-  /**
-   * @return A {@link NavigableMap} with samples (keys are tNanos and values are corresponding ticks counters).
-   * This method always return the same instance that was created in
-   * {@link #AbstractNavigableMapRateMeter(long, Duration, RateMeterConfig, Supplier, boolean)} by using the fourth argument.
-   * The returned instance MUST NOT contain {@code null} values (one MUST NOT put such values inside).
-   * @see #AbstractNavigableMapRateMeter(long, Duration, RateMeterConfig, Supplier, boolean)
-   */
-  protected T getSamples() {
-    return samples;
   }
 }

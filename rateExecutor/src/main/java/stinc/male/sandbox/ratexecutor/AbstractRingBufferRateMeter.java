@@ -14,9 +14,9 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  */
 public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends AbstractRateMeter {
   private final boolean sequential;
-  private final T samples;//length is even
+  private final T samplesHistory;//length is even
   @Nullable
-  private final AtomicBoolean[] tickLocks;//same length as samples; required to overcome problem which arises when the samples window moved too far while we were executing tick method
+  private final AtomicBoolean[] tickLocks;//same length as samples history; required to overcome problem which arises when the samples window moved too far while we were accounting a new sample
   private final long samplesWindowStepNanos;
   private long samplesWindowShiftSteps_todo;
   @Nullable
@@ -28,17 +28,17 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
    * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
-   * @param samplesSuppplier
+   * @param samplesHistorySuppplier
    * @param sequential
    */
   AbstractRingBufferRateMeter(
       final long startNanos,
       final Duration samplesInterval,
       final ConcurrentRingBufferRateMeterConfig config,
-      final Function<Integer, ? extends T> samplesSuppplier,
+      final Function<Integer, ? extends T> samplesHistorySuppplier,
       final boolean sequential) {
     super(startNanos, samplesInterval, config);
-    checkNotNull(samplesSuppplier, "samplesSuppplier");
+    checkNotNull(samplesHistorySuppplier, "samplesHistorySuppplier");
     final long timeSensitivityNanos = config.getTimeSensitivity().toNanos();
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     Preconditions.checkArgument(timeSensitivityNanos <= samplesIntervalNanos, "config",
@@ -47,12 +47,12 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     final int samplesIntervalArrayLength = (int) (samplesIntervalNanos / timeSensitivityNanos);
     Preconditions.checkArgument(samplesIntervalNanos / samplesIntervalArrayLength * samplesIntervalArrayLength == samplesIntervalNanos, "samplesInterval",
         () -> String.format(
-            "The specified samplesInterval %snanos and timeSensitivity %snanos can not be used together because samplesInterval can not be devided evenly by timeSensitivity",
+            "The specified getSamplesInterval()=%snanos and getTimeSensitivity()=%snanos can not be used together because samplesInterval can not be devided evenly by timeSensitivity",
             samplesIntervalArrayLength, timeSensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
-    samples = samplesSuppplier.apply(2 * samplesIntervalArrayLength);
+    samplesHistory = samplesHistorySuppplier.apply(2 * samplesIntervalArrayLength);
     if (!sequential && config.isStrictTick()) {
-      tickLocks = new AtomicBoolean[samples.length()];
+      tickLocks = new AtomicBoolean[samplesHistory.length()];
       for (int idx = 0; idx < tickLocks.length; idx++) {
         tickLocks[idx] = new AtomicBoolean();
       }
@@ -78,9 +78,9 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     if (sequential) {
       final long samplesWindowShiftSteps = this.samplesWindowShiftSteps_todo;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
-          i < samples.length() / 2;
+          i < samplesHistory.length() / 2;
           idx = nextSamplesWindowIdx(idx), i++) {
-        result += samples.get(idx);
+        result += samplesHistory.get(idx);
       }
     } else {
       long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
@@ -92,16 +92,16 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           lock(leftSamplesWindowIdx);//this lock decreases a race condition window
         } try {
           for (int idx = leftSamplesWindowIdx, i = 0;
-              i < samples.length() / 2;
+              i < samplesHistory.length() / 2;
               idx = nextSamplesWindowIdx(idx), i++) {
-            result += samples.get(idx);
+            result += samplesHistory.get(idx);
           }
         } finally {
           final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
           if (ri > 0) {
             unlock(leftSamplesWindowIdx);
           }
-          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samples.length() / 2) {//the samples window may has been moved while we were counting, but result is still correct
+          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() / 2) {//the samples window may has been moved while we were counting, but result is still correct
             break;
           } else {//the samples window has been moved too far
             samplesWindowShiftSteps = newSamplesWindowShiftSteps;
@@ -121,19 +121,19 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     if (count != 0) {
       final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
       long samplesWindowShiftSteps = sequential ? this.samplesWindowShiftSteps_todo : this.samplesWindowShiftSteps.get();
-      if (samplesWindowShiftSteps - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is within the samples history
+      if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {//tNanos is within the samples history
         if (sequential) {
           final int targetIdx = rightSamplesWindowIdx(targetSamplesWindowShiftSteps);
           if (samplesWindowShiftSteps < targetSamplesWindowShiftSteps) {//we need to move the samples window
             this.samplesWindowShiftSteps_todo = targetSamplesWindowShiftSteps;
             final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
             for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
-                i < numberOfSteps && i < samples.length();
+                i < numberOfSteps && i < samplesHistory.length();
                 idx = nextSamplesWindowIdx(idx), i++) {//reset moved samples
-              samples.set(idx, idx == targetIdx ? count : 0);
+              samplesHistory.set(idx, idx == targetIdx ? count : 0);
             }
           } else {
-            samples.add(targetIdx, count);
+            samplesHistory.add(targetIdx, count);
           }
         } else {
           boolean moved = false;
@@ -145,16 +145,16 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           if (moved) {
             final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
             waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
-            if (numberOfSteps <= samples.length()) {//reset some samples
+            if (numberOfSteps <= samplesHistory.length()) {//reset some samples
               for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
-                  i < numberOfSteps && i < samples.length();
+                  i < numberOfSteps && i < samplesHistory.length();
                   idx = nextSamplesWindowIdx(idx), i++) {
                 tickResetSample(idx, idx == targetIdx ? count : 0);
                 final long expectedCompletedSamplesWindowShiftSteps = samplesWindowShiftSteps + i;
                 this.completedSamplesWindowShiftSteps.compareAndSet(expectedCompletedSamplesWindowShiftSteps, expectedCompletedSamplesWindowShiftSteps + 1);//complete the reset step
               }
             } else {//reset all samples
-              for (int idx = 0; idx < samples.length(); idx++) {
+              for (int idx = 0; idx < samplesHistory.length(); idx++) {
                 tickResetSample(idx, idx == targetIdx ? count : 0);
               }
               long completedSamplesWindowShiftSteps = this.completedSamplesWindowShiftSteps.get();
@@ -196,7 +196,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
       } else {
         final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
         final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-        if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but substractCount is still correct
+        if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samplesHistory.length()) {//the samples window may has been moved while we were counting, but substractCount is still correct
           count = ticksTotalCount() - substractCount;
           effectiveTNanos = rightSamplesWindowBoundary(tNanosSamplesWindowShiftSteps);
         } else {//the samples window has been moved too far, so average over all samples is the best we can do
@@ -221,7 +221,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
       result = RateMeterMath.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
     } else {//tNanos is within or ahead of the samples window
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
-      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and the are no samples for the requested tNanos
+      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
         result = 0;
       } else {
         if (sequential) {
@@ -230,11 +230,12 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           long count = count(effectiveLeftNanos, rightNanos);
           final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
           long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-          if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samples.length()) {//the samples window may has been moved while we were counting, but count is still correct
+          if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samplesHistory.length()) {//the samples window may has been moved while we were counting, but count is still correct
             result = count;
           } else {//the samples window has been moved too far, return average
             getStats().accountFailedAccuracyEventForRate();
-            result = RateMeterMath.rateAverage(rightSamplesWindowBoundary(newSamplesWindowShiftSteps), samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
+            result = RateMeterMath.rateAverage(
+                rightSamplesWindowBoundary(newSamplesWindowShiftSteps), samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage(), or rateAverage(rightNanos) if rightNanos == rightSamplesWindowBoundary()
           }
         }
       }
@@ -261,7 +262,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   private final void tickResetSample(final int idx, final long value) {
     lock(idx);
     try {
-      samples.set(idx, value);
+      samplesHistory.set(idx, value);
     } finally {
       unlock(idx);
     }
@@ -269,20 +270,20 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
 
   private final void tickAccumulateSample(final int targetIdx, final long delta, final long targetSamplesWindowShiftSteps) {
     if (sequential) {
-      samples.add(targetIdx, delta);
+      samplesHistory.add(targetIdx, delta);
     } else {
       lock(targetIdx);
       try {
         if (tickLocks == null) {//there is no actual locking
-          samples.add(targetIdx, delta);
+          samplesHistory.add(targetIdx, delta);
           final long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-          if (targetSamplesWindowShiftSteps < samplesWindowShiftSteps - samples.length()) {//we could have accounted (but it is not guaranteed) the sample at the incorrect instant because samples window had been moved too far
+          if (targetSamplesWindowShiftSteps < samplesWindowShiftSteps - samplesHistory.length()) {//we could have accounted (but it is not necessary) the sample at the incorrect instant because samples window had been moved too far
             getStats().accountFailedAccuracyEventForTick();
           }
         } else {
           final long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-          if (samplesWindowShiftSteps - samples.length() < targetSamplesWindowShiftSteps) {//tNanos is still within the samples history
-            samples.set(targetIdx, samples.get(targetIdx) + delta);//we are under lock, so no need in CAS
+          if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {//tNanos is still within the samples history
+            samplesHistory.set(targetIdx, samplesHistory.get(targetIdx) + delta);//we are under lock, so no need in CAS
           }
         }
       } finally {
@@ -308,7 +309,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     for (int idx = rightSamplesWindowIdx(fromInclusiveSamplesWindowShiftSteps), i = 0;
         i < toInclusiveSamplesWindowShiftSteps - fromInclusiveSamplesWindowShiftSteps + 1;
         idx = nextSamplesWindowIdx(idx), i++) {
-      result += samples.get(idx);
+      result += samplesHistory.get(idx);
     }
     return result;
   }
@@ -321,14 +322,14 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   }
 
   private final int leftSamplesWindowIdx(final long samplesWindowShiftSteps) {
-    return (int)((samplesWindowShiftSteps + samples.length() / 2) % samples.length());//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int)((samplesWindowShiftSteps + samplesHistory.length() / 2) % samplesHistory.length());//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int rightSamplesWindowIdx(final long samplesWindowShiftSteps) {
-    return (int)((samplesWindowShiftSteps + samples.length() - 1) % samples.length());//the result can not be greater than samples.length, which is int, so it is a safe cast to int
+    return (int)((samplesWindowShiftSteps + samplesHistory.length() - 1) % samplesHistory.length());//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 
   private final int nextSamplesWindowIdx(final int idx) {
-    return (idx + 1) % samples.length();
+    return (idx + 1) % samplesHistory.length();
   }
 }
