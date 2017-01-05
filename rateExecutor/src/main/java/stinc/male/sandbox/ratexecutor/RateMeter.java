@@ -48,7 +48,7 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * <p>
  * <b>Allowed values</b><br>
  * samplesInterval (in nanos) \u2208 [1, {@link Long#MAX_VALUE} - 1],<br>
- * tNanos \u2208 [startNanos, startNanos - samplesInterval + {@link Long#MAX_VALUE}]
+ * tNanos \u2208 [startNanos, startNanos - 2 * samplesInterval + {@link Long#MAX_VALUE}]
  * (comparison according to {@link System#nanoTime()}).
  * <p>
  * <b>Implementation considerations</b><br>

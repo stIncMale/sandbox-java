@@ -70,8 +70,8 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
     rm.tick(1, Long.MIN_VALUE);
     assertEquals(1, rm.ticksTotalCount());
     assertEquals(rm.ticksCount(), rm.ticksTotalCount());
-    rm.tick(4, -60);
-    rm.tick(2, -52);
+    rm.tick(4, -160);
+    rm.tick(2, -152);
     assertEquals(1 + 4 + 2, rm.ticksTotalCount());
   }
 
@@ -102,7 +102,7 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
   @Test
   public final void tick5() {
     newRateMeter(Long.MAX_VALUE, ofNanos(1))
-        .tick(1, -3);
+        .tick(1, -4);
   }
 
   @Test

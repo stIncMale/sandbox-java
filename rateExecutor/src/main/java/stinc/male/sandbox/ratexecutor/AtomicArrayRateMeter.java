@@ -12,7 +12,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * (see {@link RateMeter} for details).
  */
 @ThreadSafe
-public class AtomicArrayRateMeter extends AbstractRateMeter {
+public class AtomicArrayRateMeter extends AbstractRateMeter {//TODO rename to ConcurrentRingBufferRateMeter
   private static final ConcurrentRingBufferRateMeterConfig defaultConfigInstance = ConcurrentRingBufferRateMeterConfig.newBuilder()
       .setTicksCounterSupplier(LongAdderTicksCounter::new)
       .build();
@@ -292,7 +292,7 @@ public class AtomicArrayRateMeter extends AbstractRateMeter {
         : samplesWindowShiftNanos / samplesWindowStepNanos + 1;
   }
 
-  private final int leftSamplesWindowIdx(final long samplesWindowShiftSteps) {
+  private final int leftSamplesWindowIdx(final long samplesWindowShiftSteps) {//TODO why Math.abs?
     return (int) (Math.abs((samplesWindowShiftSteps + samples.length() / 2) % samples.length()));//the result can not be greater than samples.length, which is int, so it is a safe cast to int
   }
 

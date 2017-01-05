@@ -44,7 +44,7 @@ final class RateMeterMath {
   }
 
   static final long maxTNanos(final long startNanos, final long safeSamplesIntervalNanos) {
-    return startNanos - safeSamplesIntervalNanos + Long.MAX_VALUE;
+    return startNanos - 2 * safeSamplesIntervalNanos + Long.MAX_VALUE;
   }
 
   static final double rateAverage(
