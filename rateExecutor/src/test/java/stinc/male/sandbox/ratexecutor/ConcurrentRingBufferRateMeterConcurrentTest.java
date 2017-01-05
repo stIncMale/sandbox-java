@@ -4,8 +4,8 @@ import org.junit.experimental.categories.Category;
 import stinc.male.ConcurrencyTest;
 
 @Category(ConcurrencyTest.class)
-public final class AtomicRingBufferRateMeterConcurrentTest extends AbstractRateMeterConcurrencyTest<ConcurrentRingBufferRateMeterConfig.Builder, ConcurrentRingBufferRateMeterConfig> {
-  public AtomicRingBufferRateMeterConcurrentTest() {
+public final class ConcurrentRingBufferRateMeterConcurrentTest extends AbstractRateMeterConcurrencyTest<ConcurrentRingBufferRateMeterConfig.Builder, ConcurrentRingBufferRateMeterConfig> {
+  public ConcurrentRingBufferRateMeterConcurrentTest() {
     super(
         () -> ConcurrentRingBufferRateMeterConfig.newBuilder()
             .setStrictTick(true),
