@@ -16,7 +16,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   private final boolean sequential;
   private final T samplesHistory;//length is multiple of HL
   @Nullable
-  private final AtomicBoolean[] tickLocks;//same length as samples history; required to overcome problem which arises when the samples window moved too far while we were accounting a new sample
+  private final AtomicBoolean[] locks;//same length as samples history; required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample
   private final long samplesWindowStepNanos;
   private long samplesWindowShiftSteps_todo;
   @Nullable
@@ -52,12 +52,12 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samplesHistory = samplesHistorySuppplier.apply(config.getHl() * samplesIntervalArrayLength);
     if (!sequential && config.isStrictTick()) {
-      tickLocks = new AtomicBoolean[samplesHistory.length()];
-      for (int idx = 0; idx < tickLocks.length; idx++) {
-        tickLocks[idx] = new AtomicBoolean();
+      locks = new AtomicBoolean[samplesHistory.length()];
+      for (int idx = 0; idx < locks.length; idx++) {
+        locks[idx] = new AtomicBoolean();
       }
     } else {
-      tickLocks = null;
+      locks = null;
     }
     samplesWindowShiftSteps = sequential ? null : new AtomicLong();
     samplesWindowShiftSteps_todo = 0;
@@ -88,26 +88,18 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
         result = 0;
         waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
         final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
-        if (ri > 0) {//not the first attempt
-          lock(leftSamplesWindowIdx);//this lock decreases a race condition window
-        } try {
-          for (int idx = leftSamplesWindowIdx, i = 0;
-              i < samplesHistory.length() / getConfig().getHl();
-              idx = nextSamplesWindowIdx(idx), i++) {
-            result += samplesHistory.get(idx);
-          }
-        } finally {
-          final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-          if (ri > 0) {
-            unlock(leftSamplesWindowIdx);
-          }
-          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {//the samples window may has been moved while we were counting, but result is still correct
-            break;
-          } else {//the samples window has been moved too far
-            samplesWindowShiftSteps = newSamplesWindowShiftSteps;
-            if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
-              getStats().accountFailedAccuracyEventForTicksCount();
-            }
+        for (int idx = leftSamplesWindowIdx, i = 0;
+            i < samplesHistory.length() / getConfig().getHl();
+            idx = nextSamplesWindowIdx(idx), i++) {
+          result += samplesHistory.get(idx);
+        }
+        final long newSamplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
+        if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {//the samples window may has been moved while we were counting, but result is still correct
+          break;
+        } else {//the samples window has been moved too far
+          samplesWindowShiftSteps = newSamplesWindowShiftSteps;
+          if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
+            getStats().accountFailedAccuracyEventForTicksCount();
           }
         }
       }
@@ -250,14 +242,14 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   }
 
   private final void lock(final int idx) {
-    while (tickLocks != null && !tickLocks[idx].compareAndSet(false, true)) {
+    while (locks != null && !locks[idx].compareAndSet(false, true)) {
       Thread.yield();
     }
   }
 
   private final void unlock(final int idx) {
-    if (tickLocks != null) {
-      tickLocks[idx].set(false);
+    if (locks != null) {
+      locks[idx].set(false);
     }
   }
 
@@ -276,7 +268,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     } else {
       lock(targetIdx);
       try {
-        if (tickLocks == null) {//there is no actual locking
+        if (locks == null) {//there is no actual locking
           samplesHistory.add(targetIdx, delta);
           final long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
           if (targetSamplesWindowShiftSteps < samplesWindowShiftSteps - samplesHistory.length()) {//we could have accounted (but it is not necessary) the sample at the incorrect instant because samples window had been moved too far

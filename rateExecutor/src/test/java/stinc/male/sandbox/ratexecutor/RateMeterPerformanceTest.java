@@ -3,6 +3,7 @@ package stinc.male.sandbox.ratexecutor;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -29,7 +30,7 @@ public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.ofMillis(100);
   private static final Duration timeSensitivity = Duration.ofMillis(10);
   private static final boolean SERVER = true;
-  private static final boolean QUICK = true;
+  private static final boolean QUICK = false;
   private static final long ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT = 0;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder().mode(Mode.Throughput)
@@ -60,6 +61,7 @@ public class RateMeterPerformanceTest {
   public RateMeterPerformanceTest() {
   }
 
+  @Ignore
   @Test
   public void serialBaseline() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
@@ -114,6 +116,7 @@ public class RateMeterPerformanceTest {
         .run();
   }
 
+  @Ignore
   @Test
   public void parallel_2_Baseline() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
@@ -123,6 +126,7 @@ public class RateMeterPerformanceTest {
         .run();
   }
 
+  @Ignore
   @Test
   public void parallel_4_Baseline() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
@@ -151,7 +155,7 @@ public class RateMeterPerformanceTest {
   }
 
   @Test
-  public void parallel_2_ConcurrentRingBufferRateMeterRateMeter() throws RunnerException {
+  public void parallel_2_ConcurrentRingBufferRateMeter() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
         .include(getClass().getName() + ".parallel_2.*concurrentRingBufferRateMeter")
         .threads(2)
@@ -160,7 +164,7 @@ public class RateMeterPerformanceTest {
   }
 
   @Test
-  public void parallel_4_ConcurrentRingBufferRateMeterRateMeter() throws RunnerException {
+  public void parallel_4_ConcurrentRingBufferRateMeter() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
         .include(getClass().getName() + ".parallel_4.*concurrentRingBufferRateMeter")
         .threads(4)
@@ -563,23 +567,28 @@ public class RateMeterPerformanceTest {
       navigableMapRateMeter = new NavigableMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
+              .setHl(2)
               .build());
       concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
+              .setHl(2)
               .build());
       ringBufferRateMeter = new RingBufferRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
+              .setHl(2)
               .build());
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build())
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
+              .setHl(2)
               .build());
       linearizableRateMeter = new LinearizableRateMeter(
           new RingBufferRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSuppplier.get()
                   .setTicksCounterSupplier(LongTicksCounter::new)
+                  .setHl(2)
                   .build()));
     }
   }
@@ -602,11 +611,13 @@ public class RateMeterPerformanceTest {
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build())
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
+              .setStrictTick(true)
               .build());
       linearizableRateMeter = new LinearizableRateMeter(
           new RingBufferRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSuppplier.get()
                   .setTicksCounterSupplier(LongTicksCounter::new)
+                  .setHl(2)
                   .build()));
     }
 

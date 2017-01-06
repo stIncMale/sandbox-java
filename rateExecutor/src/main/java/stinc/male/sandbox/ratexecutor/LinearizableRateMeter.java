@@ -1,19 +1,20 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 public final class LinearizableRateMeter implements RateMeter {
   private final RateMeter rm;
-  private final ReadWriteLock rwlock;
+//  private final ReadWriteLock rwlock;
+  private final AtomicBoolean lock;
 
   public LinearizableRateMeter(final AbstractRateMeter rm) {
     Preconditions.checkNotNull(rm, "rm");
     this.rm = rm;
-    rwlock = new ReentrantReadWriteLock();
+//    rwlock = new ReentrantReadWriteLock();
+    lock = new AtomicBoolean();
   }
 
   @Override
@@ -58,11 +59,13 @@ public final class LinearizableRateMeter implements RateMeter {
 
   @Override
   public final long ticksTotalCount() {
-    rwlock.readLock().lock();
+//    rwlock.readLock().lock();
+    lock();
     try {
       return rm.ticksTotalCount();
     } finally {
-      rwlock.readLock().unlock();
+//      rwlock.readLock().unlock();
+      unlock();
     }
   }
 
@@ -73,51 +76,71 @@ public final class LinearizableRateMeter implements RateMeter {
 
   @Override
   public final long rightSamplesWindowBoundary() {
-    rwlock.readLock().lock();
+//    rwlock.readLock().lock();
+    lock();
     try {
       return rm.rightSamplesWindowBoundary();
     } finally {
-      rwlock.readLock().unlock();
+//      rwlock.readLock().unlock();
+      unlock();
     }
   }
 
   @Override
   public final long ticksCount() {
-    rwlock.readLock().lock();
+//    rwlock.readLock().lock();
+    lock();
     try {
       return rm.ticksCount();
     } finally {
-      rwlock.readLock().unlock();
+//      rwlock.readLock().unlock();
+      unlock();
     }
   }
 
   @Override
   public final void tick(final long count, final long tNanos) {
-    rwlock.readLock().lock();
+//    rwlock.readLock().lock();
+    lock();
     try {
       rm.tick(count, tNanos);
     } finally {
-      rwlock.readLock().unlock();
+//      rwlock.readLock().unlock();
+      unlock();
     }
   }
 
   @Override
   public final double rateAverage(final long tNanos) {
-    rwlock.readLock().lock();
+//    rwlock.readLock().lock();
+    lock();
     try {
       return rm.rateAverage(tNanos);
     } finally {
-      rwlock.readLock().unlock();
+//      rwlock.readLock().unlock();
+      unlock();
     }
   }
 
   @Override
   public final double rate(final long tNanos) {
-    rwlock.readLock().lock();
+//    rwlock.readLock().lock();
+    lock();
     try {
       return rm.rate(tNanos);
     } finally {
-      rwlock.readLock().unlock();
+//      rwlock.readLock().unlock();
+      unlock();
     }
+  }
+
+  private final void lock() {
+    while (!lock.compareAndSet(false, true)) {
+      Thread.yield();
+    }
+  }
+
+  private final void unlock() {
+    lock.set(false);
   }
 }
