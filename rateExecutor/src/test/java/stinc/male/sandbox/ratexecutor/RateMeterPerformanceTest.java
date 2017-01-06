@@ -543,8 +543,8 @@ public class RateMeterPerformanceTest {
   }
 
   private static final long nanoTime() {
-//    return System.nanoTime();
-    return TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
+    return System.nanoTime();
+//    return TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
   }
 
   @State(Scope.Thread)
