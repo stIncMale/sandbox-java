@@ -79,6 +79,10 @@ abstract class AbstractRateMeter implements RateMeter {
     return stats;
   }
 
+  public final RateMeterConfig getConfig() {
+    return config;
+  }
+
   protected final ConcurrentRateMeterStats getStats() {
     return stats;
   }
@@ -92,10 +96,6 @@ abstract class AbstractRateMeter implements RateMeter {
    */
   protected final long getSamplesIntervalNanos() {
     return samplesIntervalNanos;
-  }
-
-  protected final RateMeterConfig getConfig() {
-    return config;
   }
 
   protected final void checkArgument(final long tNanos, final String safeParamName) throws IllegalArgumentException {

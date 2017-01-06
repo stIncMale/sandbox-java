@@ -7,13 +7,13 @@ import javax.annotation.concurrent.NotThreadSafe;
 public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   private final boolean strictTick;
 
-  protected ConcurrentRingBufferRateMeterConfig(
+  ConcurrentRingBufferRateMeterConfig(
       final boolean checkArguments,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
       final boolean collectStats,
       final boolean strictTick,
-      final int maxTicksCountAttempts,
+      final long maxTicksCountAttempts,
       final int hl) {
     super(
         checkArguments,
@@ -77,40 +77,40 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
       strictTick = false;
     }
 
-    @Override
-    public Builder setCheckArguments(final boolean checkArguments) {
-      return (Builder)super.setCheckArguments(checkArguments);
-    }
-
-    @Override
-    public Builder setTicksCounterSupplier(final Function<Long, ? extends TicksCounter> ticksCounterSupplier) {
-      return (Builder)super.setTicksCounterSupplier(ticksCounterSupplier);
-    }
-
-    @Override
-    public Builder setTimeSensitivity(final Duration timeSensitivity) {
-      return (Builder)super.setTimeSensitivity(timeSensitivity);
-    }
-
-    @Override
-    public Builder setCollectStats(final boolean collectStats) {
-      return (Builder)super.setCollectStats(collectStats);
-    }
-
-    @Override
-    public Builder setMaxTicksCountAttempts(final int maxTicksCountAttempts) {
-      return (Builder)super.setMaxTicksCountAttempts(maxTicksCountAttempts);
-    }
-
-    @Override
-    public Builder setHl(final int hl) {
-      return (Builder)super.setHl(hl);
-    }
+//    @Override
+//    public Builder setCheckArguments(final boolean checkArguments) {
+//      return (Builder)super.setCheckArguments(checkArguments);
+//    }
+//
+//    @Override
+//    public Builder setTicksCounterSupplier(final Function<Long, ? extends TicksCounter> ticksCounterSupplier) {
+//      return (Builder)super.setTicksCounterSupplier(ticksCounterSupplier);
+//    }
+//
+//    @Override
+//    public Builder setTimeSensitivity(final Duration timeSensitivity) {
+//      return (Builder)super.setTimeSensitivity(timeSensitivity);
+//    }
+//
+//    @Override
+//    public Builder setCollectStats(final boolean collectStats) {
+//      return (Builder)super.setCollectStats(collectStats);
+//    }
+//
+//    @Override
+//    public Builder setMaxTicksCountAttempts(final int maxTicksCountAttempts) {
+//      return (Builder)super.setMaxTicksCountAttempts(maxTicksCountAttempts);
+//    }
+//
+//    @Override
+//    public Builder setHl(final int hl) {
+//      return (Builder)super.setHl(hl);
+//    }
 
     /**
      * @see ConcurrentRingBufferRateMeterConfig#isStrictTick()
      */
-    public Builder setStrictTick(final boolean strictTick) {
+    public final Builder setStrictTick(final boolean strictTick) {
       this.strictTick = strictTick;
       return this;
     }

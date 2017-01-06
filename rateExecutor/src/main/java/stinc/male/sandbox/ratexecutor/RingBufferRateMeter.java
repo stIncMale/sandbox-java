@@ -5,10 +5,14 @@ import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
 public class RingBufferRateMeter extends AbstractRingBufferRateMeter<SequentialLongArray> {
-  private static final ConcurrentRingBufferRateMeterConfig defaultConfigInstance = ConcurrentRingBufferRateMeterConfig.newBuilder()
-      .setTicksCounterSupplier(LongTicksCounter::new)
-      .setHl(2)
-      .build();
+  private static final ConcurrentRingBufferRateMeterConfig defaultConfigInstance;
+
+  static {
+    final ConcurrentRingBufferRateMeterConfig.Builder defaultConfigBuilder = ConcurrentRingBufferRateMeterConfig.newBuilder();
+    defaultConfigBuilder.setTicksCounterSupplier(LongTicksCounter::new)
+        .setHl(2);
+    defaultConfigInstance = defaultConfigBuilder.build();
+  }
 
   /**
    * @return A reasonable configuration.

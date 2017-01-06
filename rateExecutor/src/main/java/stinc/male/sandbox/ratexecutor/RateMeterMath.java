@@ -43,8 +43,8 @@ final class RateMeterMath {
     checkArgument(!unit.isNegative(), safeParamName, "Must be positive");
   }
 
-  static final long maxTNanos(final long startNanos, final long safeSamplesIntervalNanos, final int safeHl) {
-    return startNanos - (long)safeHl * safeSamplesIntervalNanos + Long.MAX_VALUE;
+  static final long maxTNanos(final long startNanos, final long safeSamplesIntervalNanos, final long safeHl) {
+    return startNanos - safeHl * safeSamplesIntervalNanos + Long.MAX_VALUE;
   }
 
   static final double rateAverage(

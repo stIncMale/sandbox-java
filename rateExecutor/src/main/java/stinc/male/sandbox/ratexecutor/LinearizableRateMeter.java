@@ -2,19 +2,41 @@ package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
 @ThreadSafe
 public final class LinearizableRateMeter implements RateMeter {
+  private final SynchronizationType sync;
   private final RateMeter rm;
-//  private final ReadWriteLock rwlock;
-  private final AtomicBoolean lock;
+  @Nullable
+  private final ReadWriteLock rwlock;
+  @Nullable
+  private final AtomicBoolean spinLock;
 
-  public LinearizableRateMeter(final AbstractRateMeter rm) {
-    Preconditions.checkNotNull(rm, "rm");
+  public LinearizableRateMeter(final AbstractRateMeter rm, final SynchronizationType sync) {
+    checkNotNull(rm, "rm");
+    checkNotNull(sync, "sync");
     this.rm = rm;
-//    rwlock = new ReentrantReadWriteLock();
-    lock = new AtomicBoolean();
+    this.sync = sync;
+    switch (sync) {
+      case RW_LOCK: {
+        rwlock = new ReentrantReadWriteLock();
+        spinLock = null;
+        break;
+      }
+      case SPIN_LOCK: {
+        rwlock = null;
+        spinLock = new AtomicBoolean();
+        break;
+      }
+      default: {
+        throw new IllegalArgumentException(String.format("The argument %s is illegal", "sync"));
+      }
+    }
   }
 
   @Override
@@ -59,12 +81,10 @@ public final class LinearizableRateMeter implements RateMeter {
 
   @Override
   public final long ticksTotalCount() {
-//    rwlock.readLock().lock();
     lock();
     try {
       return rm.ticksTotalCount();
     } finally {
-//      rwlock.readLock().unlock();
       unlock();
     }
   }
@@ -76,71 +96,82 @@ public final class LinearizableRateMeter implements RateMeter {
 
   @Override
   public final long rightSamplesWindowBoundary() {
-//    rwlock.readLock().lock();
     lock();
     try {
       return rm.rightSamplesWindowBoundary();
     } finally {
-//      rwlock.readLock().unlock();
       unlock();
     }
   }
 
   @Override
   public final long ticksCount() {
-//    rwlock.readLock().lock();
     lock();
     try {
       return rm.ticksCount();
     } finally {
-//      rwlock.readLock().unlock();
       unlock();
     }
   }
 
   @Override
   public final void tick(final long count, final long tNanos) {
-//    rwlock.readLock().lock();
     lock();
     try {
       rm.tick(count, tNanos);
     } finally {
-//      rwlock.readLock().unlock();
       unlock();
     }
   }
 
   @Override
   public final double rateAverage(final long tNanos) {
-//    rwlock.readLock().lock();
     lock();
     try {
       return rm.rateAverage(tNanos);
     } finally {
-//      rwlock.readLock().unlock();
       unlock();
     }
   }
 
   @Override
   public final double rate(final long tNanos) {
-//    rwlock.readLock().lock();
     lock();
     try {
       return rm.rate(tNanos);
     } finally {
-//      rwlock.readLock().unlock();
       unlock();
     }
   }
 
   private final void lock() {
-    while (!lock.compareAndSet(false, true)) {
-      Thread.yield();
+    if (sync == SynchronizationType.RW_LOCK) {
+      rwlock.readLock().lock();
+    } else {
+      while (!spinLock.compareAndSet(false, true)) {
+        Thread.yield();
+      }
     }
   }
 
   private final void unlock() {
-    lock.set(false);
+    if (sync == SynchronizationType.RW_LOCK) {
+      rwlock.readLock().lock();
+    } else {
+      spinLock.set(false);
+    }
+  }
+
+  public enum SynchronizationType {
+    RW_LOCK,
+    SPIN_LOCK
+  }
+
+  @Override
+  public final String toString() {
+    return getClass().getSimpleName()
+        + "(rm=" + rm
+        + ", sync=" + sync
+        + ')';
   }
 }

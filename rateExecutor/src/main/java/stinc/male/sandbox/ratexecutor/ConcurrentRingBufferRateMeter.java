@@ -9,9 +9,13 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @ThreadSafe
 public class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentLongArray> {
-  private static final ConcurrentRingBufferRateMeterConfig defaultConfigInstance = ConcurrentRingBufferRateMeterConfig.newBuilder()
-      .setTicksCounterSupplier(LongAdderTicksCounter::new)
-      .build();
+  private static final ConcurrentRingBufferRateMeterConfig defaultConfigInstance;
+
+  static {
+    final ConcurrentRingBufferRateMeterConfig.Builder defaultConfigBuilder = ConcurrentRingBufferRateMeterConfig.newBuilder();
+    defaultConfigBuilder.setTicksCounterSupplier(LongAdderTicksCounter::new);
+    defaultConfigInstance = defaultConfigBuilder.build();
+  }
 
   /**
    * @return A reasonable configuration.

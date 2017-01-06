@@ -17,15 +17,15 @@ public class RateMeterConfig {
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final Duration timeSensitivity;
   private final boolean collectStats;
-  private final int maxTicksCountAttempts;
+  private final long maxTicksCountAttempts;
   private final int hl;
 
-  protected RateMeterConfig(
+  RateMeterConfig(
       final boolean checkArguments,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
       final boolean collectStats,
-      final int maxTicksCountAttempts,
+      final long maxTicksCountAttempts,
       final int hl) {
     this.checkArguments = checkArguments;
     this.ticksCounterSupplier = ticksCounterSupplier;
@@ -97,7 +97,7 @@ public class RateMeterConfig {
    * must be accounted provided that {@link #isCollectStats() stats are being collected}.
    * @return 100 by default.
    */
-  public final int getMaxTicksCountAttempts() {
+  public final long getMaxTicksCountAttempts() {
     return maxTicksCountAttempts;
   }
 
@@ -130,7 +130,7 @@ public class RateMeterConfig {
     protected Function<Long, ? extends TicksCounter> ticksCounterSupplier;
     protected Duration timeSensitivity;
     protected boolean collectStats;
-    protected int maxTicksCountAttempts;
+    protected long maxTicksCountAttempts;
     protected int hl;
 
     protected Builder() {
@@ -154,7 +154,7 @@ public class RateMeterConfig {
     /**
      * @see RateMeterConfig#isCheckArguments()
      */
-    public Builder setCheckArguments(final boolean checkArguments) {
+    public final Builder setCheckArguments(final boolean checkArguments) {
       this.checkArguments = checkArguments;
       return this;
     }
@@ -163,7 +163,7 @@ public class RateMeterConfig {
      * @param ticksCounterSupplier Must be immutable.
      * @see RateMeterConfig#getTicksCounterSupplier()
      */
-    public Builder setTicksCounterSupplier(final Function<Long, ? extends TicksCounter> ticksCounterSupplier) {
+    public final Builder setTicksCounterSupplier(final Function<Long, ? extends TicksCounter> ticksCounterSupplier) {
       checkNotNull(ticksCounterSupplier, "ticksCounterSupplier");
       this.ticksCounterSupplier = ticksCounterSupplier;
       return this;
@@ -173,7 +173,7 @@ public class RateMeterConfig {
      * @param timeSensitivity Must be positive (not {@linkplain Duration#isNegative() negative} and not {@linkplain Duration#isZero() zero}).
      * @see RateMeterConfig#getTimeSensitivity()
      */
-    public Builder setTimeSensitivity(final Duration timeSensitivity) {
+    public final Builder setTimeSensitivity(final Duration timeSensitivity) {
       checkNotNull(timeSensitivity, "timeSensitivity");
       checkArgument(!timeSensitivity.isNegative(), "timeSensitivity", "Must be positive");
       checkArgument(!timeSensitivity.isZero(), "timeSensitivity", "Must not be zero");
@@ -184,7 +184,7 @@ public class RateMeterConfig {
     /**
      * @see RateMeterConfig#isCollectStats()
      */
-    public Builder setCollectStats(final boolean collectStats) {
+    public final Builder setCollectStats(final boolean collectStats) {
       this.collectStats = collectStats;
       return this;
     }
@@ -193,7 +193,7 @@ public class RateMeterConfig {
      * @param maxTicksCountAttempts Must be positive.
      * @see RateMeterConfig#getMaxTicksCountAttempts()
      */
-    public Builder setMaxTicksCountAttempts(final int maxTicksCountAttempts) {
+    public final Builder setMaxTicksCountAttempts(final long maxTicksCountAttempts) {
       checkArgument(maxTicksCountAttempts > 0, "maxTicksCountAttempts", "Must be positive");
       this.maxTicksCountAttempts = maxTicksCountAttempts;
       return this;
@@ -203,7 +203,7 @@ public class RateMeterConfig {
      * @param hl Must be greater than or equal to 2.
      * @see RateMeterConfig#getHl()
      */
-    public Builder setHl(final int hl) {
+    public final Builder setHl(final int hl) {
       checkArgument(hl >= 2, "hl", "Must be greater than or equal to 2");
       this.hl = hl;
       return this;

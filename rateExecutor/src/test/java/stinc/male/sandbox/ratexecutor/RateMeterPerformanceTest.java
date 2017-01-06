@@ -21,6 +21,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import stinc.male.PerformanceTest;
+import stinc.male.sandbox.ratexecutor.LinearizableRateMeter.SynchronizationType;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
 import static org.junit.Assert.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
@@ -579,17 +580,19 @@ public class RateMeterPerformanceTest {
               .setTicksCounterSupplier(LongTicksCounter::new)
               .setHl(2)
               .build());
+      final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
+          = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build());
+      concurrentRingBufferRateMeterConfigBuilder.setTicksCounterSupplier(LongAdderTicksCounter::new)
+          .setHl(2);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
-          ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build())
-              .setTicksCounterSupplier(LongAdderTicksCounter::new)
-              .setHl(2)
-              .build());
+          concurrentRingBufferRateMeterConfigBuilder.build());
       linearizableRateMeter = new LinearizableRateMeter(
           new RingBufferRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSuppplier.get()
                   .setTicksCounterSupplier(LongTicksCounter::new)
                   .setHl(2)
-                  .build()));
+                  .build()),
+          SynchronizationType.SPIN_LOCK);
     }
   }
 
@@ -608,17 +611,19 @@ public class RateMeterPerformanceTest {
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
               .build());
+      final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
+          = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build());
+      concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
+          .setTicksCounterSupplier(LongAdderTicksCounter::new);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
-          ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build())
-              .setTicksCounterSupplier(LongAdderTicksCounter::new)
-              .setStrictTick(true)
-              .build());
+          concurrentRingBufferRateMeterConfigBuilder.build());
       linearizableRateMeter = new LinearizableRateMeter(
           new RingBufferRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSuppplier.get()
                   .setTicksCounterSupplier(LongTicksCounter::new)
                   .setHl(2)
-                  .build()));
+                  .build()),
+          SynchronizationType.SPIN_LOCK);
     }
 
     @TearDown(Level.Trial)
