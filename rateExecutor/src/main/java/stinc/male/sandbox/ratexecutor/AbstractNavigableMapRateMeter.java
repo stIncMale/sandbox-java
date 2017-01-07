@@ -83,6 +83,37 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   }
 
   @Override
+  public LongReading ticksCount(final LongReading reading) {
+    checkNotNull(reading, "reading");
+    reading.accurate = true;
+    long value = 0;
+    final long samplesIntervalNanos = getSamplesIntervalNanos();
+    long rightNanos = rightSamplesWindowBoundary();
+    if (sequential) {
+      final long leftNanos = rightNanos - samplesIntervalNanos;
+      value = count(leftNanos, rightNanos);
+    } else {
+      for (long ri = 0; ri < getConfig().getMaxTicksCountAttempts(); ri++) {
+        final long leftNanos = rightNanos - samplesIntervalNanos;
+        value = count(leftNanos, rightNanos);
+        final long newRightNanos = rightSamplesWindowBoundary();
+        if (NanosComparator.compare(newRightNanos - getConfig().getHl() * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but value is still correct
+          break;
+        } else {//the samples window has been moved too far
+          rightNanos = newRightNanos;
+          if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
+            reading.accurate = false;
+            getStats().accountFailedAccuracyEventForTicksCount();
+          }
+        }
+      }
+    }
+    reading.tNanos = rightNanos;
+    reading.value = value;
+    return reading;
+  }
+
+  @Override
   public void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {

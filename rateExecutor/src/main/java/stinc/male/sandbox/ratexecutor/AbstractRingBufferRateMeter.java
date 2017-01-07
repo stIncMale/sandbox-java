@@ -106,6 +106,45 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   }
 
   @Override
+  public LongReading ticksCount(final LongReading reading) {
+    checkNotNull(reading, "reading");
+    reading.accurate = true;
+    long value = 0;
+    long samplesWindowShiftSteps = sequential ? this.samplesWindowShiftSteps : this.atomicSamplesWindowShiftSteps.get();
+    if (sequential) {
+      for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
+          i < samplesHistory.length() / getConfig().getHl();
+          idx = nextSamplesWindowIdx(idx), i++) {
+        value += samplesHistory.get(idx);
+      }
+    } else {
+      for (long ri = 0; ri < getConfig().getMaxTicksCountAttempts(); ri++) {
+        value = 0;
+        waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
+        final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
+        for (int idx = leftSamplesWindowIdx, i = 0;
+            i < samplesHistory.length() / getConfig().getHl();
+            idx = nextSamplesWindowIdx(idx), i++) {
+          value += samplesHistory.get(idx);
+        }
+        final long newSamplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
+        if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {//the samples window may has been moved while we were counting, but result is still correct
+          break;
+        } else {//the samples window has been moved too far
+          samplesWindowShiftSteps = newSamplesWindowShiftSteps;
+          if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
+            reading.accurate = false;
+            getStats().accountFailedAccuracyEventForTicksCount();
+          }
+        }
+      }
+    }
+    reading.tNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
+    reading.value = value;
+    return reading;
+  }
+
+  @Override
   public void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {

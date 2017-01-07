@@ -115,6 +115,16 @@ public final class LinearizableRateMeter implements RateMeter {
   }
 
   @Override
+  public final LongReading ticksCount(final LongReading reading) {
+    readLock();
+    try {
+      return rm.ticksCount(reading);
+    } finally {
+      readUnlock();
+    }
+  }
+
+  @Override
   public final void tick(final long count, final long tNanos) {
     writeLock();
     try {
