@@ -91,7 +91,7 @@ public final class LinearizableRateMeter implements RateMeter {
 
   @Override
   public final RateMeterStats stats() {
-    return rm.stats();//we know that RateMeterStats in AbstractRateMeter is thread-safe
+    return rm.stats();//we know that RateMeterStats in AbstractRateMeter is thread-safe, so we can read without explicit synchronization
   }
 
   @Override

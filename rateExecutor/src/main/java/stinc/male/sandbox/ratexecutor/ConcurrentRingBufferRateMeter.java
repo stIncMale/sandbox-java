@@ -3,10 +3,6 @@ package stinc.male.sandbox.ratexecutor;
 import java.time.Duration;
 import javax.annotation.concurrent.ThreadSafe;
 
-/**
- * This implementation of {@link RateMeter} is not linearizable and may produce inaccurate results if used concurrently
- * (see {@link RateMeter} for details).
- */
 @ThreadSafe
 public class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentLongArray> {
   private static final ConcurrentRingBufferRateMeterConfig defaultConfigInstance;

@@ -4,10 +4,6 @@ import java.time.Duration;
 import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.concurrent.ThreadSafe;
 
-/**
- * This implementation of {@link RateMeter} is not linearizable and may produce inaccurate results if used concurrently
- * (see {@link RateMeter} for details).
- */
 @ThreadSafe
 public class ConcurrentNavigableMapRateMeter extends AbstractNavigableMapRateMeter<ConcurrentSkipListMap<Long, TicksCounter>> {
   private static final RateMeterConfig defaultConfigInstance = RateMeterConfig.newBuilder()
