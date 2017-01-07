@@ -138,7 +138,7 @@ public class RateMeterConfig {
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = Duration.ofNanos(50);
       collectStats = true;
-      maxTicksCountAttempts = 1000;
+      maxTicksCountAttempts = 50;
       hl = 3;
     }
 
