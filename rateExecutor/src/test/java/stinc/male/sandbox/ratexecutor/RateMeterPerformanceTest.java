@@ -607,7 +607,7 @@ public class RateMeterPerformanceTest {
                   .setTicksCounterSupplier(LongTicksCounter::new)
                   .setHl(2)
                   .build()),
-          SynchronizationType.RW_LOCK);
+          SynchronizationType.SPIN_LOCK);
     }
   }
 
