@@ -48,11 +48,11 @@ final class RateMeterMath {
   }
 
   static final double rateAverage(
-      final long safeTNanos,
+      final long safeRightNanos,
       final long safeUnitSizeNanos,
       final long safeStartNanos,
       final long safeTicksTotalCount) {
-    final long totalNanos = safeTNanos - safeStartNanos;
+    final long totalNanos = safeRightNanos - safeStartNanos;
     return totalNanos == 0
         ? 0
         : (double)safeTicksTotalCount / ((double)totalNanos / safeUnitSizeNanos);

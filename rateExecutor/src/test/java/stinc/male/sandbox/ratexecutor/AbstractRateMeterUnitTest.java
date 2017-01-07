@@ -176,12 +176,9 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
     rm.tick(-1, 60);
     assertDoubleEquals((4d + 1 + 2 + 3 - 2 + 1 - 1) / (100d / 50), rm.rateAverage(100));
     assertDoubleEquals((4d + 1 + 2 + 3 - 2 + 1 - 1) / (100d / 30), rm.rateAverage(100, ofNanos(30)));
-    assertDoubleEquals((4d + 1 + 2 + 3 + 1) / (30d / 50), rm.rateAverage(30));
+    assertDoubleEquals((4 + 1 + 2 + 3 - 2 + 1 - 1) / (60d / 50), rm.rateAverage(60));
+    assertDoubleEquals(rm.rateAverage(rm.rightSamplesWindowBoundary()), rm.rateAverage(30));
     assertDoubleEquals(rm.rateAverage(), rm.rateAverage(10));
-    rm.tick(1, 99);
-    assertDoubleEquals(4d + 1 + 2 + 3 - 2 + 1, rm.rateAverage(50));
-    rm.tick(-1, 100);
-    assertDoubleEquals((4d + 1 + 2 + 3 - 2 + 1 -1) / (100d / 50), rm.rateAverage(50));
   }
 
   @Test

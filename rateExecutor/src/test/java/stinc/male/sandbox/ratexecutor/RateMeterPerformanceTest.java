@@ -645,15 +645,12 @@ public class RateMeterPerformanceTest {
     public final void tearDown() {
       assertEquals(0, concurrentNavigableMapRateMeter.stats().failedAccuracyEventsCountForTicksCount(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
       assertEquals(0, concurrentNavigableMapRateMeter.stats().failedAccuracyEventsCountForTick(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
-      assertEquals(0, concurrentNavigableMapRateMeter.stats().failedAccuracyEventsCountForRateAverage(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
       assertEquals(0, concurrentNavigableMapRateMeter.stats().failedAccuracyEventsCountForRate(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
       assertEquals(0, concurrentRingBufferRateMeter.stats().failedAccuracyEventsCountForTicksCount(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
       assertEquals(0, concurrentRingBufferRateMeter.stats().failedAccuracyEventsCountForTick(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
-      assertEquals(0, concurrentRingBufferRateMeter.stats().failedAccuracyEventsCountForRateAverage(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
       assertEquals(0, concurrentRingBufferRateMeter.stats().failedAccuracyEventsCountForRate(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
       assertEquals(0, linearizableRateMeter.stats().failedAccuracyEventsCountForTicksCount(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
       assertEquals(0, linearizableRateMeter.stats().failedAccuracyEventsCountForTick(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
-      assertEquals(0, linearizableRateMeter.stats().failedAccuracyEventsCountForRateAverage(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
       assertEquals(0, linearizableRateMeter.stats().failedAccuracyEventsCountForRate(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT);
     }
   }

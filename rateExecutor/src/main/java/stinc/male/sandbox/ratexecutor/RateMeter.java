@@ -148,7 +148,7 @@ public interface RateMeter {
   /**
    * Calculates average rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * from the {@linkplain #getStartNanos() start} till the {@code tNanos},
-   * if {@code tNanos} is greater than {@link #rightSamplesWindowBoundary()} - {@link #getSamplesInterval()},
+   * if {@code tNanos} is greater than {@link #rightSamplesWindowBoundary()},
    * otherwise returns {@link #rateAverage()}.
    *
    * @return Average rate of ticks or 0 if {@code tNanos} is equal to {@link #getStartNanos()}.
@@ -203,7 +203,7 @@ public interface RateMeter {
    * Calculates rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * as if {@code tNanos} were the right boundary of a samples window,
    * if {@code tNanos} is greater than {@link #rightSamplesWindowBoundary()} - {@link #getSamplesInterval()},
-   * otherwise returns {@link #rateAverage(long)}.
+   * otherwise returns {@link #rateAverage()}.
    *
    * @param tNanos An effective (imaginary) right boundary of a samples window.
    */

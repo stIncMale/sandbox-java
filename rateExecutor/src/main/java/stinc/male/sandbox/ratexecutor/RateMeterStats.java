@@ -7,7 +7,5 @@ public interface RateMeterStats {
 
   long failedAccuracyEventsCountForTick();
 
-  long failedAccuracyEventsCountForRateAverage();
-
   long failedAccuracyEventsCountForRate();
 }

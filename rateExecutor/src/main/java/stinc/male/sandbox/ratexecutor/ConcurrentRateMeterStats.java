@@ -14,15 +14,12 @@ final class ConcurrentRateMeterStats implements RateMeterStats {
   @Nullable
   private final LongAdder failedAccuracyEventsCountForTick;
   @Nullable
-  private final LongAdder failedAccuracyEventsCountForRateAverage;
-  @Nullable
   private final LongAdder failedAccuracyEventsCountForRate;
 
   ConcurrentRateMeterStats(final boolean enabled) {
     this.enabled = enabled;
     failedAccuracyEventsCountForTicksCount = enabled ? new LongAdder() : null;
     failedAccuracyEventsCountForTick = enabled ? new LongAdder() : null;
-    failedAccuracyEventsCountForRateAverage = enabled ? new LongAdder() : null;
     failedAccuracyEventsCountForRate = enabled ? new LongAdder() : null;
   }
 
@@ -46,11 +43,6 @@ final class ConcurrentRateMeterStats implements RateMeterStats {
   }
 
   @Override
-  public final long failedAccuracyEventsCountForRateAverage() {
-    return enabled ? failedAccuracyEventsCountForRateAverage.sum() : 0;
-  }
-
-  @Override
   public final long failedAccuracyEventsCountForRate() {
     return enabled ? failedAccuracyEventsCountForRate.sum() : 0;
   }
@@ -67,12 +59,6 @@ final class ConcurrentRateMeterStats implements RateMeterStats {
     }
   }
 
-  public final void accountFailedAccuracyEventForRateAverage() {
-    if (enabled) {
-      failedAccuracyEventsCountForRateAverage.increment();
-    }
-  }
-
   public final void accountFailedAccuracyEventForRate() {
     if (enabled) {
       failedAccuracyEventsCountForRate.increment();
@@ -86,7 +72,6 @@ final class ConcurrentRateMeterStats implements RateMeterStats {
     if (enabled) {
       result.append(", failedAccuracyEventsCountForTicksCount=").append(failedAccuracyEventsCountForTicksCount.sum())
           .append(", failedAccuracyEventsCountForTick=").append(failedAccuracyEventsCountForTick.sum())
-          .append(", failedAccuracyEventsCountForRateAverage=").append(failedAccuracyEventsCountForRateAverage.sum())
           .append(", failedAccuracyEventsCountForRate=").append(failedAccuracyEventsCountForRate.sum());
     }
     result.append(')');
