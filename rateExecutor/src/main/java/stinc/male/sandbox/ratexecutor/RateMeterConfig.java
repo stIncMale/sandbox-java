@@ -95,7 +95,7 @@ public class RateMeterConfig {
    * If this limit is reached and all attempts have failed, then the
    * {@linkplain RateMeterStats#failedAccuracyEventsCountForTicksCount() failed accuracy event}
    * must be accounted provided that {@link #isCollectStats() stats are being collected}.
-   * @return 100 by default.
+   * @return 1000 by default.
    */
   public final long getMaxTicksCountAttempts() {
     return maxTicksCountAttempts;
@@ -138,7 +138,7 @@ public class RateMeterConfig {
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = Duration.ofNanos(50);
       collectStats = true;
-      maxTicksCountAttempts = 100;
+      maxTicksCountAttempts = 1000;
       hl = 3;
     }
 

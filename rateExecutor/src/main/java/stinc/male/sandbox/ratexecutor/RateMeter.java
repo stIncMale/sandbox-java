@@ -231,7 +231,46 @@ public interface RateMeter {
    * does not collects it.
    */
   RateMeterStats stats();
+
+  final class LongReading extends AbstractReading {
+    long value;
+
+    public LongReading() {
+    }
+
+    public final long getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName()
+          + "(value=" + value
+          + ", tNanos=" + tNanos
+          + ')';
+    }
+  }
+
+  final class DoubleReading extends AbstractReading {
+    double value;
+
+    public DoubleReading() {
+    }
+
+    public final double getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName()
+          + "(value=" + value
+          + ", tNanos=" + tNanos
+          + ')';
+    }
+  }
 }
+
 //TODO add methods rate(Result{rate, time, failedAccuracy}), rateAverage(Result), ticksCount(Result) that will allow to get not only rate but also time in a garbage-free manner
 
 //TODO verify javadocs and other comments and messages

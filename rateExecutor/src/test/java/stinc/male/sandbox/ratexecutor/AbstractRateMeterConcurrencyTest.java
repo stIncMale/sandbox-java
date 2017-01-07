@@ -73,6 +73,7 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig
         .setCheckArguments(true)
         .setTimeSensitivity(ofNanos(1))
         .setTicksCounterSupplier(ticksCounterSupplier)
+        .setMaxTicksCountAttempts(Long.MAX_VALUE)
         .build();
     final RateMeter rm = getRateMeterCreator().create(
         startNanos,
@@ -100,8 +101,8 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary());
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount());
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.totalCount(), rm.ticksTotalCount());
-    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), 0, rm.stats().failedAccuracyEventsCountForTick(), 0);//this assert must never fail
-    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), 0, rm.stats().failedAccuracyEventsCountForTicksCount(), 0);//strictly speaking this assert may fail, so do not panic
+    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), 0, rm.stats().failedAccuracyEventsCountForTick(), 0);
+    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), 0, rm.stats().failedAccuracyEventsCountForTicksCount(), 0);
   }
 
   private static final class TestParams {

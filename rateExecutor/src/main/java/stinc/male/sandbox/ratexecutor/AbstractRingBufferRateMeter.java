@@ -84,7 +84,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
       }
     } else {
       long samplesWindowShiftSteps = this.samplesWindowShiftSteps.get();
-      for (int ri = 0; ri < getConfig().getMaxTicksCountAttempts(); ri++) {
+      for (long ri = 0; ri < getConfig().getMaxTicksCountAttempts(); ri++) {
         result = 0;
         waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
         final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);

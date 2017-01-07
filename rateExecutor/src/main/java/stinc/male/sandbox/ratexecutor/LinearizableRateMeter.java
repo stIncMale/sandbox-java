@@ -81,11 +81,11 @@ public final class LinearizableRateMeter implements RateMeter {
 
   @Override
   public final long ticksTotalCount() {
-    lock();
+    readLock();
     try {
       return rm.ticksTotalCount();
     } finally {
-      unlock();
+      readUnlock();
     }
   }
 
@@ -96,55 +96,55 @@ public final class LinearizableRateMeter implements RateMeter {
 
   @Override
   public final long rightSamplesWindowBoundary() {
-    lock();
+    readLock();
     try {
       return rm.rightSamplesWindowBoundary();
     } finally {
-      unlock();
+      readUnlock();
     }
   }
 
   @Override
   public final long ticksCount() {
-    lock();
+    readLock();
     try {
       return rm.ticksCount();
     } finally {
-      unlock();
+      readUnlock();
     }
   }
 
   @Override
   public final void tick(final long count, final long tNanos) {
-    lock();
+    writeLock();
     try {
       rm.tick(count, tNanos);
     } finally {
-      unlock();
+      writeUnlock();
     }
   }
 
   @Override
   public final double rateAverage(final long tNanos) {
-    lock();
+    readLock();
     try {
       return rm.rateAverage(tNanos);
     } finally {
-      unlock();
+      readUnlock();
     }
   }
 
   @Override
   public final double rate(final long tNanos) {
-    lock();
+    readLock();
     try {
       return rm.rate(tNanos);
     } finally {
-      unlock();
+      readUnlock();
     }
   }
 
-  private final void lock() {
+  private final void readLock() {
     if (sync == SynchronizationType.RW_LOCK) {
       rwlock.readLock().lock();
     } else {
@@ -154,9 +154,27 @@ public final class LinearizableRateMeter implements RateMeter {
     }
   }
 
-  private final void unlock() {
+  private final void readUnlock() {
     if (sync == SynchronizationType.RW_LOCK) {
-      rwlock.readLock().lock();
+      rwlock.readLock().unlock();
+    } else {
+      spinLock.set(false);
+    }
+  }
+
+  private final void writeLock() {
+    if (sync == SynchronizationType.RW_LOCK) {
+      rwlock.writeLock().lock();
+    } else {
+      while (!spinLock.compareAndSet(false, true)) {
+        Thread.yield();
+      }
+    }
+  }
+
+  private final void writeUnlock() {
+    if (sync == SynchronizationType.RW_LOCK) {
+      rwlock.writeLock().unlock();
     } else {
       spinLock.set(false);
     }
