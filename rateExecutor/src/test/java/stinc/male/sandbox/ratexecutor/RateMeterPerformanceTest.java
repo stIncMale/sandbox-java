@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -29,14 +28,10 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
 @Category(PerformanceTest.class)
 public class RateMeterPerformanceTest {
-  private static final Duration samplesInterval = Duration.of(1000, ChronoUnit.MICROS);
-  private static final Duration timeSensitivity = Duration.of(50, ChronoUnit.MICROS);
-//  private static final Duration samplesInterval = Duration.of(100, ChronoUnit.MILLIS);
-//  private static final Duration timeSensitivity = Duration.of(5, ChronoUnit.MILLIS);
-//  private static final Duration samplesInterval = Duration.of(1000, ChronoUnit.MILLIS);
-//  private static final Duration timeSensitivity = Duration.of(50, ChronoUnit.MILLIS);
+  private static final Duration samplesInterval = Duration.of(5_000, ChronoUnit.MICROS);
+  private static final Duration timeSensitivity = Duration.of(250, ChronoUnit.MICROS);
   private static final boolean SERVER = true;
-  private static final boolean QUICK = false;
+  private static final boolean QUICK = true;
   private static final long ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT = 0;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder()
@@ -48,13 +43,13 @@ public class RateMeterPerformanceTest {
     if (QUICK) {
       result.warmupTime(milliseconds(samplesInterval.toMillis() * 3))
           .warmupIterations(1)
-          .measurementTime(milliseconds(1_000))
+          .measurementTime(milliseconds(100))
           .measurementIterations(1)
           .forks(1);
     } else {
       result.warmupTime(milliseconds(500))
           .warmupIterations(3)
-          .measurementTime(milliseconds(1_500))
+          .measurementTime(milliseconds(500))
           .measurementIterations(3)
           .forks(3);
     }
@@ -66,13 +61,12 @@ public class RateMeterPerformanceTest {
   public RateMeterPerformanceTest() {
   }
 
-  @Ignore
   @Test
   public void serial_throughput_baseline() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
         .mode(Mode.Throughput)
         .timeUnit(TimeUnit.MILLISECONDS)
-        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
+        .include(getClass().getName() + ".baseline_.*")
         .threads(1)
         .build())
         .run();
@@ -133,7 +127,42 @@ public class RateMeterPerformanceTest {
         .run();
   }
 
-  @Ignore
+  @Test
+  public void serial_latency_concurrentNavigableMapRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*serial_tick_concurrentNavigableMapRateMeter")
+        .include(getClass().getName() + ".*parallel4_tick\\$1rate\\$10_concurrentNavigableMapRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_latency_concurrentRingBufferRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*parallel4_tick_concurrentRingBufferRateMeter")
+        .include(getClass().getName() + ".*parallel4_tick\\$1rate\\$10_concurrentRingBufferRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_latency_linearizableRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*parallel4_tick_linearizableRateMeter")
+        .include(getClass().getName() + ".*parallel4_tick\\$1rate\\$10_linearizableRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
   @Test
   public void parallel4_throughput_baseline() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
@@ -596,12 +625,10 @@ public class RateMeterPerformanceTest {
       concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
-              .setHl(3)
               .build());
       final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
           = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build());
-      concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
-          .setHl(3)
+      concurrentRingBufferRateMeterConfigBuilder.setStrictTick(false)
           .setTicksCounterSupplier(LongAdderTicksCounter::new);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
