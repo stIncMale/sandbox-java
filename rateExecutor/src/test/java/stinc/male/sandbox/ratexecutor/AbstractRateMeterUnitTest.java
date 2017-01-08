@@ -239,7 +239,7 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
 
   @Test
   public final void rate4() {
-    final Reading r = new Reading();//TODO
+    final Reading r = new Reading();
     final RateMeter rm = newRateMeter(-2, ofNanos(3));
     rm.tick(3, 0);
     rm.tick(1, 1);

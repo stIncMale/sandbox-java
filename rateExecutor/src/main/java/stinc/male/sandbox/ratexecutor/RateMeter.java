@@ -317,9 +317,5 @@ public interface RateMeter {
     }
   }
 }
-
-//TODO add methods rate(Result{rate, time, failedAccuracy}), rateAverage(Result), ticksCount(Result) that will allow to get not only rate but also time in a garbage-free manner
-
 //TODO verify javadocs and other comments and messages
-
 //TODO check inheritance/final methods
