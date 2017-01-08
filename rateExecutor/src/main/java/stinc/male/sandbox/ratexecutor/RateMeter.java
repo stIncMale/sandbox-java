@@ -103,7 +103,7 @@ public interface RateMeter {
    */
   long ticksCount();
 
-  Reading ticksCount(Reading reading);//TODO test
+  Reading ticksCount(Reading reading);
 
   /**
    * Calculates the total number of ticks since the {@linkplain #getStartNanos() start}.
