@@ -2,6 +2,7 @@ package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
 import javax.annotation.Nullable;
+import stinc.male.sandbox.ratexecutor.RateMeter.Reading;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
@@ -65,6 +66,14 @@ final class RateMeterMath {
     return (safeUnitSizeNanos == safeSamplesIntervalNanos)
         ? rateInSamplesIntervals
         : rateInSamplesIntervals / ((double) safeSamplesIntervalNanos / safeUnitSizeNanos);
+  }
+
+  static final Reading convertRate(
+      final Reading rateReadingInSamplesIntervals,
+      final long safeSamplesIntervalNanos,
+      final long safeUnitSizeNanos) {
+    return rateReadingInSamplesIntervals.setValue(
+        convertRate(rateReadingInSamplesIntervals.getDoubleValue(), safeSamplesIntervalNanos, safeUnitSizeNanos));
   }
 
   private RateMeterMath() {

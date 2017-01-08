@@ -106,9 +106,9 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   }
 
   @Override
-  public LongReading ticksCount(final LongReading reading) {
+  public Reading ticksCount(final Reading reading) {
     checkNotNull(reading, "reading");
-    reading.accurate = true;
+    reading.setAccurate(true);
     long value = 0;
     long samplesWindowShiftSteps = sequential ? this.samplesWindowShiftSteps : this.atomicSamplesWindowShiftSteps.get();
     if (sequential) {
@@ -133,14 +133,13 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
         } else {//the samples window has been moved too far
           samplesWindowShiftSteps = newSamplesWindowShiftSteps;
           if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
-            reading.accurate = false;
+            reading.setAccurate(false);
             getStats().accountFailedAccuracyEventForTicksCount();
           }
         }
       }
     }
-    reading.tNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
-    reading.value = value;
+    reading.setTNanos(rightSamplesWindowBoundary(samplesWindowShiftSteps)).setValue(value);
     return reading;
   }
 

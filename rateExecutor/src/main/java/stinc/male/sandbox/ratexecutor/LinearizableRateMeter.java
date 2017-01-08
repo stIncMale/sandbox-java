@@ -115,7 +115,7 @@ public final class LinearizableRateMeter implements RateMeter {
   }
 
   @Override
-  public final LongReading ticksCount(final LongReading reading) {
+  public final Reading ticksCount(final Reading reading) {
     readLock();
     try {
       return rm.ticksCount(reading);

@@ -1,6 +1,8 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
+import javax.annotation.concurrent.NotThreadSafe;
+import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratexecutor.RateMeterMath.checkTNanos;
 import static stinc.male.sandbox.ratexecutor.RateMeterMath.checkUnit;
 import static stinc.male.sandbox.ratexecutor.RateMeterMath.convertRate;
@@ -101,7 +103,7 @@ public interface RateMeter {
    */
   long ticksCount();
 
-  LongReading ticksCount(LongReading reading);//TODO test
+  Reading ticksCount(Reading reading);//TODO test
 
   /**
    * Calculates the total number of ticks since the {@linkplain #getStartNanos() start}.
@@ -188,6 +190,11 @@ public interface RateMeter {
     return ticksCount();
   }
 
+  default Reading rate(final Reading reading) {
+    checkNotNull(reading, "reading");
+    return ticksCount(reading);
+  }
+
   /**
    * Acts just like {@link #rate()} but the result is measured in {@code unit}<sup>-1</sup>
    * instead of samplesInterval<sup>-1</sup>.
@@ -199,6 +206,12 @@ public interface RateMeter {
   default double rate(final Duration unit) {
     checkUnit(unit, "unit");
     return convertRate(rate(), getSamplesInterval().toNanos(), unit.toNanos());
+  }
+
+  default Reading rate(final Duration unit, final Reading reading) {
+    checkUnit(unit, "unit");
+    checkNotNull(reading, "reading");
+    return convertRate(rate(reading), getSamplesInterval().toNanos(), unit.toNanos());
   }
 
   /**
@@ -234,40 +247,61 @@ public interface RateMeter {
    */
   RateMeterStats stats();
 
-  final class LongReading extends AbstractReading {
-    long value;
+  @NotThreadSafe
+  final class Reading {
+    private long longValue;
+    private double doubleValue;
+    private long tNanos;
+    private boolean accurate;
 
-    public LongReading() {
+    public Reading() {
     }
 
-    public final long getValue() {
-      return value;
+    public final double getDoubleValue() {
+      return doubleValue;
+    }
+
+    public final long getLongValue() {
+      return longValue;
+    }
+
+    public final long getTNanos() {
+      return tNanos;
+    }
+
+    public final boolean isAccurate() {
+      return accurate;
+    }
+
+    final Reading setValue(final double value) {
+      longValue = (long)value;
+      doubleValue = value;
+      return this;
+    }
+
+    final Reading setValue(final long value) {
+      longValue = value;
+      doubleValue = value;
+      return this;
+    }
+
+    final Reading setTNanos(final long tNanos) {
+      this.tNanos = tNanos;
+      return this;
+    }
+
+    final Reading setAccurate(final boolean accurate) {
+      this.accurate = accurate;
+      return this;
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
       return getClass().getSimpleName()
-          + "(value=" + value
+          + "(longValue=" + longValue
+          + ", doubleValue=" + doubleValue
           + ", tNanos=" + tNanos
-          + ')';
-    }
-  }
-
-  final class DoubleReading extends AbstractReading {
-    double value;
-
-    public DoubleReading() {
-    }
-
-    public final double getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return getClass().getSimpleName()
-          + "(value=" + value
-          + ", tNanos=" + tNanos
+          + ", accurate=" + accurate
           + ')';
     }
   }

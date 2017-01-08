@@ -69,6 +69,13 @@ abstract class AbstractRateMeter implements RateMeter {
   }
 
   @Override
+  public Reading rate(final Duration unit, final Reading reading) {
+    checkArgument(unit, "unit");
+    checkNotNull(reading, "reading");
+    return convertRate(rate(reading), getSamplesInterval().toNanos(), unit.toNanos());
+  }
+
+  @Override
   public double rate(final long tNanos, final Duration unit) {
     checkArguments(tNanos, "tNanos", unit, "unit");
     return convertRate(rate(tNanos), samplesIntervalNanos, unit.toNanos());
