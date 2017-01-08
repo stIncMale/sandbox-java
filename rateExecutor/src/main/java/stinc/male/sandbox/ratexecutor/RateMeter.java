@@ -224,6 +224,8 @@ public interface RateMeter {
    */
   double rate(long tNanos);
 
+  Reading rate(long tNanos, Reading reading);
+
   /**
    * Acts just like {@link #rate(long)} but the result is measured in {@code unit}<sup>-1</sup>
    * instead of samplesInterval<sup>-1</sup>.
@@ -239,6 +241,15 @@ public interface RateMeter {
     checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos, 3), "tNanos");
     checkUnit(unit, "unit");
     return convertRate(rate(tNanos), samplesIntervalNanos, unit.toNanos());
+  }
+
+  default Reading rate(final long tNanos, final Duration unit, final Reading reading) {
+    final long startNanos = getStartNanos();
+    final long samplesIntervalNanos = getSamplesInterval().toNanos();
+    checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos, 3), "tNanos");
+    checkUnit(unit, "unit");
+    checkNotNull(reading, "reading");
+    return convertRate(rate(tNanos, reading), samplesIntervalNanos, unit.toNanos());
   }
 
   /**

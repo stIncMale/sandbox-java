@@ -40,11 +40,6 @@ public final class LinearizableRateMeter implements RateMeter {
   }
 
   @Override
-  public final double rateAverage() {
-    return rm.rateAverage();
-  }
-
-  @Override
   public final double rateAverage(final Duration unit) {
     return rm.rateAverage(unit);
   }
@@ -55,18 +50,23 @@ public final class LinearizableRateMeter implements RateMeter {
   }
 
   @Override
-  public final long rate() {
-    return rm.rate();
-  }
-
-  @Override
   public final double rate(final Duration unit) {
     return rm.rate(unit);
   }
 
   @Override
+  public final Reading rate(final Duration unit, final Reading reading) {
+    return rm.rate(unit, reading);
+  }
+
+  @Override
   public final double rate(final long tNanos, final Duration unit) {
     return rm.rate(tNanos, unit);
+  }
+
+  @Override
+  public final Reading rate(final long tNanos, final Duration unit, final Reading reading) {
+    return rm.rate(tNanos, unit, reading);
   }
 
   @Override
@@ -149,6 +149,16 @@ public final class LinearizableRateMeter implements RateMeter {
     readLock();
     try {
       return rm.rate(tNanos);
+    } finally {
+      readUnlock();
+    }
+  }
+
+  @Override
+  public final Reading rate(final long tNanos, final Reading reading) {
+    readLock();
+    try {
+      return rm.rate(tNanos, reading);
     } finally {
       readUnlock();
     }

@@ -190,6 +190,47 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
     return result;
   }
 
+  @Override
+  public Reading rate(final long tNanos, final Reading reading) {
+    checkArgument(tNanos, "tNanos");
+    checkNotNull(reading, "reading");
+    reading.setAccurate(true);
+    final double value;
+    final long samplesIntervalNanos = getSamplesIntervalNanos();
+    final long rightNanos = rightSamplesWindowBoundary();
+    final long leftNanos = rightNanos - samplesIntervalNanos;
+    if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
+      value = RateMeterMath.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
+      reading.setTNanos(rightNanos);
+      reading.setAccurate(false);
+    } else {//tNanos is within or ahead of the samples window
+      final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
+      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
+        value = 0;
+        reading.setTNanos(tNanos);
+      } else {
+        final long count = count(effectiveLeftNanos, tNanos);
+        reading.setTNanos(tNanos);
+        if (sequential) {
+          value = count;
+        } else {
+          long newRightNanos = rightSamplesWindowBoundary();
+          final long safeLeft = newRightNanos - getConfig().getHl() * samplesIntervalNanos;
+          if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
+            value = count;
+          } else {//the samples window has been moved too far, return average
+            reading.setAccurate(false);
+            reading.setTNanos(newRightNanos);
+            getStats().accountFailedAccuracyEventForRate();
+            value = RateMeterMath.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
+          }
+        }
+      }
+    }
+    reading.setValue(value);
+    return reading;
+  }
+
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {
     return samplesHistory.subMap(fromExclusiveNanos, false, toInclusiveNanos, true)
         .values()

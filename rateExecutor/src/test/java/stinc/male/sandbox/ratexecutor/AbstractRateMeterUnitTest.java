@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import org.junit.Test;
 import stinc.male.sandbox.ratexecutor.RateMeter.Reading;
 import static java.time.Duration.ofNanos;
+import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -60,28 +61,28 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
   @Test
   public final void ticksCount1() {
     assertEquals(0, newRateMeter(0, ofNanos(1)).ticksCount());
-    assertReading(0, 0, newRateMeter(0, ofNanos(1)).ticksCount(new Reading()));
+    assertReading(0, 0, true, newRateMeter(0, ofNanos(1)).ticksCount(new Reading()));
   }
 
   @Test
   public final void ticksCount2() {
-    final Reading reading = new Reading();
+    final Reading r = new Reading();
     final RateMeter rm = newRateMeter(-5, ofNanos(50));
     rm.tick(1, 7);
     rm.tick(4, 10);
     rm.tick(2, 20);
     rm.tick(3, 30);
     assertEquals(1 + 4 + 2 + 3, rm.ticksCount());
-    assertReading(rm.ticksCount(), 30, rm.ticksCount(reading));
+    assertReading(rm.ticksCount(), 30, true, rm.ticksCount(r));
     rm.tick(0, 8);
     assertEquals(1 + 4 + 2 + 3, rm.ticksCount());
-    assertReading(rm.ticksCount(), 30, rm.ticksCount(reading));
+    assertReading(rm.ticksCount(), 30, true, rm.ticksCount(r));
     rm.tick(-2, 50);
     rm.tick(1, 30);
     rm.tick(-1, 60);
     rm.tick(5, 10);
     assertEquals(2 + 3 - 2 + 1 - 1, rm.ticksCount());
-    assertReading(rm.ticksCount(), 60, rm.ticksCount(reading));
+    assertReading(rm.ticksCount(), 60, true, rm.ticksCount(r));
   }
 
   @Test
@@ -95,7 +96,7 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
     rm.tick(1, Long.MIN_VALUE);
     assertEquals(1, rm.ticksTotalCount());
     assertEquals(rm.ticksCount(), rm.ticksTotalCount());
-    assertReading(rm.ticksCount(), Long.MIN_VALUE, rm.ticksCount(new Reading()));
+    assertReading(rm.ticksCount(), Long.MIN_VALUE, true, rm.ticksCount(new Reading()));
     rm.tick(4, -210);
     rm.tick(2, -202);
     assertEquals(1 + 4 + 2, rm.ticksTotalCount());
@@ -192,66 +193,82 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
   @Test
   public final void rate1() {
     assertDoubleEquals(0, newRateMeter(0, ofNanos(10)).rate());
-    assertReading(0, 0, newRateMeter(0, ofNanos(10)).rate(new Reading()));
+    assertReading(0, 0, true, newRateMeter(0, ofNanos(10)).rate(new Reading()));
   }
 
   @Test
   public final void rate2() {
     assertDoubleEquals(0, newRateMeter(0, ofNanos(10)).rate(0));
+    assertReading(0, 0, true, newRateMeter(0, ofNanos(10)).rate(0, new Reading()));
   }
 
   @Test
   public final void rate3() {
-    final Reading reading = new Reading();
+    final Reading r = new Reading();
     final RateMeter rm = newRateMeter(-1, ofNanos(30));
     rm.tick(1, 0);
     rm.tick(1, 5);
     assertDoubleEquals(1d + 1, rm.rate());
-    assertReading(rm.rate(), 5, rm.rate(reading));
+    assertReading(rm.rate(), 5, true, rm.rate(r));
     assertDoubleEquals((1d + 1) / (30d / 10), rm.rate(ofNanos(10)));
+    assertReading(rm.rate(ofNanos(10)), 5, true, rm.rate(ofNanos(10), r));
     rm.tick(0, 10);
     rm.tick(2, 20);
     assertDoubleEquals(1 + 1 + 2, rm.rate());
-    assertReading(rm.rate(), 20, rm.rate(reading));
+    assertReading(rm.rate(), 20, true, rm.rate(r));
     assertDoubleEquals((1d + 1 + 2) / (30d / 10), rm.rate(ofNanos(10)));
+    assertReading(rm.rate(ofNanos(10)), 20, true, rm.rate(ofNanos(10), r));
     rm.tick(3, 30);
     assertDoubleEquals(1 + 2 + 3, rm.rate());
-    assertReading(rm.rate(), 30, rm.rate(reading));
+    assertReading(rm.rate(), 30, true, rm.rate(r));
     rm.tick(-2, 50);
     rm.tick(1, 30);
     rm.tick(-1, 60);
     assertDoubleEquals(-2 - 1, rm.rate());
-    assertReading(rm.rate(), 60, rm.rate(reading));
+    assertReading(rm.rate(), 60, true, rm.rate(r));
     assertDoubleEquals((-2d - 1) / (30d / 10), rm.rate(ofNanos(10)));
+    assertReading(rm.rate(ofNanos(10)), 60, true, rm.rate(ofNanos(10), r));
     assertDoubleEquals(rm.ticksCount(), rm.rate());
-    assertReading(rm.ticksCount(), 60, rm.rate(reading));
-    assertReading(rm.rate(), 60, rm.ticksCount(new Reading()));
+    assertReading(rm.ticksCount(), 60, true, rm.rate(r));
+    assertReading(rm.rate(), 60, true, rm.ticksCount(new Reading()));
     assertDoubleEquals(rm.rate(rm.rightSamplesWindowBoundary()), rm.rate());
     assertDoubleEquals(rm.rate(rm.rightSamplesWindowBoundary(), ofNanos(10)), rm.rate(ofNanos(10)));
+    assertReading(rm.rate(ofNanos(10)), 60, true, rm.rate(ofNanos(10), r));
+    assertReading(rm.rate(5), 60, false, rm.rate(5, r));
   }
 
   @Test
   public final void rate4() {
+    final Reading r = new Reading();//TODO
     final RateMeter rm = newRateMeter(-2, ofNanos(3));
     rm.tick(3, 0);
     rm.tick(1, 1);
     rm.tick(0, 1);
     rm.tick(2, 2);
     assertDoubleEquals((3d + 1 + 2), rm.rate(2));
+    assertReading(rm.rate(2), 2, true, rm.rate(2, r));
+    assertReading(rm.rateAverage(), 2, false, rm.rate(-2, r));
     assertDoubleEquals((3d + 1 + 2) / (3d / 17), rm.rate(2, ofNanos(17)));
+    assertReading(rm.rate(2, ofNanos(17)), 2, true, rm.rate(2, ofNanos(17), r));
     rm.tick(3, 3);
     assertDoubleEquals((1 + 2 + 3), rm.rate(3));
+    assertReading(rm.rate(3), 3, true, rm.rate(3, r));
     assertDoubleEquals((1d + 2 + 3) / (3d / 15), rm.rate(3, ofNanos(15)));
+    assertReading(rm.rate(3, ofNanos(15)), 3, true, rm.rate(3, ofNanos(15), r));
     rm.tick(-2, 5);
     rm.tick(1, 3);
     rm.tick(-1, 6);
     assertDoubleEquals((-2 - 1), rm.rate(7));
+    assertReading(rm.rate(7), 7, true, rm.rate(7, r));
     assertDoubleEquals((-2d - 1) / (3d / 15), rm.rate(7, ofNanos(15)));
+    assertReading(rm.rate(7, ofNanos(15)), 7, true, rm.rate(7, ofNanos(15), r));
     assertDoubleEquals((2d + 3 + 1), rm.rate(4));
+    assertReading(rm.rate(4), 4, true, rm.rate(4, r));
   }
 
   @Test
   public final void rate5() {
+    final Reading r = new Reading();
     final RateMeter rm = newRateMeter(-2, ofNanos(30));
     rm.tick(1, -1);
     rm.tick(3, 0);
@@ -259,15 +276,23 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
     rm.tick(0, 10);
     rm.tick(2, 20);
     assertDoubleEquals((1d + 3 + 1 + 2), rm.rate(20));
+    assertReading(rm.rate(20), 20, true, rm.rate(20, r));
+    assertReading(0, 50, true, rm.rate(50, r));
     assertDoubleEquals((1d + 3 + 1 + 2) / (30d / 17), rm.rate(20, ofNanos(17)));
+    assertReading(rm.rate(20, ofNanos(17)), 20, true, rm.rate(20, ofNanos(17), r));
     rm.tick(3, 30);
     assertDoubleEquals((1 + 2 + 3), rm.rate(30));
+    assertReading(rm.rate(30), 30, true, rm.rate(30, r));
     assertDoubleEquals((1d + 2 + 3) / (30d / 15), rm.rate(30, ofNanos(15)));
+    assertReading(rm.rate(30, ofNanos(15)), 30, true, rm.rate(30, ofNanos(15), r));
     rm.tick(-2, 50);
     rm.tick(1, 30);
     rm.tick(-1, 60);
     assertDoubleEquals((-2 - 1), rm.rate(70));
+    assertReading(rm.rate(70), 70, true, rm.rate(70, r));
+    assertReading(rm.rateAverage(), 60, false, rm.rate(30, r));
     assertDoubleEquals((-2d - 1) / (30d / 15), rm.rate(70, ofNanos(15)));
+    assertReading(rm.rate(70, ofNanos(15)), 70, true, rm.rate(70, ofNanos(15), r));
   }
 
   private final RateMeter newRateMeter(final long startNanos, final Duration samplesInterval) {
@@ -291,15 +316,23 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
     assertEquals(extected, actual, 0.000000000001);
   }
 
-  private static final void assertReading(final long expectedValue, final long expectedTNanos, final Reading reading) {
+  private static final void assertReading(final long expectedValue, final long expectedTNanos, final boolean accurate, final Reading reading) {
     assertEquals(expectedValue, reading.getLongValue());
     assertEquals(expectedTNanos, reading.getTNanos());
-    assertTrue(reading.isAccurate());
+    if (accurate) {
+      assertTrue(reading.isAccurate());
+    } else {
+      assertFalse(reading.isAccurate());
+    }
   }
 
-  private static final void assertReading(final double expectedValue, final long expectedTNanos, final Reading reading) {
+  private static final void assertReading(final double expectedValue, final long expectedTNanos, final boolean accurate, final Reading reading) {
     assertDoubleEquals(expectedValue, reading.getDoubleValue());
     assertEquals(expectedTNanos, reading.getTNanos());
-    assertTrue(reading.isAccurate());
+    if (accurate) {
+      assertTrue(reading.isAccurate());
+    } else {
+      assertFalse(reading.isAccurate());
+    }
   }
 }
