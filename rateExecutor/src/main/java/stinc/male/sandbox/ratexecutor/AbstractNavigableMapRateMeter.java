@@ -113,7 +113,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   }
 
   @Override
-  public void tick(final long count, final long tNanos) {
+  public void tick(final long count, final long tNanos) {//TODO add sequential implementation which relies on the fact that NanosComparator.compare(rightNanos, tNanos) <= 0
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();

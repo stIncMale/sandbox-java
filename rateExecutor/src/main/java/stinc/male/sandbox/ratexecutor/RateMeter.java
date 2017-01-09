@@ -20,7 +20,7 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * All nanosecond values are compared as specified by {@link System#nanoTime()}.
  * <p>
  * <i>Sample</i><br>
- * Sample is a pair (tNanos, ticksCount), where ticksCount
+ * Sample is a pair (tNanos, ticksCount), where ticksCount \u2208 [{@link Long#MIN_VALUE}; {@link Long#MAX_VALUE}].
  * <p>
  * <i>Samples window</i><br>
  * Samples window is a half-closed time interval
