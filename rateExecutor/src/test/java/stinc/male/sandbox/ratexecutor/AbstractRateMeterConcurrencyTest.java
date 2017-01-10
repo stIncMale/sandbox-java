@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import stinc.male.sandbox.ratexecutor.RateMeter.Reading;
 import static java.time.Duration.ofNanos;
 import static org.junit.Assert.assertEquals;
 
@@ -73,7 +74,6 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig
         .setCheckArguments(true)
         .setTimeSensitivity(ofNanos(1))
         .setTicksCounterSupplier(ticksCounterSupplier)
-        .setMaxTicksCountAttempts(Long.MAX_VALUE)
         .build();
     final RateMeter rm = getRateMeterCreator().create(
         startNanos,
@@ -102,7 +102,6 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount());
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.totalCount(), rm.ticksTotalCount());
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), 0, rm.stats().failedAccuracyEventsCountForTick(), 0);
-    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), 0, rm.stats().failedAccuracyEventsCountForTicksCount(), 0);
   }
 
   private static final class TestParams {
@@ -188,10 +187,15 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig
         shuffledSamples.forEach(sample -> {
           rm.tick(sample.getValue(), sample.getKey());
           if (tickToRateRatio > 0 && i % tickToRateRatio == 0) {
-            if (ThreadLocalRandom.current().nextBoolean()) {
+            final int randomInt = ThreadLocalRandom.current().nextInt(4);
+            if (randomInt == 0) {
               rm.rate();
-            } else {
+            } else if (randomInt == 1) {
               rm.rate(rm.rightSamplesWindowBoundary());
+            } else if (randomInt == 1) {
+              rm.rate(new Reading());
+            } else {
+              rm.rate(rm.rightSamplesWindowBoundary(), new Reading());
             }
           }
         });

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
@@ -17,6 +18,8 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   private final long timeSensitivityNanos;
   private final AtomicBoolean gcInProgress;
   private volatile long gcLastRightSamplesWindowBoundary;
+  @Nullable
+  private final StampedLock ticksCountRwLock;
 
   private final double gcRatio = 0.3;//(0,1] the bigger, the less frequently GC happens, but the older elements are maintained in the samples history.
 
@@ -49,6 +52,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
         () -> String.format("getTimeSensitivityNanos()=%s must be not greater than getSamplesIntervalNanos()=%s",
             timeSensitivityNanos, getSamplesIntervalNanos()));
     this.sequential = sequential;
+    ticksCountRwLock = sequential ? null : new StampedLock();
   }
 
   @Override
@@ -65,17 +69,25 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long leftNanos = rightNanos - samplesIntervalNanos;
       result = count(leftNanos, rightNanos);
     } else {
-      for (long ri = 0; ri < getConfig().getMaxTicksCountAttempts(); ri++) {
-        final long leftNanos = rightNanos - samplesIntervalNanos;
-        result = count(leftNanos, rightNanos);
-        final long newRightNanos = rightSamplesWindowBoundary();
-        if (NanosComparator.compare(newRightNanos - getConfig().getHl() * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but result is still correct
-          break;
-        } else {//the samples window has been moved too far
-          rightNanos = newRightNanos;
-          if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
-            getStats().accountFailedAccuracyEventForTicksCount();
+      final long maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
+      long ticksCountReadLockStamp = 0;
+      try {
+        for (long ri = 0; ri < maxTicksCountAttempts; ri++) {
+          final long leftNanos = rightNanos - samplesIntervalNanos;
+          result = count(leftNanos, rightNanos);
+          final long newRightNanos = rightSamplesWindowBoundary();
+          if (NanosComparator.compare(newRightNanos - getConfig().getHl() * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but result is still correct
+            break;
+          } else {//the samples window has been moved too far
+            rightNanos = newRightNanos;
+            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
+              ticksCountReadLockStamp = ticksCountRwLock.readLock();
+            }
           }
+        }
+      } finally {
+        if (ticksCountReadLockStamp != 0) {
+          ticksCountRwLock.unlockRead(ticksCountReadLockStamp);
         }
       }
     }
@@ -93,18 +105,25 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long leftNanos = rightNanos - samplesIntervalNanos;
       value = count(leftNanos, rightNanos);
     } else {
-      for (long ri = 0; ri < getConfig().getMaxTicksCountAttempts(); ri++) {
-        final long leftNanos = rightNanos - samplesIntervalNanos;
-        value = count(leftNanos, rightNanos);
-        final long newRightNanos = rightSamplesWindowBoundary();
-        if (NanosComparator.compare(newRightNanos - getConfig().getHl() * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but value is still correct
-          break;
-        } else {//the samples window has been moved too far
-          rightNanos = newRightNanos;
-          if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
-            reading.setAccurate(false);
-            getStats().accountFailedAccuracyEventForTicksCount();
+      final long maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
+      long ticksCountReadLockStamp = 0;
+      try {
+        for (long ri = 0; ri < maxTicksCountAttempts; ri++) {
+          final long leftNanos = rightNanos - samplesIntervalNanos;
+          value = count(leftNanos, rightNanos);
+          final long newRightNanos = rightSamplesWindowBoundary();
+          if (NanosComparator.compare(newRightNanos - getConfig().getHl() * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but value is still correct
+            break;
+          } else {//the samples window has been moved too far
+            rightNanos = newRightNanos;
+            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
+              ticksCountReadLockStamp = ticksCountRwLock.readLock();
+            }
           }
+        }
+      } finally {
+        if (ticksCountReadLockStamp != 0) {
+          ticksCountRwLock.unlockRead(ticksCountReadLockStamp);
         }
       }
     }
@@ -121,17 +140,24 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       if (NanosComparator.compare(leftHistoryNanos, tNanos) < 0) {//tNanos is within the samples history
         @Nullable
         final TicksCounter existingSample;
-        if (timeSensitivityNanos == 1) {
-          final TicksCounter newSample = getConfig().getTicksCounterSupplier().apply(count);
-          existingSample = samplesHistory.putIfAbsent(tNanos, newSample);
-        } else {
-          @Nullable
-          final Entry<Long, TicksCounter> existingEntry = samplesHistory.floorEntry(tNanos);
-          if (existingEntry != null && (tNanos - existingEntry.getKey()) <= timeSensitivityNanos) {
-            existingSample = existingEntry.getValue();
-          } else {
+        long ticksCountWriteLockStamp = (!sequential && ticksCountRwLock.isReadLocked()) ? ticksCountRwLock.writeLock() : 0;
+        try {
+          if (timeSensitivityNanos == 1) {
             final TicksCounter newSample = getConfig().getTicksCounterSupplier().apply(count);
             existingSample = samplesHistory.putIfAbsent(tNanos, newSample);
+          } else {
+            @Nullable
+            final Entry<Long, TicksCounter> existingEntry = samplesHistory.floorEntry(tNanos);
+            if (existingEntry != null && (tNanos - existingEntry.getKey()) <= timeSensitivityNanos) {
+              existingSample = existingEntry.getValue();
+            } else {
+              final TicksCounter newSample = getConfig().getTicksCounterSupplier().apply(count);
+              existingSample = samplesHistory.putIfAbsent(tNanos, newSample);
+            }
+          }
+        } finally {
+          if (ticksCountWriteLockStamp != 0) {
+            ticksCountRwLock.unlockWrite(ticksCountWriteLockStamp);
           }
         }
         if (existingSample != null) {//we need to merge samples

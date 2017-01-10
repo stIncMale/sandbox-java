@@ -94,10 +94,13 @@ public class RateMeterConfig {
    * (such a race may be caused by allowing to move the samples window while counting current ticks).
    * If this limit is reached and all attempts have failed, then the
    * {@linkplain RateMeterStats#failedAccuracyEventsCountForTicksCount() failed accuracy event}
-   * must be accounted provided that {@link #isCollectStats() stats are being collected}.
-   * @return 1000 by default.
+   * must be accounted provided that {@link #isCollectStats() stats is being collected}.
+   * <p>
+   * Note that this is just a hint, so an implementation may choose to do more attempts,
+   * but the number of attempts must be finite.
+   * @return 5 by default.
    */
-  public final long getMaxTicksCountAttempts() {
+  public final long getMaxTicksCountAttempts() {//TODO use int
     return maxTicksCountAttempts;
   }
 
@@ -138,7 +141,7 @@ public class RateMeterConfig {
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = Duration.ofNanos(50);
       collectStats = true;
-      maxTicksCountAttempts = 50;
+      maxTicksCountAttempts = 5;
       hl = 3;
     }
 

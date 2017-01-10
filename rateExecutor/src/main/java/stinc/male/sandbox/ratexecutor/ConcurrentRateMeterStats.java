@@ -10,15 +10,12 @@ final class ConcurrentRateMeterStats implements RateMeterStats {
 
   private final boolean enabled;
   @Nullable
-  private final LongAdder failedAccuracyEventsCountForTicksCount;
-  @Nullable
   private final LongAdder failedAccuracyEventsCountForTick;
   @Nullable
   private final LongAdder failedAccuracyEventsCountForRate;
 
   ConcurrentRateMeterStats(final boolean enabled) {
     this.enabled = enabled;
-    failedAccuracyEventsCountForTicksCount = enabled ? new LongAdder() : null;
     failedAccuracyEventsCountForTick = enabled ? new LongAdder() : null;
     failedAccuracyEventsCountForRate = enabled ? new LongAdder() : null;
   }
@@ -33,11 +30,6 @@ final class ConcurrentRateMeterStats implements RateMeterStats {
   }
 
   @Override
-  public final long failedAccuracyEventsCountForTicksCount() {
-    return enabled ? failedAccuracyEventsCountForTicksCount.sum() : 0;
-  }
-
-  @Override
   public final long failedAccuracyEventsCountForTick() {
     return enabled ? failedAccuracyEventsCountForTick.sum() : 0;
   }
@@ -45,12 +37,6 @@ final class ConcurrentRateMeterStats implements RateMeterStats {
   @Override
   public final long failedAccuracyEventsCountForRate() {
     return enabled ? failedAccuracyEventsCountForRate.sum() : 0;
-  }
-
-  public final void accountFailedAccuracyEventForTicksCount() {
-    if (enabled) {
-      failedAccuracyEventsCountForTicksCount.increment();
-    }
   }
 
   public final void accountFailedAccuracyEventForTick() {
@@ -70,8 +56,7 @@ final class ConcurrentRateMeterStats implements RateMeterStats {
     final StringBuilder result = new StringBuilder(getClass().getSimpleName())
         .append("(enabled=" + enabled);
     if (enabled) {
-      result.append(", failedAccuracyEventsCountForTicksCount=").append(failedAccuracyEventsCountForTicksCount.sum())
-          .append(", failedAccuracyEventsCountForTick=").append(failedAccuracyEventsCountForTick.sum())
+      result.append(", failedAccuracyEventsCountForTick=").append(failedAccuracyEventsCountForTick.sum())
           .append(", failedAccuracyEventsCountForRate=").append(failedAccuracyEventsCountForRate.sum());
     }
     result.append(')');

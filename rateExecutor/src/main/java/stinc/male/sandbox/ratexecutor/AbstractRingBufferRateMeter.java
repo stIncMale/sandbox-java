@@ -3,6 +3,7 @@ package stinc.male.sandbox.ratexecutor;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
@@ -21,6 +22,8 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   private final AtomicLong atomicSamplesWindowShiftSteps;
   @Nullable
   private final AtomicLong atomicCompletedSamplesWindowShiftSteps;
+  @Nullable
+  private final StampedLock ticksCountRwLock;
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -49,13 +52,19 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
             samplesIntervalArrayLength, timeSensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samplesHistory = samplesHistorySuppplier.apply(config.getHl() * samplesIntervalArrayLength);
-    if (!sequential && config.isStrictTick()) {
-      locks = new AtomicBoolean[samplesHistory.length()];
-      for (int idx = 0; idx < locks.length; idx++) {
-        locks[idx] = new AtomicBoolean();
-      }
-    } else {
+    if (sequential) {
+      ticksCountRwLock = null;
       locks = null;
+    } else {
+      ticksCountRwLock = new StampedLock();
+      if (config.isStrictTick()) {
+        locks = new AtomicBoolean[samplesHistory.length()];
+        for (int idx = 0; idx < locks.length; idx++) {
+          locks[idx] = new AtomicBoolean();
+        }
+      } else {
+        locks = null;
+      }
     }
     atomicSamplesWindowShiftSteps = sequential ? null : new AtomicLong();
     samplesWindowShiftSteps = 0;
@@ -81,24 +90,32 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
         result += samplesHistory.get(idx);
       }
     } else {
-      long samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
-      for (long ri = 0; ri < getConfig().getMaxTicksCountAttempts(); ri++) {
-        result = 0;
-        waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
-        final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
-        for (int idx = leftSamplesWindowIdx, i = 0;
-            i < samplesHistory.length() / getConfig().getHl();
-            idx = nextSamplesWindowIdx(idx), i++) {
-          result += samplesHistory.get(idx);
-        }
-        final long newSamplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
-        if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {//the samples window may has been moved while we were counting, but result is still correct
-          break;
-        } else {//the samples window has been moved too far
-          samplesWindowShiftSteps = newSamplesWindowShiftSteps;
-          if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
-            getStats().accountFailedAccuracyEventForTicksCount();
+      final long maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
+      long ticksCountReadLockStamp = 0;
+      try {
+        long samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
+        for (long ri = 0; ri < maxTicksCountAttempts || ticksCountReadLockStamp != 0; ri++) {
+          result = 0;
+          waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
+          final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
+          for (int idx = leftSamplesWindowIdx, i = 0;
+              i < samplesHistory.length() / getConfig().getHl();
+              idx = nextSamplesWindowIdx(idx), i++) {
+            result += samplesHistory.get(idx);
           }
+          final long newSamplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
+          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {//the samples window may has been moved while we were counting, but result is still correct
+            break;
+          } else {//the samples window has been moved too far
+            samplesWindowShiftSteps = newSamplesWindowShiftSteps;
+            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
+              ticksCountReadLockStamp = ticksCountRwLock.readLock();
+            }
+          }
+        }
+      } finally {
+        if (ticksCountReadLockStamp != 0) {
+          ticksCountRwLock.unlockRead(ticksCountReadLockStamp);
         }
       }
     }
@@ -118,24 +135,31 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
         value += samplesHistory.get(idx);
       }
     } else {
-      for (long ri = 0; ri < getConfig().getMaxTicksCountAttempts(); ri++) {
-        value = 0;
-        waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
-        final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
-        for (int idx = leftSamplesWindowIdx, i = 0;
-            i < samplesHistory.length() / getConfig().getHl();
-            idx = nextSamplesWindowIdx(idx), i++) {
-          value += samplesHistory.get(idx);
-        }
-        final long newSamplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
-        if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {//the samples window may has been moved while we were counting, but result is still correct
-          break;
-        } else {//the samples window has been moved too far
-          samplesWindowShiftSteps = newSamplesWindowShiftSteps;
-          if (ri == getConfig().getMaxTicksCountAttempts() - 1) {//all read attempts have been exhausted, return what we have
-            reading.setAccurate(false);
-            getStats().accountFailedAccuracyEventForTicksCount();
+      final long maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
+      long ticksCountReadLockStamp = 0;
+      try {
+        for (long ri = 0; ri < maxTicksCountAttempts || ticksCountReadLockStamp != 0; ri++) {
+          value = 0;
+          waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
+          final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
+          for (int idx = leftSamplesWindowIdx, i = 0;
+              i < samplesHistory.length() / getConfig().getHl();
+              idx = nextSamplesWindowIdx(idx), i++) {
+            value += samplesHistory.get(idx);
           }
+          final long newSamplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
+          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {//the samples window may has been moved while we were counting, but result is still correct
+            break;
+          } else {//the samples window has been moved too far
+            samplesWindowShiftSteps = newSamplesWindowShiftSteps;
+            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
+              ticksCountReadLockStamp = ticksCountRwLock.readLock();
+            }
+          }
+        }
+      } finally {
+        if (ticksCountReadLockStamp != 0) {
+          ticksCountRwLock.unlockRead(ticksCountReadLockStamp);
         }
       }
     }
@@ -165,35 +189,49 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           }
         } else {
           boolean moved = false;
-          while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps
-              && !(moved = this.atomicSamplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//move the samples window if we we need to
-            samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
-          }
-          final int targetIdx = rightSamplesWindowIdx(targetSamplesWindowShiftSteps);
-          if (moved) {
-            final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
-            waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
-            if (numberOfSteps <= samplesHistory.length()) {//reset some samples
-              for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
-                  i < numberOfSteps && i < samplesHistory.length();
-                  idx = nextSamplesWindowIdx(idx), i++) {
-                tickResetSample(idx, idx == targetIdx ? count : 0);
-                final long expectedCompletedSamplesWindowShiftSteps = samplesWindowShiftSteps + i;
-                this.atomicCompletedSamplesWindowShiftSteps.compareAndSet(expectedCompletedSamplesWindowShiftSteps, expectedCompletedSamplesWindowShiftSteps + 1);//complete the reset step
-              }
-            } else {//reset all samples
-              for (int idx = 0; idx < samplesHistory.length(); idx++) {
-                tickResetSample(idx, idx == targetIdx ? count : 0);
-              }
-              long completedSamplesWindowShiftSteps = this.atomicCompletedSamplesWindowShiftSteps.get();
-              while (completedSamplesWindowShiftSteps < targetSamplesWindowShiftSteps
-                  && !(this.atomicCompletedSamplesWindowShiftSteps.compareAndSet(completedSamplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//complete steps
-                completedSamplesWindowShiftSteps = this.atomicCompletedSamplesWindowShiftSteps.get();
-              }
+          long ticksCountWriteLockStamp = 0;
+          while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps) {//move the samples window if we we need to
+            if (ticksCountWriteLockStamp == 0) {
+              ticksCountWriteLockStamp = ticksCountRwLock.isReadLocked() ? ticksCountRwLock.writeLock() : 0;
             }
-          } else {
-            waitForCompletedWindowShiftSteps(targetSamplesWindowShiftSteps);
-            tickAccumulateSample(targetIdx, count, targetSamplesWindowShiftSteps);
+            moved = this.atomicSamplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps);
+            if (moved) {
+              break;
+            } else {
+              samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
+            }
+          }
+          try {
+            final int targetIdx = rightSamplesWindowIdx(targetSamplesWindowShiftSteps);
+            if (moved) {
+              final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
+              waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
+              if (numberOfSteps <= samplesHistory.length()) {//reset some samples
+                for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
+                    i < numberOfSteps && i < samplesHistory.length();
+                    idx = nextSamplesWindowIdx(idx), i++) {
+                  tickResetSample(idx, idx == targetIdx ? count : 0);
+                  final long expectedCompletedSamplesWindowShiftSteps = samplesWindowShiftSteps + i;
+                  this.atomicCompletedSamplesWindowShiftSteps.compareAndSet(expectedCompletedSamplesWindowShiftSteps, expectedCompletedSamplesWindowShiftSteps + 1);//complete the reset step
+                }
+              } else {//reset all samples
+                for (int idx = 0; idx < samplesHistory.length(); idx++) {
+                  tickResetSample(idx, idx == targetIdx ? count : 0);
+                }
+                long completedSamplesWindowShiftSteps = this.atomicCompletedSamplesWindowShiftSteps.get();
+                while (completedSamplesWindowShiftSteps < targetSamplesWindowShiftSteps
+                    && !(this.atomicCompletedSamplesWindowShiftSteps.compareAndSet(completedSamplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//complete steps
+                  completedSamplesWindowShiftSteps = this.atomicCompletedSamplesWindowShiftSteps.get();
+                }
+              }
+            } else {
+              waitForCompletedWindowShiftSteps(targetSamplesWindowShiftSteps);
+              tickAccumulateSample(targetIdx, count, targetSamplesWindowShiftSteps);
+            }
+          } finally {
+            if (ticksCountWriteLockStamp != 0) {
+              ticksCountRwLock.unlockWrite(ticksCountWriteLockStamp);
+            }
           }
         }
       }
@@ -298,10 +336,6 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     return reading;
   }
 
-  private long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
-    return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
-  }
-
   private final void lock(final int idx) {
     while (locks != null && !locks[idx].compareAndSet(false, true)) {
       Thread.yield();
@@ -367,6 +401,10 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
       result += samplesHistory.get(idx);
     }
     return result;
+  }
+
+  private long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
+    return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
   }
 
   private final long samplesWindowShiftSteps(final long tNanos) {
