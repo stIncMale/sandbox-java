@@ -259,7 +259,7 @@ public interface RateMeter {
   RateMeterStats stats();
 
   @NotThreadSafe
-  final class Reading {
+  final class Reading {//TODO move outside the interface
     private long longValue;
     private double doubleValue;
     private long tNanos;
