@@ -30,21 +30,21 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * Current ticks are those inside the samples window.
  * Current rate is calculated base on current ticks only and by default is measured in samplesInterval<sup>-1</sup>.
  * <p>
- * For example if samplesInterval is 3s,<br>
- * startNanos is 1_000_000_000ns,<br>
+ * For example if samplesInterval is 30ns,<br>
+ * startNanos is 10ns,<br>
  * and the only scored ticks are<br>
- * 1 at 2_500_000_000ns (this is tNanos, not tNanos - startNanos),<br>
- * 1 at 3_000_000_000ns,<br>
- * 8 at 5_000_000_000ns,<br>
- * -2 at 6_000_000_000ns,<br>
+ * (25ns, 1) (this is tNanos, not tNanos - startNanos),<br>
+ * (30ns, 1),<br>
+ * (50ns, 8),<br>
+ * (60ns, -2),<br>
  * then the current rate is<br>
- * (8 - 2) / samplesInterval = 6samplesInterval<sup>-1</sup> = 2s<sup>-1</sup> because samplesInterval is 3s.
+ * (8 - 2) / samplesInterval = 6samplesInterval<sup>-1</sup> = 6 / 30ns = 0.2ns<sup>-1</sup>.
  * <pre>
- *             2_500_000_000ns          5_000_000_000ns
+ *              25ns      50ns
  *                    |                        |                                                 t
  * ----|---------|----1----1---------|---------8--------(-2)------|---------|---------|---------&gt;
  *     |                   |                             |
- * startNanos       3_000_000_000ns               6_000_000_000ns
+ * startNanos        30ns                     60ns
  *                         (--------samples window-------]
  * </pre>
  * <p>
