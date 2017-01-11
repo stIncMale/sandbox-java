@@ -29,7 +29,8 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 @Category(PerformanceTest.class)
 public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.of(1, ChronoUnit.MILLIS);
-  private static final Duration timeSensitivity = Duration.of(50, ChronoUnit.MICROS);
+//  private static final Duration timeSensitivity = Duration.of(50, ChronoUnit.MICROS);
+  private static final Duration timeSensitivity = Duration.of(1, ChronoUnit.NANOS);
   private static final boolean SERVER = true;
   private static final boolean QUICK = true;
   private static final long ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL = 0;
@@ -185,16 +186,16 @@ public class RateMeterPerformanceTest {
         .run();
   }
 
-  @Test
-  public void parallel4_throughput_concurrentRingBufferRateMeter() throws RunnerException {
-    new Runner(jmhOptionsBuilderSupplier.get()
-        .mode(Mode.Throughput)
-        .timeUnit(TimeUnit.MILLISECONDS)
-        .include(getClass().getName() + ".parallel4.*concurrentRingBufferRateMeter")
-        .threads(4)
-        .build())
-        .run();
-  }
+//  @Test
+//  public void parallel4_throughput_concurrentRingBufferRateMeter() throws RunnerException {
+//    new Runner(jmhOptionsBuilderSupplier.get()
+//        .mode(Mode.Throughput)
+//        .timeUnit(TimeUnit.MILLISECONDS)
+//        .include(getClass().getName() + ".parallel4.*concurrentRingBufferRateMeter")
+//        .threads(4)
+//        .build())
+//        .run();
+//  }
 
 //  @Test
 //  public void parallel4_throughput_linearizableRateMeter() throws RunnerException {
@@ -220,18 +221,18 @@ public class RateMeterPerformanceTest {
         .run();
   }
 
-  @Test
-  public void parallel4_latency_concurrentRingBufferRateMeter() throws RunnerException {
-    new Runner(jmhOptionsBuilderSupplier.get()
-        .mode(Mode.AverageTime)
-        .timeUnit(TimeUnit.NANOSECONDS)
-        .include(getClass().getName() + ".*parallel4_tick_concurrentRingBufferRateMeter")
-        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentRingBufferRateMeter")
-        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentRingBufferRateMeter")
-        .threads(4)
-        .build())
-        .run();
-  }
+//  @Test
+//  public void parallel4_latency_concurrentRingBufferRateMeter() throws RunnerException {
+//    new Runner(jmhOptionsBuilderSupplier.get()
+//        .mode(Mode.AverageTime)
+//        .timeUnit(TimeUnit.NANOSECONDS)
+//        .include(getClass().getName() + ".*parallel4_tick_concurrentRingBufferRateMeter")
+//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentRingBufferRateMeter")
+//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentRingBufferRateMeter")
+//        .threads(4)
+//        .build())
+//        .run();
+//  }
 
 //  @Test
 //  public void parallel4_latency_linearizableRateMeter() throws RunnerException {
@@ -625,12 +626,13 @@ public class RateMeterPerformanceTest {
     public final void setup() {
       concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
-              .setTicksCounterSupplier(LongAdderTicksCounter::new)
+              .setTicksCounterSupplier(AtomicLongTicksCounter::new)
               .build());
       final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
           = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build());
-      concurrentRingBufferRateMeterConfigBuilder.setStrictTick(false)
-          .setTicksCounterSupplier(LongAdderTicksCounter::new);
+      concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
+          .setTicksCounterSupplier(LongAdderTicksCounter::new)
+          .setHl(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
       linearizableRateMeter = new LinearizableRateMeter(
