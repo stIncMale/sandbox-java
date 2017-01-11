@@ -17,7 +17,7 @@ public class RateMeterConfig {
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final Duration timeSensitivity;
   private final boolean collectStats;
-  private final long maxTicksCountAttempts;
+  private final int maxTicksCountAttempts;
   private final int hl;
 
   RateMeterConfig(
@@ -25,7 +25,7 @@ public class RateMeterConfig {
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
       final boolean collectStats,
-      final long maxTicksCountAttempts,
+      final int maxTicksCountAttempts,
       final int hl) {
     this.checkArguments = checkArguments;
     this.ticksCounterSupplier = ticksCounterSupplier;
@@ -92,15 +92,11 @@ public class RateMeterConfig {
    * (see {@link RateMeter#ticksCount()} for example).
    * Some implementations may allow a race condition while performing such a calculation for performance reasons
    * (such a race may be caused by allowing to move the samples window while counting current ticks).
-   * If this limit is reached and all attempts have failed, then the
-   * {@linkplain RateMeterStats#failedAccuracyEventsCountForTicksCount() failed accuracy event}
-   * must be accounted provided that {@link #isCollectStats() stats is being collected}.
-   * <p>
    * Note that this is just a hint, so an implementation may choose to do more attempts,
    * but the number of attempts must be finite.
    * @return 5 by default.
    */
-  public final long getMaxTicksCountAttempts() {//TODO use int
+  public final int getMaxTicksCountAttempts() {
     return maxTicksCountAttempts;
   }
 
@@ -133,7 +129,7 @@ public class RateMeterConfig {
     protected Function<Long, ? extends TicksCounter> ticksCounterSupplier;
     protected Duration timeSensitivity;
     protected boolean collectStats;
-    protected long maxTicksCountAttempts;
+    protected int maxTicksCountAttempts;
     protected int hl;
 
     protected Builder() {
@@ -196,7 +192,7 @@ public class RateMeterConfig {
      * @param maxTicksCountAttempts Must be positive.
      * @see RateMeterConfig#getMaxTicksCountAttempts()
      */
-    public final Builder setMaxTicksCountAttempts(final long maxTicksCountAttempts) {
+    public final Builder setMaxTicksCountAttempts(final int maxTicksCountAttempts) {
       checkArgument(maxTicksCountAttempts > 0, "maxTicksCountAttempts", "Must be positive");
       this.maxTicksCountAttempts = maxTicksCountAttempts;
       return this;

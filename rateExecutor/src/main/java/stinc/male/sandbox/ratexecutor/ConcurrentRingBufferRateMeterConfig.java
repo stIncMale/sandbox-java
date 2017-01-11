@@ -13,7 +13,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
       final Duration timeSensitivity,
       final boolean collectStats,
       final boolean strictTick,
-      final long maxTicksCountAttempts,
+      final int maxTicksCountAttempts,
       final int hl) {
     super(
         checkArguments,
@@ -76,36 +76,6 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
       super(config);
       strictTick = false;
     }
-
-//    @Override
-//    public Builder setCheckArguments(final boolean checkArguments) {
-//      return (Builder)super.setCheckArguments(checkArguments);
-//    }
-//
-//    @Override
-//    public Builder setTicksCounterSupplier(final Function<Long, ? extends TicksCounter> ticksCounterSupplier) {
-//      return (Builder)super.setTicksCounterSupplier(ticksCounterSupplier);
-//    }
-//
-//    @Override
-//    public Builder setTimeSensitivity(final Duration timeSensitivity) {
-//      return (Builder)super.setTimeSensitivity(timeSensitivity);
-//    }
-//
-//    @Override
-//    public Builder setCollectStats(final boolean collectStats) {
-//      return (Builder)super.setCollectStats(collectStats);
-//    }
-//
-//    @Override
-//    public Builder setMaxTicksCountAttempts(final int maxTicksCountAttempts) {
-//      return (Builder)super.setMaxTicksCountAttempts(maxTicksCountAttempts);
-//    }
-//
-//    @Override
-//    public Builder setHl(final int hl) {
-//      return (Builder)super.setHl(hl);
-//    }
 
     /**
      * @see ConcurrentRingBufferRateMeterConfig#isStrictTick()

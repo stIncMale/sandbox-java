@@ -190,7 +190,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
         } else {
           boolean moved = false;
           long ticksCountWriteLockStamp = 0;
-          while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps) {//move the samples window if we we need to
+          while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps) {//move the samples window if we need to
             if (ticksCountWriteLockStamp == 0) {
               ticksCountWriteLockStamp = ticksCountRwLock.isReadLocked() ? ticksCountRwLock.writeLock() : 0;
             }
@@ -204,7 +204,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           try {
             final int targetIdx = rightSamplesWindowIdx(targetSamplesWindowShiftSteps);
             if (moved) {
-              final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
+              final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;//it is guaranted that samplesWindowShiftSteps < targetSamplesWindowShiftSteps
               waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
               if (numberOfSteps <= samplesHistory.length()) {//reset some samples
                 for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
@@ -212,7 +212,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
                     idx = nextSamplesWindowIdx(idx), i++) {
                   tickResetSample(idx, idx == targetIdx ? count : 0);
                   final long expectedCompletedSamplesWindowShiftSteps = samplesWindowShiftSteps + i;
-                  this.atomicCompletedSamplesWindowShiftSteps.compareAndSet(expectedCompletedSamplesWindowShiftSteps, expectedCompletedSamplesWindowShiftSteps + 1);//complete the reset step
+                  this.atomicCompletedSamplesWindowShiftSteps.compareAndSet(expectedCompletedSamplesWindowShiftSteps, expectedCompletedSamplesWindowShiftSteps + 1);//complete the current step
                 }
               } else {//reset all samples
                 for (int idx = 0; idx < samplesHistory.length(); idx++) {
@@ -220,7 +220,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
                 }
                 long completedSamplesWindowShiftSteps = this.atomicCompletedSamplesWindowShiftSteps.get();
                 while (completedSamplesWindowShiftSteps < targetSamplesWindowShiftSteps
-                    && !(this.atomicCompletedSamplesWindowShiftSteps.compareAndSet(completedSamplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//complete steps
+                    && !(this.atomicCompletedSamplesWindowShiftSteps.compareAndSet(completedSamplesWindowShiftSteps, targetSamplesWindowShiftSteps))) {//complete steps up to the targetSamplesWindowShiftSteps
                   completedSamplesWindowShiftSteps = this.atomicCompletedSamplesWindowShiftSteps.get();
                 }
               }
