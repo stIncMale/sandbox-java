@@ -55,7 +55,7 @@ public final class LinearizableRateMeter implements RateMeter {
   }
 
   @Override
-  public final Reading rate(final Duration unit, final Reading reading) {
+  public final RateMeterReading rate(final Duration unit, final RateMeterReading reading) {
     return rm.rate(unit, reading);
   }
 
@@ -65,7 +65,7 @@ public final class LinearizableRateMeter implements RateMeter {
   }
 
   @Override
-  public final Reading rate(final long tNanos, final Duration unit, final Reading reading) {
+  public final RateMeterReading rate(final long tNanos, final Duration unit, final RateMeterReading reading) {
     return rm.rate(tNanos, unit, reading);
   }
 
@@ -115,7 +115,7 @@ public final class LinearizableRateMeter implements RateMeter {
   }
 
   @Override
-  public final Reading ticksCount(final Reading reading) {
+  public final RateMeterReading ticksCount(final RateMeterReading reading) {
     readLock();
     try {
       return rm.ticksCount(reading);
@@ -155,7 +155,7 @@ public final class LinearizableRateMeter implements RateMeter {
   }
 
   @Override
-  public final Reading rate(final long tNanos, final Reading reading) {
+  public final RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     readLock();
     try {
       return rm.rate(tNanos, reading);

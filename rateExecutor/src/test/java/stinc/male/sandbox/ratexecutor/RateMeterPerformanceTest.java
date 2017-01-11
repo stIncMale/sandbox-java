@@ -543,7 +543,7 @@ public class RateMeterPerformanceTest {
 
   private static final void rate(final RateMeter rm, final Blackhole bh) {
     bh.consume(rm.rate());
-//    bh.consume(rm.rate(new Reading()));
+//    bh.consume(rm.rate(new RateMeterReading()));
 //    bh.consume(rm.rate(nanoTime()));
 //    bh.consume(rm.rate(rm.rightSamplesWindowBoundary()));
   }

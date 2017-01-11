@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import stinc.male.sandbox.ratexecutor.RateMeter.Reading;
 import static java.time.Duration.ofNanos;
 import static org.junit.Assert.assertEquals;
 
@@ -193,9 +192,9 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig
             } else if (randomInt == 1) {
               rm.rate(rm.rightSamplesWindowBoundary());
             } else if (randomInt == 1) {
-              rm.rate(new Reading());
+              rm.rate(new RateMeterReading());
             } else {
-              rm.rate(rm.rightSamplesWindowBoundary(), new Reading());
+              rm.rate(rm.rightSamplesWindowBoundary(), new RateMeterReading());
             }
           }
         });

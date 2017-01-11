@@ -1,7 +1,6 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import javax.annotation.concurrent.NotThreadSafe;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratexecutor.RateMeterMath.checkTNanos;
 import static stinc.male.sandbox.ratexecutor.RateMeterMath.checkUnit;
@@ -103,7 +102,7 @@ public interface RateMeter {
    */
   long ticksCount();
 
-  Reading ticksCount(Reading reading);
+  RateMeterReading ticksCount(RateMeterReading reading);
 
   /**
    * Calculates the total number of ticks since the {@linkplain #getStartNanos() start}.
@@ -190,7 +189,7 @@ public interface RateMeter {
     return ticksCount();
   }
 
-  default Reading rate(final Reading reading) {
+  default RateMeterReading rate(final RateMeterReading reading) {
     checkNotNull(reading, "reading");
     return ticksCount(reading);
   }
@@ -208,7 +207,7 @@ public interface RateMeter {
     return convertRate(rate(), getSamplesInterval().toNanos(), unit.toNanos());
   }
 
-  default Reading rate(final Duration unit, final Reading reading) {
+  default RateMeterReading rate(final Duration unit, final RateMeterReading reading) {
     checkUnit(unit, "unit");
     checkNotNull(reading, "reading");
     return convertRate(rate(reading), getSamplesInterval().toNanos(), unit.toNanos());
@@ -224,7 +223,7 @@ public interface RateMeter {
    */
   double rate(long tNanos);
 
-  Reading rate(long tNanos, Reading reading);
+  RateMeterReading rate(long tNanos, RateMeterReading reading);
 
   /**
    * Acts just like {@link #rate(long)} but the result is measured in {@code unit}<sup>-1</sup>
@@ -243,7 +242,7 @@ public interface RateMeter {
     return convertRate(rate(tNanos), samplesIntervalNanos, unit.toNanos());
   }
 
-  default Reading rate(final long tNanos, final Duration unit, final Reading reading) {
+  default RateMeterReading rate(final long tNanos, final Duration unit, final RateMeterReading reading) {
     final long startNanos = getStartNanos();
     final long samplesIntervalNanos = getSamplesInterval().toNanos();
     checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos, 3), "tNanos");
@@ -257,65 +256,6 @@ public interface RateMeter {
    * does not collects it.
    */
   RateMeterStats stats();
-
-  @NotThreadSafe
-  final class Reading {//TODO move outside the interface
-    private long longValue;
-    private double doubleValue;
-    private long tNanos;
-    private boolean accurate;
-
-    public Reading() {
-    }
-
-    public final double getDoubleValue() {
-      return doubleValue;
-    }
-
-    public final long getLongValue() {
-      return longValue;
-    }
-
-    public final long getTNanos() {
-      return tNanos;
-    }
-
-    public final boolean isAccurate() {
-      return accurate;
-    }
-
-    final Reading setValue(final double value) {
-      longValue = (long)value;
-      doubleValue = value;
-      return this;
-    }
-
-    final Reading setValue(final long value) {
-      longValue = value;
-      doubleValue = value;
-      return this;
-    }
-
-    final Reading setTNanos(final long tNanos) {
-      this.tNanos = tNanos;
-      return this;
-    }
-
-    final Reading setAccurate(final boolean accurate) {
-      this.accurate = accurate;
-      return this;
-    }
-
-    @Override
-    public final String toString() {
-      return getClass().getSimpleName()
-          + "(longValue=" + longValue
-          + ", doubleValue=" + doubleValue
-          + ", tNanos=" + tNanos
-          + ", accurate=" + accurate
-          + ')';
-    }
-  }
 }
 //TODO verify javadocs and other comments and messages
 //TODO check inheritance/final methods

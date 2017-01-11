@@ -123,7 +123,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   }
 
   @Override
-  public Reading ticksCount(final Reading reading) {
+  public RateMeterReading ticksCount(final RateMeterReading reading) {
     checkNotNull(reading, "reading");
     reading.setAccurate(true);
     long value = 0;
@@ -290,7 +290,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   }
 
   @Override
-  public Reading rate(final long tNanos, final Reading reading) {
+  public RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     checkArgument(tNanos, "tNanos");
     checkNotNull(reading, "reading");
     reading.setAccurate(true);
