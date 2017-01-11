@@ -32,7 +32,7 @@ public class RateMeterPerformanceTest {
 //  private static final Duration timeSensitivity = Duration.of(50, ChronoUnit.MICROS);
   private static final Duration timeSensitivity = Duration.of(1, ChronoUnit.NANOS);
   private static final boolean SERVER = true;
-  private static final boolean QUICK = true;
+  private static final boolean QUICK = false;
   private static final long ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL = 0;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder()

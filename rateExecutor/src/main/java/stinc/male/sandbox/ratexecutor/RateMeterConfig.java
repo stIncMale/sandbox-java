@@ -69,10 +69,10 @@ public class RateMeterConfig {
    * that differ from the specified one not more than by the time sensitivity.
    * <p>
    * It is recommended to specify here an resolution (accuracy, granularity) of the used timer.
-   * @return {@code Duration.ofNanos(50)} by default. As of year 2017 there is no need to use
-   * a finer sensitivity because it is an approximation of the {@link System#nanoTime()} resolution
+   * @return {@code Duration.ofNanos(150)} by default, which is an approximation of the {@link System#nanoTime()} accuracy
    * (see <a href="https://github.com/shipilev/timers-bench">timers-bench</a>
    * and <a href="https://shipilev.net/blog/2014/nanotrusting-nanotime/">Nanotrusting the Nanotime</a> for measurements and explanations).
+   * It is possible that there is no need to use a finer sensitivity.
    */
   public final Duration getTimeSensitivity() {
     return timeSensitivity;
@@ -139,7 +139,7 @@ public class RateMeterConfig {
     protected Builder() {
       checkArguments = false;
       ticksCounterSupplier = LongAdderTicksCounter::new;
-      timeSensitivity = Duration.ofNanos(50);
+      timeSensitivity = Duration.ofNanos(150);
       collectStats = true;
       maxTicksCountAttempts = 5;
       hl = 3;
