@@ -16,7 +16,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   private final T samplesHistory;//length is multiple of HL
   @Nullable
   private final AtomicBoolean[] locks;//same length as samples history; required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample
-  @Nullable
+  @Nullable //TODO use wait/lock strategies: spin lock (busy loop), RWLock or probably use LockSupport.park. See Disruptor WaitStrategy
   private final StampedLock[] rwLocks;//same length as samples history; required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample
   private final long samplesWindowStepNanos;
   private long samplesWindowShiftSteps;
@@ -402,8 +402,8 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
         } else {
           final long samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
           if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {//double check that tNanos is still within the samples history
-//            samplesHistory.set(targetIdx, samplesHistory.get(targetIdx) + delta);//we are under lock, so no need in CAS //TODO
-            samplesHistory.add(targetIdx, delta);//TODO
+            samplesHistory.set(targetIdx, samplesHistory.get(targetIdx) + delta);//we are under lock, so no need in CAS
+//            samplesHistory.add(targetIdx, delta);//TODO [use wait/lock strategies: spin lock (busy loop), RWLock or probably use LockSupport.park. See Disruptor WaitStrategy] we need to atomically add if we under a read lock
           }
         }
       } finally {
