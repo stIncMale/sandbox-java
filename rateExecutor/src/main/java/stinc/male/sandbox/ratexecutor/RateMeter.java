@@ -100,7 +100,9 @@ public interface RateMeter {
    *
    * @return Number of current ticks.
    */
-  long ticksCount();
+  default long ticksCount() {
+    return ticksCount(new RateMeterReading()).getLongValue();
+  }
 
   RateMeterReading ticksCount(RateMeterReading reading);
 
@@ -221,7 +223,9 @@ public interface RateMeter {
    *
    * @param tNanos An effective (imaginary) right boundary of a samples window.
    */
-  double rate(long tNanos);
+  default double rate(long tNanos) {
+    return rate(tNanos, new RateMeterReading()).getDoubleValue();
+  }
 
   RateMeterReading rate(long tNanos, RateMeterReading reading);
 
