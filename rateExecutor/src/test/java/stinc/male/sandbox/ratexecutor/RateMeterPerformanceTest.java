@@ -221,18 +221,18 @@ public class RateMeterPerformanceTest {
 //        .run();
 //  }
 
-  @Test
-  public void parallel4_latency_concurrentRingBufferRateMeter() throws RunnerException {
-    new Runner(jmhOptionsBuilderSupplier.get()
-        .mode(Mode.AverageTime)
-        .timeUnit(TimeUnit.NANOSECONDS)
-        .include(getClass().getName() + ".*parallel4_tick_concurrentRingBufferRateMeter")
-        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentRingBufferRateMeter")
-        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentRingBufferRateMeter")
-        .threads(4)
-        .build())
-        .run();
-  }
+//  @Test
+//  public void parallel4_latency_concurrentRingBufferRateMeter() throws RunnerException {
+//    new Runner(jmhOptionsBuilderSupplier.get()
+//        .mode(Mode.AverageTime)
+//        .timeUnit(TimeUnit.NANOSECONDS)
+//        .include(getClass().getName() + ".*parallel4_tick_concurrentRingBufferRateMeter")
+//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentRingBufferRateMeter")
+//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentRingBufferRateMeter")
+//        .threads(4)
+//        .build())
+//        .run();
+//  }
 
 //  @Test
 //  public void parallel4_latency_linearizableRateMeter() throws RunnerException {
@@ -630,7 +630,7 @@ public class RateMeterPerformanceTest {
               .build());
       final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
           = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build());
-      concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
+      concurrentRingBufferRateMeterConfigBuilder.setStrictTick(false)
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
           .setHl(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
