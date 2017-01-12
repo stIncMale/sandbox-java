@@ -16,6 +16,8 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   private final T samplesHistory;//length is multiple of HL
   @Nullable
   private final AtomicBoolean[] locks;//same length as samples history; required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample
+  @Nullable
+  private final StampedLock[] rwLocks;//same length as samples history; required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample
   private final long samplesWindowStepNanos;
   private long samplesWindowShiftSteps;
   @Nullable
@@ -55,6 +57,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     if (sequential) {
       ticksCountRwLock = null;
       locks = null;
+      rwLocks = null;
     } else {
       ticksCountRwLock = new StampedLock();
       if (config.isStrictTick()) {
@@ -62,8 +65,13 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
         for (int idx = 0; idx < locks.length; idx++) {
           locks[idx] = new AtomicBoolean();
         }
+        rwLocks = new StampedLock[samplesHistory.length()];
+        for (int idx = 0; idx < rwLocks.length; idx++) {
+          rwLocks[idx] = new StampedLock();
+        }
       } else {
         locks = null;
+        rwLocks = null;
       }
     }
     atomicSamplesWindowShiftSteps = sequential ? null : new AtomicLong();
@@ -336,24 +344,46 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     return reading;
   }
 
-  private final void lock(final int idx) {
+  private final long lock(final int idx) {
     while (locks != null && !locks[idx].compareAndSet(false, true)) {
       Thread.yield();
     }
+    return 0;
+//    return rwLocks == null ? 0 : rwLocks[idx].writeLock();
   }
 
-  private final void unlock(final int idx) {
+  private final void unlock(final int idx, final long stamp) {
     if (locks != null) {
       locks[idx].set(false);
     }
+//    if (stamp != 0) {
+//      rwLocks[idx].unlockWrite(stamp);
+//    }
+  }
+
+  private final long sharedLock(final int idx) {
+    while (locks != null && !locks[idx].compareAndSet(false, true)) {
+      Thread.yield();
+    }
+    return 0;
+//    return rwLocks == null ? 0 : rwLocks[idx].readLock();
+  }
+
+  private final void unlockShared(final int idx, final long stamp) {
+    if (locks != null) {
+      locks[idx].set(false);
+    }
+//    if (stamp != 0) {
+//      rwLocks[idx].unlockRead(stamp);
+//    }
   }
 
   private final void tickResetSample(final int idx, final long value) {
-    lock(idx);
+    final long stamp = lock(idx);
     try {
       samplesHistory.set(idx, value);
     } finally {
-      unlock(idx);
+      unlock(idx, stamp);
     }
   }
 
@@ -361,7 +391,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     if (sequential) {
       samplesHistory.add(targetIdx, delta);
     } else {
-      lock(targetIdx);
+      final long stamp = sharedLock(targetIdx);
       try {
         if (locks == null) {//there is no actual locking
           samplesHistory.add(targetIdx, delta);
@@ -371,12 +401,13 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           }
         } else {
           final long samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
-          if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {//tNanos is still within the samples history
-            samplesHistory.set(targetIdx, samplesHistory.get(targetIdx) + delta);//we are under lock, so no need in CAS
+          if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {//double check that tNanos is still within the samples history
+//            samplesHistory.set(targetIdx, samplesHistory.get(targetIdx) + delta);//we are under lock, so no need in CAS //TODO
+            samplesHistory.add(targetIdx, delta);//TODO
           }
         }
       } finally {
-        unlock(targetIdx);
+        unlockShared(targetIdx, stamp);
       }
     }
   }
