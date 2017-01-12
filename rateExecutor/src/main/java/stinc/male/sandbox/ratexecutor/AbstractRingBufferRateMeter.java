@@ -48,8 +48,8 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     final int samplesIntervalArrayLength = (int) (samplesIntervalNanos / timeSensitivityNanos);
     Preconditions.checkArgument(samplesIntervalNanos / samplesIntervalArrayLength * samplesIntervalArrayLength == samplesIntervalNanos, "samplesInterval",
         () -> String.format(
-            "The specified getSamplesInterval()=%snanos and getTimeSensitivity()=%snanos can not be used together because samplesInterval can not be devided evenly by timeSensitivity",
-            samplesIntervalArrayLength, timeSensitivityNanos));
+            "The specified getSamplesInterval()=%sns and getTimeSensitivity()=%sns can not be used together because samplesInterval can not be devided evenly by timeSensitivity",
+            samplesIntervalNanos, timeSensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samplesHistory = samplesHistorySuppplier.apply(config.getHl() * samplesIntervalArrayLength);
     if (sequential) {
