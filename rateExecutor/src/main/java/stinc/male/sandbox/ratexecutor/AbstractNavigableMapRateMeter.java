@@ -105,10 +105,10 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long leftNanos = rightNanos - samplesIntervalNanos;
       value = count(leftNanos, rightNanos);
     } else {
-      final long maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
+      final int maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
       long ticksCountReadLockStamp = 0;
       try {
-        for (long ri = 0; ri < maxTicksCountAttempts; ri++) {
+        for (int ri = 0; ri < maxTicksCountAttempts; ri++) {
           final long leftNanos = rightNanos - samplesIntervalNanos;
           value = count(leftNanos, rightNanos);
           final long newRightNanos = rightSamplesWindowBoundary();
