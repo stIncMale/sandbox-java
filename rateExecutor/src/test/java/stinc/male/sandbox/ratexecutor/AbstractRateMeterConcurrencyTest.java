@@ -97,10 +97,10 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig
             throw new RuntimeException(e);
           }
         });
+    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), 0, rm.stats().failedAccuracyEventsCountForTick(), 0);
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary());
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount());
     assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.totalCount(), rm.ticksTotalCount());
-    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), 0, rm.stats().failedAccuracyEventsCountForTick(), 0);
   }
 
   private static final class TestParams {

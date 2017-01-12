@@ -111,7 +111,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
               idx = nextSamplesWindowIdx(idx), i++) {
             result += samplesHistory.get(idx);
           }
-          final long newSamplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();//TODO think about using atomicCompletedSamplesWindowShiftSteps instead of atomicSamplesWindowShiftSteps for reads. Test performance and if OK then think
+          final long newSamplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
           if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {//the samples window may has been moved while we were counting, but result is still correct
             break;
           } else {//the samples window has been moved too far
@@ -213,7 +213,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
             final int targetIdx = rightSamplesWindowIdx(targetSamplesWindowShiftSteps);
             if (moved) {
               final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;//it is guaranted that samplesWindowShiftSteps < targetSamplesWindowShiftSteps
-              waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);//TODO we may need to wait for less then samplesWindowShiftSteps (see Ring buffer diagram in the presentation)
+              waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
               if (numberOfSteps <= samplesHistory.length()) {//reset some samples
                 for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
                     i < numberOfSteps && i < samplesHistory.length();
