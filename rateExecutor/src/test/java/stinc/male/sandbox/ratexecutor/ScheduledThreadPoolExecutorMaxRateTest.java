@@ -1,9 +1,12 @@
 package stinc.male.sandbox.ratexecutor;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -21,13 +24,16 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import stinc.male.PerformanceTest;
+import static java.lang.System.nanoTime;
+import static java.time.Duration.ofMillis;
+import static org.junit.Assert.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
 @Category(PerformanceTest.class)
 public class ScheduledThreadPoolExecutorMaxRateTest {
-  private static final long NUMBER_OF_PERFORMED_ACTIONS = 1_000_000;
+  private static final long NUMBER_OF_ACTIONS_PER_MEASUREMENT = 1_000_000;
   private static final boolean SERVER = true;
-  private static final boolean QUICK = true;
+  private static final boolean QUICK = false;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder()
         .jvmArgsPrepend(SERVER ? "-server" : "-client")
@@ -55,11 +61,11 @@ public class ScheduledThreadPoolExecutorMaxRateTest {
   }
 
   @Test
-  public void test() throws RunnerException {
+  public void referenceMeasurements() throws RunnerException {
     final Collection<RunResult> results = new Runner(jmhOptionsBuilderSupplier.get()
             .mode(Mode.AverageTime)
             .timeUnit(TimeUnit.MILLISECONDS)
-            .include(getClass().getName() + ".*schedule.*")
+            .include(getClass().getName() + ".*reference_schedule.*")
             .threads(1)
             .build())
             .run();
@@ -69,76 +75,115 @@ public class ScheduledThreadPoolExecutorMaxRateTest {
       final Result<?> primaryResult = runResult.getPrimaryResult();
       final double score = primaryResult.getScore();
       final String scoreUnit = primaryResult.getScoreUnit();
-      final double rate = (double)NUMBER_OF_PERFORMED_ACTIONS / score;
+      final String[] scoreUnits = scoreUnit.split("/");
+      final double rate = (double) NUMBER_OF_ACTIONS_PER_MEASUREMENT / score;
       final String description = runResult.getPrimaryResult().getLabel();
-      System.out.println(description + ":\tmax rate " + String.format(Locale.ROOT, "\t%1.3f", rate)  + "\t(" + scoreUnit + ")⁻\u00B9");
+      System.out.println(description
+              + ": max rate "
+              + format(rate)
+              + scoreUnits[1] + "s/" + scoreUnits[0]);
     });
   }
 
+  @Test
+  public void measurements() throws RunnerException {
+    final AtomicLong counter = new AtomicLong();
+    final ConcurrentRingBufferRateMeterConfig.Builder rmCfg = ConcurrentRingBufferRateMeter.defaultConfig()
+            .toBuilder();
+    rmCfg.setHl(2);
+    rmCfg.setStrictTick(false);
+    final RateMeter rm = new ConcurrentRingBufferRateMeter(
+            nanoTime(),
+            ofMillis(1),
+            rmCfg.build());
+    final int numberOfMeasurements = 50;
+    final List<Double> measurements = new ArrayList<>(numberOfMeasurements);
+    final ScheduledThreadPoolExecutor ex = new ScheduledThreadPoolExecutor(1);
+    ex.scheduleAtFixedRate(() -> {
+      rm.tick(1, nanoTime());
+      counter.getAndIncrement();
+    }, 0, 1, TimeUnit.NANOSECONDS);
+    final long startNanos = nanoTime();
+    final long startCount = counter.get();
+    final long endCount = startCount + numberOfMeasurements * NUMBER_OF_ACTIONS_PER_MEASUREMENT;
+    while(counter.get() < endCount) {
+      measurements.add((double)rm.rate());
+    }
+    final long endNanos = nanoTime();
+    final double rate = measurements.stream()
+            .mapToDouble(Double::doubleValue)
+            .sum() / measurements.size();
+    final double averageRate = (double)ofMillis(1).toNanos() * (double)(endCount - startCount) / (endNanos - startNanos);
+    assertEquals(0, rm.stats().failedAccuracyEventsCountForRate());
+    assertEquals(0, rm.stats().failedAccuracyEventsCountForTick());
+    System.out.println("scheduleAtFixedRate: measured rate "
+            + format(rate)
+            + "ops/ms"
+            + ", measured average rate "
+            + format(rm.rateAverage())
+            + "ops/ms"
+            + ", calculated average rate "
+            + format(averageRate)
+            + "ops/ms");
+  }
+
   @Benchmark
-  public void scheduleAtFixedRate(final ScheduleAtFixedRate s) {
+  public void reference_scheduleAtFixedRate(final Reference_ScheduleAtFixedRate s) {
     final long counter = s.counter.get();
-    final long targetCounter = counter + NUMBER_OF_PERFORMED_ACTIONS;
+    final long targetCounter = counter + NUMBER_OF_ACTIONS_PER_MEASUREMENT;
     while (s.counter.get() < targetCounter);
   }
 
   @Benchmark
-  public void scheduleWithFixedDelay(final ScheduleWithFixedDelay s) {
+  public void reference_scheduleWithFixedDelay(final Reference_ScheduleWithFixedDelay s) {
     final long counter = s.counter.get();
-    final long targetCounter = counter + NUMBER_OF_PERFORMED_ACTIONS;
+    final long targetCounter = counter + NUMBER_OF_ACTIONS_PER_MEASUREMENT;
     while (s.counter.get() < targetCounter);
-  }
-
-  private static final void action() {
   }
 
   @State(Scope.Thread)
-  public static class ScheduleAtFixedRate {
-    LongAdderTicksCounter counter;
+  public static class Reference_ScheduleAtFixedRate {
+    AtomicLong counter;
     ScheduledThreadPoolExecutor ex;
 
-    public ScheduleAtFixedRate() {
+    public Reference_ScheduleAtFixedRate() {
     }
 
-    @Setup(Level.Iteration)
+    @Setup(Level.Trial)
     public final void setup() {
-      counter = new LongAdderTicksCounter(0);
+      counter = new AtomicLong(0);
       ex = new ScheduledThreadPoolExecutor(1);
-      ex.scheduleAtFixedRate(() -> counter.add(1), 0, 1, TimeUnit.NANOSECONDS);
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-      }
+      ex.scheduleAtFixedRate(() -> counter.getAndIncrement(), 0, 1, TimeUnit.NANOSECONDS);
     }
 
-    @TearDown(Level.Iteration)
+    @TearDown(Level.Trial)
     public final void tearDown() {
       ex.shutdownNow();
     }
   }
 
   @State(Scope.Thread)
-  public static class ScheduleWithFixedDelay {
-    LongAdderTicksCounter counter;
+  public static class Reference_ScheduleWithFixedDelay {
+    AtomicLong counter;
     ScheduledThreadPoolExecutor ex;
 
-    public ScheduleWithFixedDelay() {
+    public Reference_ScheduleWithFixedDelay() {
     }
 
-    @Setup(Level.Iteration)
+    @Setup(Level.Trial)
     public final void setup() {
-      counter = new LongAdderTicksCounter(0);
+      counter = new AtomicLong(0);
       ex = new ScheduledThreadPoolExecutor(1);
-      ex.scheduleWithFixedDelay(() -> counter.add(1), 0, 1, TimeUnit.NANOSECONDS);
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-      }
+      ex.scheduleWithFixedDelay(() -> counter.getAndIncrement(), 0, 1, TimeUnit.NANOSECONDS);
     }
 
-    @TearDown(Level.Iteration)
+    @TearDown(Level.Trial)
     public final void tearDown() {
       ex.shutdownNow();
     }
+  }
+
+  private static final String format(final double v) {
+    return String.format(Locale.ROOT, "%1.3f ", v);
   }
 }
