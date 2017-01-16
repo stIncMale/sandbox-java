@@ -66,7 +66,7 @@ public class RateMeterPerformanceTest {
     new Runner(jmhOptionsBuilderSupplier.get()
         .mode(Mode.Throughput)
         .timeUnit(TimeUnit.MILLISECONDS)
-        .include(getClass().getName() + ".baseline_.*")
+        .include(getClass().getName() + ".*baseline_.*")
         .threads(1)
         .build())
         .run();
@@ -77,7 +77,7 @@ public class RateMeterPerformanceTest {
     new Runner(jmhOptionsBuilderSupplier.get()
         .mode(Mode.Throughput)
         .timeUnit(TimeUnit.MILLISECONDS)
-        .include(getClass().getName() + ".serial_.*navigableMapRateMeter")
+        .include(getClass().getName() + ".*serial_.*navigableMapRateMeter")
         .threads(1)
         .build())
         .run();
@@ -88,7 +88,7 @@ public class RateMeterPerformanceTest {
     new Runner(jmhOptionsBuilderSupplier.get()
         .mode(Mode.Throughput)
         .timeUnit(TimeUnit.MILLISECONDS)
-        .include(getClass().getName() + ".serial_.*concurrentNavigableMapRateMeter")
+        .include(getClass().getName() + ".*serial_.*concurrentNavigableMapRateMeter")
         .threads(1)
         .build())
         .run();
@@ -99,7 +99,7 @@ public class RateMeterPerformanceTest {
     new Runner(jmhOptionsBuilderSupplier.get()
         .mode(Mode.Throughput)
         .timeUnit(TimeUnit.MILLISECONDS)
-        .include(getClass().getName() + ".serial_.*ringBufferRateMeter")
+        .include(getClass().getName() + ".*serial_.*ringBufferRateMeter")
         .threads(1)
         .build())
         .run();
@@ -110,7 +110,7 @@ public class RateMeterPerformanceTest {
     new Runner(jmhOptionsBuilderSupplier.get()
         .mode(Mode.Throughput)
         .timeUnit(TimeUnit.MILLISECONDS)
-        .include(getClass().getName() + ".serial_.*concurrentRingBufferRateMeter")
+        .include(getClass().getName() + ".*serial_.*concurrentRingBufferRateMeter")
         .threads(1)
         .build())
         .run();
@@ -121,7 +121,7 @@ public class RateMeterPerformanceTest {
     new Runner(jmhOptionsBuilderSupplier.get()
         .mode(Mode.Throughput)
         .timeUnit(TimeUnit.MILLISECONDS)
-        .include(getClass().getName() + ".serial_.*linearizableRateMeter")
+        .include(getClass().getName() + ".*serial_.*linearizableRateMeter")
         .threads(1)
         .build())
         .run();
