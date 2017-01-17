@@ -1,5 +1,7 @@
 package stinc.male.sandbox.ratexecutor;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,8 +34,9 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 @Category(PerformanceTest.class)
 public class ScheduledThreadPoolExecutorMaxRateTest {
   private static final long NUMBER_OF_ACTIONS_PER_MEASUREMENT = 1_000_000;
+  private static final long PERIOD_NANOS = 500;
   private static final boolean SERVER = true;
-  private static final boolean QUICK = false;
+  private static final boolean QUICK = true;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder()
         .jvmArgsPrepend(SERVER ? "-server" : "-client")
@@ -61,7 +64,7 @@ public class ScheduledThreadPoolExecutorMaxRateTest {
   }
 
   @Test
-  public void referenceMeasurements() throws RunnerException {
+  public void reference() throws RunnerException {
     final Collection<RunResult> results = new Runner(jmhOptionsBuilderSupplier.get()
             .mode(Mode.AverageTime)
             .timeUnit(TimeUnit.MILLISECONDS)
@@ -86,45 +89,73 @@ public class ScheduledThreadPoolExecutorMaxRateTest {
   }
 
   @Test
-  public void measurements() throws RunnerException {
+  public void rate_scheduleAtFixedRate() throws RunnerException {
     final AtomicLong counter = new AtomicLong();
-    final ConcurrentRingBufferRateMeterConfig.Builder rmCfg = ConcurrentRingBufferRateMeter.defaultConfig()
-            .toBuilder();
-    rmCfg.setHl(2);
-    rmCfg.setStrictTick(false);
-    final RateMeter rm = new ConcurrentRingBufferRateMeter(
-            nanoTime(),
-            ofMillis(1),
-            rmCfg.build());
-    final int numberOfMeasurements = 50;
-    final List<Double> measurements = new ArrayList<>(numberOfMeasurements);
-    final ScheduledThreadPoolExecutor ex = new ScheduledThreadPoolExecutor(1);
-    ex.scheduleAtFixedRate(() -> {
-      rm.tick(1, nanoTime());
-      counter.getAndIncrement();
-    }, 0, 1, TimeUnit.NANOSECONDS);
-    final long startNanos = nanoTime();
-    final long startCount = counter.get();
-    final long endCount = startCount + numberOfMeasurements * NUMBER_OF_ACTIONS_PER_MEASUREMENT;
-    while(counter.get() < endCount) {
-      measurements.add((double)rm.rate());
+    final RateMeter rm;
+    {//setup
+      final ConcurrentRingBufferRateMeterConfig.Builder rmCfg = ConcurrentRingBufferRateMeter.defaultConfig()
+          .toBuilder();
+      rmCfg.setHl(2);
+      rmCfg.setStrictTick(false);
+      rmCfg.setTimeSensitivity(Duration.of(50, ChronoUnit.MICROS));
+      rm = new ConcurrentRingBufferRateMeter(
+          nanoTime(),
+          ofMillis(1),
+          rmCfg.build());
+      final ScheduledThreadPoolExecutor ex = new ScheduledThreadPoolExecutor(1);
+      ex.scheduleAtFixedRate(() -> {
+        rm.tick(1, nanoTime());
+        counter.getAndIncrement();
+      }, 0, PERIOD_NANOS, TimeUnit.NANOSECONDS);
     }
-    final long endNanos = nanoTime();
-    final double rate = measurements.stream()
-            .mapToDouble(Double::doubleValue)
-            .sum() / measurements.size();
-    final double averageRate = (double)ofMillis(1).toNanos() * (double)(endCount - startCount) / (endNanos - startNanos);
-    assertEquals(0, rm.stats().failedAccuracyEventsCountForRate());
-    assertEquals(0, rm.stats().failedAccuracyEventsCountForTick());
-    System.out.println("scheduleAtFixedRate: measured rate "
-            + format(rate)
-            + "ops/ms"
-            + ", measured average rate "
-            + format(rm.rateAverage())
-            + "ops/ms"
-            + ", calculated average rate "
-            + format(averageRate)
-            + "ops/ms");
+    final int numberOfMeasurements = 50;
+    final List<Double> measurements = new ArrayList<>(1000_000);
+    {//warm up
+      System.out.println("Warm up...");
+      final long warmUpDurationNanos = ofMillis(2_000).toNanos();
+      final long startNanos = nanoTime();
+      while (nanoTime() - startNanos < warmUpDurationNanos) {
+        measurements.add((double)rm.rate());
+        if (measurements.size() > 100_000) {
+          measurements.clear();
+        }
+      }
+      measurements.clear();
+      try {
+        Thread.sleep(rm.getSamplesInterval().toMillis());
+      } catch (final InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    {//measurement
+      System.out.println("Measurement...");
+      final long startNanos = nanoTime();
+      final long startCount = counter.get();
+      final long endCount = startCount + numberOfMeasurements * NUMBER_OF_ACTIONS_PER_MEASUREMENT;
+      long count = counter.get();
+      while(count < endCount) {
+        if (count % 1000 == 0) {
+          measurements.add((double)rm.rate());
+        }
+        count = counter.get();
+      }
+      final long endNanos = nanoTime();
+      final double rate = measurements.stream()
+          .mapToDouble(Double::doubleValue)
+          .sum() / measurements.size();
+      final double averageRate = (double)ofMillis(1).toNanos() * (double)(endCount - startCount) / (endNanos - startNanos);
+      assertEquals(0, rm.stats().failedAccuracyEventsCountForRate());
+      assertEquals(0, rm.stats().failedAccuracyEventsCountForTick());
+      System.out.println("scheduleAtFixedRate: measured rate "
+          + format(rate)
+          + "ops/ms"
+          + ", measured average rate "
+          + format(rm.rateAverage())
+          + "ops/ms"
+          + ", calculated average rate "
+          + format(averageRate)
+          + "ops/ms");
+    }
   }
 
   @Benchmark
@@ -153,7 +184,7 @@ public class ScheduledThreadPoolExecutorMaxRateTest {
     public final void setup() {
       counter = new AtomicLong(0);
       ex = new ScheduledThreadPoolExecutor(1);
-      ex.scheduleAtFixedRate(() -> counter.getAndIncrement(), 0, 1, TimeUnit.NANOSECONDS);
+      ex.scheduleAtFixedRate(() -> counter.getAndIncrement(), 0, PERIOD_NANOS, TimeUnit.NANOSECONDS);
     }
 
     @TearDown(Level.Trial)
