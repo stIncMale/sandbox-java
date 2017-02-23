@@ -176,7 +176,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   }
 
   @Override
-  public void tick(final long count, final long tNanos) {//TODO use sequential implementation which relies on the fact that samplesWindowShiftSteps <= targetSamplesWindowShiftSteps
+  public void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
       final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);

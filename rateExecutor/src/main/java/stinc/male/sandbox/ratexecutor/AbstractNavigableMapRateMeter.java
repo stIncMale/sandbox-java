@@ -20,8 +20,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   private volatile long gcLastRightSamplesWindowBoundary;
   @Nullable
   private final StampedLock ticksCountRwLock;
-
-  private final double gcRatio = 0.3;//(0,1] the bigger, the less frequently GC happens, but the older elements are maintained in the samples history.
+  private final double gcRatio = 0.3;//(0; 1] the bigger, the less frequently GC happens, but the older elements are maintained in the samples history.
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -132,7 +131,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   }
 
   @Override
-  public void tick(final long count, final long tNanos) {//TODO add sequential implementation which relies on the fact that NanosComparator.compare(rightNanos, tNanos) <= 0
+  public void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();
