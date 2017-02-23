@@ -124,7 +124,7 @@ public class RateMeterConfig {
   }
 
   @NotThreadSafe
-  public static class Builder<T extends Builder<T>> {
+  public static class Builder {
     protected boolean checkArguments;
     protected Function<Long, ? extends TicksCounter> ticksCounterSupplier;
     protected Duration timeSensitivity;
