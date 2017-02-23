@@ -12,7 +12,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  * always behave as methods of immutable class.
  */
 @Immutable
-public class RateMeterConfig {//TODO try <T extends Result<T>> and return T as this
+public class RateMeterConfig {
   private final boolean checkArguments;
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final Duration timeSensitivity;
@@ -124,7 +124,7 @@ public class RateMeterConfig {//TODO try <T extends Result<T>> and return T as t
   }
 
   @NotThreadSafe
-  public static class Builder {
+  public static class Builder<T extends Builder<T>> {
     protected boolean checkArguments;
     protected Function<Long, ? extends TicksCounter> ticksCounterSupplier;
     protected Duration timeSensitivity;
