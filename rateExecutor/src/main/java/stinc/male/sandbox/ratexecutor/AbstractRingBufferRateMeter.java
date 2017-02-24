@@ -26,6 +26,8 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   private final AtomicLong atomicCompletedSamplesWindowShiftSteps;
   @Nullable
   private final StampedLock ticksCountRwLock;
+  @Nullable
+  private final WaitStrategy completedSamplesWindowShiftStepsWaitStrategy;
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -58,8 +60,10 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
       ticksCountRwLock = null;
       locks = null;
       rwLocks = null;
+      completedSamplesWindowShiftStepsWaitStrategy = null;
     } else {
       ticksCountRwLock = new StampedLock();
+      completedSamplesWindowShiftStepsWaitStrategy = config.getWaitStrategySupplier().get();
       if (config.isStrictTick()) {
         locks = new AtomicBoolean[samplesHistory.length()];
         for (int idx = 0; idx < locks.length; idx++) {
@@ -301,6 +305,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   public RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     checkArgument(tNanos, "tNanos");
     checkNotNull(reading, "reading");
+    reading.setTNanos(tNanos);
     reading.setAccurate(true);
     final double value;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
@@ -315,13 +320,11 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
       if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
         value = 0;
-        reading.setTNanos(tNanos);
       } else {
         final long effectiveRightNanos = NanosComparator.compare(tNanos, rightNanos) <= 0
             ? tNanos//tNanos is within the samples window
             : rightNanos;//tNanos is ahead of samples window
         final long count = count(effectiveLeftNanos, effectiveRightNanos);
-        reading.setTNanos(tNanos);
         if (sequential) {
           value = count;
         } else {
@@ -330,9 +333,9 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samplesHistory.length()) {//the samples window may has been moved while we were counting, but count is still correct
             value = count;
           } else {//the samples window has been moved too far, return average
-            reading.setAccurate(false);
             final long newRightNanos = rightSamplesWindowBoundary(newSamplesWindowShiftSteps);
             reading.setTNanos(newRightNanos);
+            reading.setAccurate(false);
             getStats().accountFailedAccuracyEventForRate();
             value = RateMeterMath.rateAverage(
                 newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
@@ -414,15 +417,16 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
 
   private final void waitForCompletedWindowShiftSteps(final long samplesWindowShiftSteps) {
     if (!sequential) {
-      while (this.atomicCompletedSamplesWindowShiftSteps.get() < samplesWindowShiftSteps) {
-        Thread.yield();
-      }
+      completedSamplesWindowShiftStepsWaitStrategy.await(() -> samplesWindowShiftSteps <= this.atomicCompletedSamplesWindowShiftSteps.get());
     }
   }
 
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {
     final long fromInclusiveNanos = fromExclusiveNanos + 1;
     final long fromInclusiveSamplesWindowShiftSteps = samplesWindowShiftSteps(fromInclusiveNanos);
+    if (!sequential) {
+      completedSamplesWindowShiftStepsWaitStrategy.await(() -> fromInclusiveSamplesWindowShiftSteps <= this.atomicCompletedSamplesWindowShiftSteps.get());
+    }
     waitForCompletedWindowShiftSteps(fromInclusiveSamplesWindowShiftSteps);
     final long toInclusiveSamplesWindowShiftSteps = samplesWindowShiftSteps(toInclusiveNanos);
     long result = 0;

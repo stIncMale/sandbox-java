@@ -219,6 +219,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   public RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     checkArgument(tNanos, "tNanos");
     checkNotNull(reading, "reading");
+    reading.setTNanos(tNanos);
     reading.setAccurate(true);
     final double value;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
@@ -232,10 +233,8 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
       if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {//tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
         value = 0;
-        reading.setTNanos(tNanos);
       } else {
         final long count = count(effectiveLeftNanos, tNanos);
-        reading.setTNanos(tNanos);
         if (sequential) {
           value = count;
         } else {
@@ -244,8 +243,8 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
             value = count;
           } else {//the samples window has been moved too far, return average
-            reading.setAccurate(false);
             reading.setTNanos(newRightNanos);
+            reading.setAccurate(false);
             getStats().accountFailedAccuracyEventForRate();
             value = RateMeterMath.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
           }

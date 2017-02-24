@@ -2,19 +2,22 @@ package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.concurrent.NotThreadSafe;
 
 public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   private final boolean strictTick;
+  private final Supplier<? extends WaitStrategy> waitStrategySupplier;
 
   ConcurrentRingBufferRateMeterConfig(
       final boolean checkArguments,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
       final boolean collectStats,
-      final boolean strictTick,
       final int maxTicksCountAttempts,
-      final int hl) {
+      final int hl,
+      final boolean strictTick,
+      final Supplier<? extends WaitStrategy> waitStrategySupplier) {
     super(
         checkArguments,
         ticksCounterSupplier,
@@ -23,6 +26,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
         maxTicksCountAttempts,
         hl);
     this.strictTick = strictTick;
+    this.waitStrategySupplier = waitStrategySupplier;
   }
 
   public static Builder newBuilder() {
@@ -46,6 +50,14 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
     return strictTick;
   }
 
+  /**
+   * Specifies which {@link WaitStrategy} must be used by {@link RateMeter}.
+   * @return {@code YieldWaitStrategy::new} by default.
+   */
+  public final Supplier<? extends WaitStrategy> getWaitStrategySupplier() {
+    return waitStrategySupplier;
+  }
+
   @Override
   public String toString() {
     return getClass().getSimpleName()
@@ -56,25 +68,30 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
         + ", maxTicksCountAttempts=" + getMaxTicksCountAttempts()
         + ", hl=" + getHl()
         + ", strictTick=" + strictTick
+        + ", waitStrategySupplier=" + waitStrategySupplier
         + ')';
   }
 
   @NotThreadSafe
   public static class Builder extends RateMeterConfig.Builder {
     private boolean strictTick;
+    private Supplier<? extends WaitStrategy> waitStrategySupplier;
 
     protected Builder() {
       strictTick = false;
+      waitStrategySupplier = YieldWaitStrategy::new;
     }
 
     protected Builder(final ConcurrentRingBufferRateMeterConfig config) {
       super(config);
       strictTick = config.isStrictTick();
+      waitStrategySupplier = config.getWaitStrategySupplier();
     }
 
     protected Builder(final RateMeterConfig config) {
       super(config);
       strictTick = false;
+      waitStrategySupplier = YieldWaitStrategy::new;
     }
 
     /**
@@ -85,6 +102,14 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
       return this;
     }
 
+    /**
+     * @see ConcurrentRingBufferRateMeterConfig#getWaitStrategySupplier()
+     */
+    public final Builder setWaitStrategySupplier(final Supplier<? extends WaitStrategy> waitStrategySupplier) {
+      this.waitStrategySupplier = waitStrategySupplier;
+      return this;
+    }
+
     @Override
     public ConcurrentRingBufferRateMeterConfig build() {
       return new ConcurrentRingBufferRateMeterConfig(
@@ -92,9 +117,10 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
           ticksCounterSupplier,
           timeSensitivity,
           collectStats,
-          strictTick,
           maxTicksCountAttempts,
-          hl);
+          hl,
+          strictTick,
+          waitStrategySupplier);
     }
   }
 }

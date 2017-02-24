@@ -146,8 +146,8 @@ public class RateMeterConfig {
       ticksCounterSupplier = config.getTicksCounterSupplier();
       timeSensitivity = config.getTimeSensitivity();
       collectStats = config.isCollectStats();
-      maxTicksCountAttempts = config.maxTicksCountAttempts;
-      hl = config.hl;
+      maxTicksCountAttempts = config.getMaxTicksCountAttempts();
+      hl = config.getHl();
     }
 
     /**
