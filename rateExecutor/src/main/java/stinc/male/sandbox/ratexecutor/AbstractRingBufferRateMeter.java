@@ -405,6 +405,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
         } else {
           final long samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
           if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {//double check that tNanos is still within the samples history
+            //todo the line below can use SET instead of CAS only if the lock is actually not shared! compare performance SET vs CAS
             samplesHistory.set(targetIdx, samplesHistory.get(targetIdx) + delta);//we are under lock, so no need in CAS
 //            samplesHistory.add(targetIdx, delta);//TODO [use wait/lock strategies: spin lock (busy loop), RWLock or probably use LockSupport.park. See Disruptor WaitStrategy] we need to atomically add if we under a read lock
           }
