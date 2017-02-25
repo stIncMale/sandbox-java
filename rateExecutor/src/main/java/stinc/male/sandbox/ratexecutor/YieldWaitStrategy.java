@@ -5,7 +5,15 @@ import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 public final class YieldWaitStrategy implements WaitStrategy {
-  public YieldWaitStrategy() {
+  private static final YieldWaitStrategy instance = new YieldWaitStrategy();
+
+  /**
+   * Always returns the same instance.
+   *
+   * @return An instance of {@link YieldWaitStrategy}.
+   */
+  public static final YieldWaitStrategy instance() {
+    return instance;
   }
 
   @Override
@@ -13,5 +21,8 @@ public final class YieldWaitStrategy implements WaitStrategy {
     while (!condition.getAsBoolean()) {
       Thread.yield();
     }
+  }
+
+  private YieldWaitStrategy() {
   }
 }

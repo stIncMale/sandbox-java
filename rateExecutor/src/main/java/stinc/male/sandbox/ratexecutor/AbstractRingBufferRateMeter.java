@@ -1,7 +1,6 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
@@ -15,9 +14,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   private final boolean sequential;
   private final T samplesHistory;//length is multiple of HL
   @Nullable
-  private final AtomicBoolean[] locks;//same length as samples history; required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample
-  @Nullable //TODO use wait/lock strategies: spin lock (busy loop), RWLock or probably use LockSupport.park. See Disruptor WaitStrategy
-  private final StampedLock[] rwLocks;//same length as samples history; required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample
+  private final LockStrategy[] ticksCountLocks;//same length as samples history; required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample
   private final long samplesWindowStepNanos;
   private long samplesWindowShiftSteps;
   @Nullable
@@ -25,7 +22,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   @Nullable
   private final AtomicLong atomicCompletedSamplesWindowShiftSteps;
   @Nullable
-  private final StampedLock ticksCountRwLock;
+  private final StampedLock ticksCountStampedLock;
   @Nullable
   private final WaitStrategy completedSamplesWindowShiftStepsWaitStrategy;
 
@@ -57,25 +54,19 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samplesHistory = samplesHistorySuppplier.apply(config.getHl() * samplesIntervalArrayLength);
     if (sequential) {
-      ticksCountRwLock = null;
-      locks = null;
-      rwLocks = null;
+      ticksCountStampedLock = null;
+      ticksCountLocks = null;
       completedSamplesWindowShiftStepsWaitStrategy = null;
     } else {
-      ticksCountRwLock = new StampedLock();
+      ticksCountStampedLock = new StampedLock();
       completedSamplesWindowShiftStepsWaitStrategy = config.getWaitStrategySupplier().get();
       if (config.isStrictTick()) {
-        locks = new AtomicBoolean[samplesHistory.length()];
-        for (int idx = 0; idx < locks.length; idx++) {
-          locks[idx] = new AtomicBoolean();
-        }
-        rwLocks = new StampedLock[samplesHistory.length()];
-        for (int idx = 0; idx < rwLocks.length; idx++) {
-          rwLocks[idx] = new StampedLock();
+        ticksCountLocks = new LockStrategy[samplesHistory.length()];
+        for (int idx = 0; idx < ticksCountLocks.length; idx++) {
+            ticksCountLocks[idx] = config.getLockStrategySupplier().get();
         }
       } else {
-        locks = null;
-        rwLocks = null;
+        ticksCountLocks = null;
       }
     }
     atomicSamplesWindowShiftSteps = sequential ? null : new AtomicLong();
@@ -121,13 +112,13 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           } else {//the samples window has been moved too far
             samplesWindowShiftSteps = newSamplesWindowShiftSteps;
             if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
-              ticksCountReadLockStamp = ticksCountRwLock.readLock();
+              ticksCountReadLockStamp = ticksCountStampedLock.readLock();
             }
           }
         }
       } finally {
         if (ticksCountReadLockStamp != 0) {
-          ticksCountRwLock.unlockRead(ticksCountReadLockStamp);
+          ticksCountStampedLock.unlockRead(ticksCountReadLockStamp);
         }
       }
     }
@@ -165,13 +156,13 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           } else {//the samples window has been moved too far
             samplesWindowShiftSteps = newSamplesWindowShiftSteps;
             if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
-              ticksCountReadLockStamp = ticksCountRwLock.readLock();
+              ticksCountReadLockStamp = ticksCountStampedLock.readLock();
             }
           }
         }
       } finally {
         if (ticksCountReadLockStamp != 0) {
-          ticksCountRwLock.unlockRead(ticksCountReadLockStamp);
+          ticksCountStampedLock.unlockRead(ticksCountReadLockStamp);
         }
       }
     }
@@ -204,7 +195,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
           long ticksCountWriteLockStamp = 0;
           while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps) {//move the samples window if we need to
             if (ticksCountWriteLockStamp == 0) {
-              ticksCountWriteLockStamp = ticksCountRwLock.isReadLocked() ? ticksCountRwLock.writeLock() : 0;
+              ticksCountWriteLockStamp = ticksCountStampedLock.isReadLocked() ? ticksCountStampedLock.writeLock() : 0;
             }
             moved = this.atomicSamplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps);
             if (moved) {
@@ -242,7 +233,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
             }
           } finally {
             if (ticksCountWriteLockStamp != 0) {
-              ticksCountRwLock.unlockWrite(ticksCountWriteLockStamp);
+              ticksCountStampedLock.unlockWrite(ticksCountWriteLockStamp);
             }
           }
         }
@@ -347,46 +338,32 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     return reading;
   }
 
-  private final long lock(final int idx) {
-    while (locks != null && !locks[idx].compareAndSet(false, true)) {
-      Thread.yield();
-    }
-    return 0;
-//    return rwLocks == null ? 0 : rwLocks[idx].writeLock();
+  private final long lockTicksCount(final int idx) {
+    return ticksCountLocks == null ? 0 :  ticksCountLocks[idx].lock();
   }
 
-  private final void unlock(final int idx, final long stamp) {
-    if (locks != null) {
-      locks[idx].set(false);
+  private final void unlockTicksCount(final int idx, final long stamp) {
+    if (ticksCountLocks != null) {
+      ticksCountLocks[idx].unlock(stamp);
     }
-//    if (stamp != 0) {
-//      rwLocks[idx].unlockWrite(stamp);
-//    }
   }
 
-  private final long sharedLock(final int idx) {
-    while (locks != null && !locks[idx].compareAndSet(false, true)) {
-      Thread.yield();
-    }
-    return 0;
-//    return rwLocks == null ? 0 : rwLocks[idx].readLock();
+  private final long sharedLockTicksCount(final int idx) {
+    return ticksCountLocks == null ? 0 :  ticksCountLocks[idx].sharedLock();
   }
 
-  private final void unlockShared(final int idx, final long stamp) {
-    if (locks != null) {
-      locks[idx].set(false);
+  private final void unlockSharedTicksCount(final int idx, final long stamp) {
+    if (ticksCountLocks != null) {
+      ticksCountLocks[idx].unlockShared(stamp);
     }
-//    if (stamp != 0) {
-//      rwLocks[idx].unlockRead(stamp);
-//    }
   }
 
   private final void tickResetSample(final int idx, final long value) {
-    final long stamp = lock(idx);
+    final long stamp = lockTicksCount(idx);
     try {
       samplesHistory.set(idx, value);
     } finally {
-      unlock(idx, stamp);
+      unlockTicksCount(idx, stamp);
     }
   }
 
@@ -394,24 +371,22 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     if (sequential) {
       samplesHistory.add(targetIdx, delta);
     } else {
-      final long stamp = sharedLock(targetIdx);
-      try {
-        if (locks == null) {//there is no actual locking
-          samplesHistory.add(targetIdx, delta);
-          final long samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
-          if (targetSamplesWindowShiftSteps < samplesWindowShiftSteps - samplesHistory.length()) {//we could have accounted (but it is not necessary) the sample at the incorrect instant because samples window had been moved too far
-            getStats().accountFailedAccuracyEventForTick();
-          }
-        } else {
+      if (ticksCountLocks == null) {//not strict mode, no locking
+        samplesHistory.add(targetIdx, delta);
+        final long samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
+        if (targetSamplesWindowShiftSteps < samplesWindowShiftSteps - samplesHistory.length()) {//we could have accounted (but it is not necessary) the sample at the incorrect instant because samples window had been moved too far
+          getStats().accountFailedAccuracyEventForTick();
+        }
+      } else {
+        final long stamp = sharedLockTicksCount(targetIdx);
+        try {
           final long samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
           if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {//double check that tNanos is still within the samples history
-            //todo the line below can use SET instead of CAS only if the lock is actually not shared! compare performance SET vs CAS
-            samplesHistory.set(targetIdx, samplesHistory.get(targetIdx) + delta);//we are under lock, so no need in CAS
-//            samplesHistory.add(targetIdx, delta);//TODO [use wait/lock strategies: spin lock (busy loop), RWLock or probably use LockSupport.park. See Disruptor WaitStrategy] we need to atomically add if we under a read lock
+            samplesHistory.add(targetIdx, delta);
           }
+        } finally {
+          unlockSharedTicksCount(targetIdx, stamp);
         }
-      } finally {
-        unlockShared(targetIdx, stamp);
       }
     }
   }

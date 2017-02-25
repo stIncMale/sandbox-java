@@ -6,7 +6,15 @@ import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 public final class ParkWaitStrategy implements WaitStrategy {
-  public ParkWaitStrategy() {
+  private static final ParkWaitStrategy instance = new ParkWaitStrategy();
+
+  /**
+   * Always returns the same instance.
+   *
+   * @return An instance of {@link ParkWaitStrategy}.
+   */
+  public static final ParkWaitStrategy instance() {
+    return instance;
   }
 
   @Override
@@ -24,5 +32,8 @@ public final class ParkWaitStrategy implements WaitStrategy {
         Thread.currentThread().interrupt();
       }
     }
+  }
+
+  private ParkWaitStrategy() {
   }
 }

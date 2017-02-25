@@ -9,7 +9,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
 @ThreadSafe
-public final class LinearizableRateMeter implements RateMeter {
+public final class LinearizableRateMeter implements RateMeter {//todo refactor locks
   private final SynchronizationType sync;
   private final RateMeter rm;
   @Nullable

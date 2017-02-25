@@ -20,7 +20,7 @@ public class RateMeterConfig {
   private final int maxTicksCountAttempts;
   private final int hl;
 
-  RateMeterConfig(
+  protected RateMeterConfig(
       final boolean checkArguments,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,

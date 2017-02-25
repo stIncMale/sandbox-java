@@ -631,7 +631,8 @@ public class RateMeterPerformanceTest {
       final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
           = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build());
       concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
-          .setWaitStrategySupplier(ParkWaitStrategy::new)
+          .setWaitStrategySupplier(YieldWaitStrategy::instance)
+          .setLockStrategySupplier(() -> new StampedLockStrategy())
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
           .setHl(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,

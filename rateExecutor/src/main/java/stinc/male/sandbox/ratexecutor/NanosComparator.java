@@ -84,7 +84,7 @@ public final class NanosComparator implements Comparator<Long> {
    */
   @Override
   public final boolean equals(@Nullable final Object obj) {
-    return obj instanceof NanosComparator;
+    return obj == instance;
   }
 
   @Override

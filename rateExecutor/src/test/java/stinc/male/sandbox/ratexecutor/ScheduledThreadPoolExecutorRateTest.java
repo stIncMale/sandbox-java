@@ -31,7 +31,7 @@ import static java.time.Duration.ofMillis;
 import static org.junit.Assert.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
-@Category(PerformanceTest.class)
+@Category(PerformanceTest.class)//todo do something with this?
 public class ScheduledThreadPoolExecutorRateTest {
   private static final long NUMBER_OF_ACTIONS_PER_MEASUREMENT = 10_000;
   private static final boolean SERVER = true;
