@@ -3,9 +3,11 @@ package stinc.male.sandbox.ratexecutor;
 import java.time.Duration;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 
+@Immutable
 public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   private final boolean strictTick;
   private final Supplier<? extends WaitStrategy> waitStrategySupplier;
