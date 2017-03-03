@@ -184,7 +184,7 @@
 				<maven.test.skip>false</maven.test.skip>
 				<sandbox.maven-surefire-plugin.parallel>all</sandbox.maven-surefire-plugin.parallel>
 				<sandbox.maven-surefire-plugin.groups></sandbox.maven-surefire-plugin.groups>
-				<sandbox.maven-surefire-plugin.excludedGroups>stinc.male.PerformanceTest, stinc.male.ConcurrencyTest</sandbox.maven-surefire-plugin.excludedGroups>
+				<sandbox.maven-surefire-plugin.excludedGroups>stinc.male.test.harness.PerformanceTest, stinc.male.test.harness.ConcurrencyTest</sandbox.maven-surefire-plugin.excludedGroups>
 			</properties>
 		</profile>
 		<profile>
@@ -192,8 +192,8 @@
 			<properties>
 				<maven.test.skip>false</maven.test.skip>
 				<sandbox.maven-surefire-plugin.parallel></sandbox.maven-surefire-plugin.parallel>
-				<sandbox.maven-surefire-plugin.groups>stinc.male.PerformanceTest</sandbox.maven-surefire-plugin.groups>
-				<sandbox.maven-surefire-plugin.excludedGroups>stinc.male.ConcurrencyTest</sandbox.maven-surefire-plugin.excludedGroups>
+				<sandbox.maven-surefire-plugin.groups>stinc.male.test.harness.PerformanceTest</sandbox.maven-surefire-plugin.groups>
+				<sandbox.maven-surefire-plugin.excludedGroups>stinc.male.test.harness.ConcurrencyTest</sandbox.maven-surefire-plugin.excludedGroups>
 			</properties>
 		</profile>
 		<profile>
@@ -201,8 +201,8 @@
 			<properties>
 				<maven.test.skip>false</maven.test.skip>
 				<sandbox.maven-surefire-plugin.parallel></sandbox.maven-surefire-plugin.parallel>
-				<sandbox.maven-surefire-plugin.groups>stinc.male.ConcurrencyTest</sandbox.maven-surefire-plugin.groups>
-				<sandbox.maven-surefire-plugin.excludedGroups>stinc.male.PerformanceTest</sandbox.maven-surefire-plugin.excludedGroups>
+				<sandbox.maven-surefire-plugin.groups>stinc.male.test.harness.ConcurrencyTest</sandbox.maven-surefire-plugin.groups>
+				<sandbox.maven-surefire-plugin.excludedGroups>stinc.male.test.harness.PerformanceTest</sandbox.maven-surefire-plugin.excludedGroups>
 			</properties>
 		</profile>
 		<profile>

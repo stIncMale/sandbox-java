@@ -10,7 +10,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
-import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
@@ -25,13 +24,13 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import stinc.male.PerformanceTest;
+import stinc.male.test.harness.ConcurrencyTest;
 import static java.lang.System.nanoTime;
 import static java.time.Duration.ofMillis;
 import static org.junit.Assert.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
-@Category(PerformanceTest.class)//todo do something with this?
+@Category(ConcurrencyTest.class)//todo do something with this?
 public class ScheduledThreadPoolExecutorRateTest {
   private static final long NUMBER_OF_ACTIONS_PER_MEASUREMENT = 10_000;
   private static final boolean SERVER = true;
@@ -62,7 +61,7 @@ public class ScheduledThreadPoolExecutorRateTest {
   public ScheduledThreadPoolExecutorRateTest() {
   }
 
-  @Test
+//  @Test
   public final void reference() throws RunnerException {
     final Collection<RunResult> results = new Runner(jmhOptionsBuilderSupplier.get()
         .mode(Mode.AverageTime)
@@ -85,22 +84,22 @@ public class ScheduledThreadPoolExecutorRateTest {
     });
   }
 
-  @Test
+//  @Test
   public final void baseline_scheduleAtFixedRate() throws RunnerException {
     rate(ScheduleType.FIXED_RATE, true);
   }
 
-  @Test
+//  @Test
   public final void baseline_scheduleWithFixedDelay() throws RunnerException {
     rate(ScheduleType.FIXED_DELAY, true);
   }
 
-  @Test
+//  @Test
   public final void scheduleAtFixedRate() throws RunnerException {
     rate(ScheduleType.FIXED_RATE, false);
   }
 
-  @Test
+//  @Test
   public final void scheduleWithFixedDelay() throws RunnerException {
     rate(ScheduleType.FIXED_DELAY, false);
   }

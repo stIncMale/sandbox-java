@@ -1,6 +1,9 @@
 package stinc.male.sandbox.ratexecutor;
 
-public final class RingBufferRateMeterTest extends AbstractRateMeterUnitTest<RateMeterConfig.Builder, RateMeterConfig> {
+import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
+import stinc.male.sandbox.ratexecutor.test.harness.AbstractRateMeterUnitTest;
+
+public final class RingBufferRateMeterTest extends AbstractRateMeterUnitTest<Builder, RateMeterConfig> {
   public RingBufferRateMeterTest() {
     super(
         RateMeterConfig.Builder::new,

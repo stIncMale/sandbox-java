@@ -1,4 +1,4 @@
-package stinc.male.sandbox.ratexecutor;
+package stinc.male.sandbox.ratexecutor.test.harness;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -14,27 +14,28 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import stinc.male.sandbox.ratexecutor.NanosComparator;
+import stinc.male.sandbox.ratexecutor.RateMeter;
+import stinc.male.sandbox.ratexecutor.RateMeterConfig;
+import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
+import stinc.male.sandbox.ratexecutor.RateMeterReading;
 import static java.time.Duration.ofNanos;
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig.Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {
-  private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
+public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {
   private final int numberOfThreads;
   private ExecutorService ex;
 
-  AbstractRateMeterConcurrencyTest(
+  protected AbstractRateMeterConcurrencyTest(
       final Supplier<B> rateMeterConfigBuilderSupplier,
       final RateMeterCreator<C> rateMeterCreator,
-      final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final int numberOfThreads) {
     super(rateMeterConfigBuilderSupplier, rateMeterCreator);
-    this.ticksCounterSupplier = ticksCounterSupplier;
     this.numberOfThreads = numberOfThreads;
   }
 
@@ -72,7 +73,6 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends RateMeterConfig
         .get()
         .setCheckArguments(true)
         .setTimeSensitivity(ofNanos(1))
-        .setTicksCounterSupplier(ticksCounterSupplier)
         .build();
     final RateMeter rm = getRateMeterCreator().create(
         startNanos,

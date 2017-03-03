@@ -1,15 +1,20 @@
-package stinc.male.sandbox.ratexecutor;
+package stinc.male.sandbox.ratexecutor.test.harness;
 
 import java.time.Duration;
 import java.util.function.Supplier;
+import org.junit.Assert;
 import org.junit.Test;
+import stinc.male.sandbox.ratexecutor.RateMeter;
+import stinc.male.sandbox.ratexecutor.RateMeterConfig;
+import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
+import stinc.male.sandbox.ratexecutor.RateMeterReading;
 import static java.time.Duration.ofNanos;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {
-  AbstractRateMeterUnitTest(final Supplier<B> rateMeterConfigBuilderSupplier, final RateMeterCreator<C> rateMeterCreator) {
+public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {
+  protected AbstractRateMeterUnitTest(final Supplier<B> rateMeterConfigBuilderSupplier, final RateMeterCreator<C> rateMeterCreator) {
     super(rateMeterConfigBuilderSupplier, rateMeterCreator);
   }
 
@@ -26,19 +31,19 @@ public abstract class AbstractRateMeterUnitTest<B extends RateMeterConfig.Builde
   @Test
   public final void getStartNanos() {
     final long startNanos = 123;
-    assertEquals(startNanos, newRateMeter(startNanos, ofNanos(10)).getStartNanos());
+    Assert.assertEquals(startNanos, newRateMeter(startNanos, ofNanos(10)).getStartNanos());
   }
 
   @Test
   public final void getSamplesInterval() {
     final Duration samplesInterval = ofNanos(10);
-    assertEquals(samplesInterval, newRateMeter(0, samplesInterval).getSamplesInterval());
+    Assert.assertEquals(samplesInterval, newRateMeter(0, samplesInterval).getSamplesInterval());
   }
 
   @Test
   public final void rightSamplesWindowBoundary1() {
     final long startNanos = 123;
-    assertEquals(startNanos, newRateMeter(startNanos, ofNanos(10)).rightSamplesWindowBoundary());
+    Assert.assertEquals(startNanos, newRateMeter(startNanos, ofNanos(10)).rightSamplesWindowBoundary());
   }
 
   @Test

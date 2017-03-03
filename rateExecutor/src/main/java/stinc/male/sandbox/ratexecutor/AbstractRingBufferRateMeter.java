@@ -14,7 +14,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   private final boolean sequential;
   private final T samplesHistory;//length is multiple of HL
   @Nullable
-  private final LockStrategy[] ticksCountLocks;//same length as samples history; required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample
+  private final LockingStrategy[] ticksCountLocks;//same length as samples history; required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample
   private final long samplesWindowStepNanos;
   private long samplesWindowShiftSteps;
   @Nullable
@@ -61,7 +61,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
       ticksCountStampedLock = new StampedLock();
       completedSamplesWindowShiftStepsWaitStrategy = config.getWaitStrategySupplier().get();
       if (config.isStrictTick()) {
-        ticksCountLocks = new LockStrategy[samplesHistory.length()];
+        ticksCountLocks = new LockingStrategy[samplesHistory.length()];
         for (int idx = 0; idx < ticksCountLocks.length; idx++) {
             ticksCountLocks[idx] = config.getLockStrategySupplier().get();
         }

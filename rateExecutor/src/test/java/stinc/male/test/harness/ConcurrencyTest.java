@@ -1,4 +1,4 @@
-package stinc.male;
+package stinc.male.test.harness;
 
 public @interface ConcurrencyTest {
 }

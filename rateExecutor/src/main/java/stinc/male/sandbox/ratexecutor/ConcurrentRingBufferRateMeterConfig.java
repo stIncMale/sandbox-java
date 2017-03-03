@@ -9,7 +9,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   private final boolean strictTick;
   private final Supplier<? extends WaitStrategy> waitStrategySupplier;
-  private final Supplier<? extends LockStrategy> lockStrategySupplier;
+  private final Supplier<? extends LockingStrategy> lockStrategySupplier;
 
    protected ConcurrentRingBufferRateMeterConfig(
       final boolean checkArguments,
@@ -20,7 +20,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
       final int hl,
       final boolean strictTick,
       final Supplier<? extends WaitStrategy> waitStrategySupplier,
-      final Supplier<? extends LockStrategy> lockStrategySupplier) {
+      final Supplier<? extends LockingStrategy> lockStrategySupplier) {
     super(
         checkArguments,
         ticksCounterSupplier,
@@ -64,10 +64,10 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   }
 
   /**
-   * Specifies which {@link LockStrategy} must be used by {@link ConcurrentRingBufferRateMeter}.
-   * @return {@code () -> new SpinLockStrategy(YieldWaitStrategy.instance())} by default.
+   * Specifies which {@link LockingStrategy} must be used by {@link ConcurrentRingBufferRateMeter}.
+   * @return {@code () -> new SpinLockingStrategy(YieldWaitStrategy.instance())} by default.
    */
-  public final Supplier<? extends LockStrategy> getLockStrategySupplier() {
+  public final Supplier<? extends LockingStrategy> getLockStrategySupplier() {
     return lockStrategySupplier;
   }
 
@@ -90,12 +90,12 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   public static class Builder extends RateMeterConfig.Builder {
     private boolean strictTick;
     private Supplier<? extends WaitStrategy> waitStrategySupplier;
-    private Supplier<? extends LockStrategy> lockStrategySupplier;
+    private Supplier<? extends LockingStrategy> lockStrategySupplier;
 
     protected Builder() {
       strictTick = false;
       waitStrategySupplier = YieldWaitStrategy::instance;
-      lockStrategySupplier = () -> new SpinLockStrategy(YieldWaitStrategy.instance());
+      lockStrategySupplier = () -> new SpinLockingStrategy(YieldWaitStrategy.instance());
     }
 
     protected Builder(final ConcurrentRingBufferRateMeterConfig config) {
@@ -108,7 +108,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
       super(config);
       strictTick = false;
       waitStrategySupplier = YieldWaitStrategy::instance;
-      lockStrategySupplier = () -> new SpinLockStrategy(YieldWaitStrategy.instance());
+      lockStrategySupplier = () -> new SpinLockingStrategy(YieldWaitStrategy.instance());
     }
 
     /**
@@ -131,7 +131,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
     /**
      * @see ConcurrentRingBufferRateMeterConfig#getLockStrategySupplier()
      */
-    public final Builder setLockStrategySupplier(final Supplier<? extends LockStrategy> lockStrategySupplier) {
+    public final Builder setLockStrategySupplier(final Supplier<? extends LockingStrategy> lockStrategySupplier) {
       checkNotNull(lockStrategySupplier, "lockStrategySupplier");
       this.lockStrategySupplier = lockStrategySupplier;
       return this;

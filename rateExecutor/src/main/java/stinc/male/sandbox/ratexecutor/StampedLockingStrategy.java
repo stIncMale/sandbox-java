@@ -4,10 +4,10 @@ import java.util.concurrent.locks.StampedLock;
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
-public final class StampedLockStrategy implements LockStrategy {
+public final class StampedLockingStrategy implements LockingStrategy {
   private final StampedLock stampedLock;
 
-  public StampedLockStrategy() {
+  public StampedLockingStrategy() {
     stampedLock = new StampedLock();
   }
 

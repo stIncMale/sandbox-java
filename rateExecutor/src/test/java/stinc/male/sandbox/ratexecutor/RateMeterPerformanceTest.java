@@ -20,8 +20,7 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import stinc.male.PerformanceTest;
-import stinc.male.sandbox.ratexecutor.LinearizableRateMeter.SynchronizationType;
+import stinc.male.test.harness.PerformanceTest;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
 import static org.junit.Assert.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
@@ -117,11 +116,11 @@ public class RateMeterPerformanceTest {
 //  }
 //
 //  @Test
-//  public void serial_throughput_linearizableRateMeter() throws RunnerException {
+//  public void serial_throughput_concurrentSimpleRateMeter() throws RunnerException {
 //    new Runner(jmhOptionsBuilderSupplier.get()
 //        .mode(Mode.Throughput)
 //        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".*serial_.*linearizableRateMeter")
+//        .include(getClass().getName() + ".*serial_.*concurrentSimpleRateMeter")
 //        .threads(1)
 //        .build())
 //        .run();
@@ -152,12 +151,12 @@ public class RateMeterPerformanceTest {
 //  }
 //
 //  @Test
-//  public void serial_latency_linearizableRateMeter() throws RunnerException {
+//  public void serial_latency_concurrentSimpleRateMeter() throws RunnerException {
 //    new Runner(jmhOptionsBuilderSupplier.get()
 //        .mode(Mode.AverageTime)
 //        .timeUnit(TimeUnit.NANOSECONDS)
-//        .include(getClass().getName() + ".*serial_tick_linearizableRateMeter")
-//        .include(getClass().getName() + ".*serial_tick\\$1rate\\$10_linearizableRateMeter")
+//        .include(getClass().getName() + ".*serial_tick_concurrentSimpleRateMeter")
+//        .include(getClass().getName() + ".*serial_tick\\$1rate\\$10_concurrentSimpleRateMeter")
 //        .threads(1)
 //        .build())
 //        .run();
@@ -185,28 +184,28 @@ public class RateMeterPerformanceTest {
 //        .build())
 //        .run();
 //  }
-
-  @Test
-  public void parallel4_throughput_concurrentRingBufferRateMeter() throws RunnerException {
-    new Runner(jmhOptionsBuilderSupplier.get()
-        .mode(Mode.Throughput)
-        .timeUnit(TimeUnit.MILLISECONDS)
-        .include(getClass().getName() + ".parallel4.*concurrentRingBufferRateMeter")
-        .threads(4)
-        .build())
-        .run();
-  }
-
+//
 //  @Test
-//  public void parallel4_throughput_linearizableRateMeter() throws RunnerException {
+//  public void parallel4_throughput_concurrentRingBufferRateMeter() throws RunnerException {
 //    new Runner(jmhOptionsBuilderSupplier.get()
 //        .mode(Mode.Throughput)
 //        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".parallel4.*linearizableRateMeter")
+//        .include(getClass().getName() + ".parallel4.*concurrentRingBufferRateMeter")
 //        .threads(4)
 //        .build())
 //        .run();
 //  }
+
+  @Test
+  public void parallel4_throughput_concurrentSimpleRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(getClass().getName() + ".parallel4.*concurrentSimpleRateMeter")
+        .threads(4)
+        .build())
+        .run();
+  }
 
 //  @Test
 //  public void parallel4_latency_concurrentNavigableMapRateMeter() throws RunnerException {
@@ -220,32 +219,32 @@ public class RateMeterPerformanceTest {
 //        .build())
 //        .run();
 //  }
-
-  @Test
-  public void parallel4_latency_concurrentRingBufferRateMeter() throws RunnerException {
-    new Runner(jmhOptionsBuilderSupplier.get()
-        .mode(Mode.AverageTime)
-        .timeUnit(TimeUnit.NANOSECONDS)
-        .include(getClass().getName() + ".*parallel4_tick_concurrentRingBufferRateMeter")
-        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentRingBufferRateMeter")
-        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentRingBufferRateMeter")
-        .threads(4)
-        .build())
-        .run();
-  }
-
+//
 //  @Test
-//  public void parallel4_latency_linearizableRateMeter() throws RunnerException {
+//  public void parallel4_latency_concurrentRingBufferRateMeter() throws RunnerException {
 //    new Runner(jmhOptionsBuilderSupplier.get()
 //        .mode(Mode.AverageTime)
 //        .timeUnit(TimeUnit.NANOSECONDS)
-//        .include(getClass().getName() + ".*parallel4_tick_linearizableRateMeter")
-//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_linearizableRateMeter")
-//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_linearizableRateMeter")
+//        .include(getClass().getName() + ".*parallel4_tick_concurrentRingBufferRateMeter")
+//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentRingBufferRateMeter")
+//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentRingBufferRateMeter")
 //        .threads(4)
 //        .build())
 //        .run();
 //  }
+
+  @Test
+  public void parallel4_latency_concurrentSimpleRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*parallel4_tick_concurrentSimpleRateMeter")
+        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentSimpleRateMeter")
+        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentSimpleRateMeter")
+        .threads(4)
+        .build())
+        .run();
+  }
 
   @Benchmark
   public void baseline_empty() {
@@ -350,23 +349,23 @@ public class RateMeterPerformanceTest {
   }
 
   @Benchmark
-  public void serial_tick_linearizableRateMeter(final RateMeterContainer_ThreadScope state) {
-    tick(state.linearizableRateMeter);
+  public void serial_tick_concurrentSimpleRateMeter(final RateMeterContainer_ThreadScope state) {
+    tick(state.concurrentSimpleRateMeter);
   }
 
   @Benchmark
-  public void serial_tick$10rate$1_linearizableRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.linearizableRateMeter, bh, counter.v++, 10);
+  public void serial_tick$10rate$1_concurrentSimpleRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSimpleRateMeter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  public void serial_tick$1rate$1_linearizableRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.linearizableRateMeter, bh, counter.v++, 1);
+  public void serial_tick$1rate$1_concurrentSimpleRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSimpleRateMeter, bh, counter.v++, 1);
   }
 
   @Benchmark
-  public void serial_tick$1rate$10_linearizableRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    rateAndTick(state.linearizableRateMeter, bh, counter.v++, 10);
+  public void serial_tick$1rate$10_concurrentSimpleRateMeter(final RateMeterContainer_ThreadScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    rateAndTick(state.concurrentSimpleRateMeter, bh, counter.v++, 10);
   }
 
   @Benchmark
@@ -482,59 +481,59 @@ public class RateMeterPerformanceTest {
   }
 
   @Benchmark
-  @Group("parallel4_tick_linearizableRateMeter")
+  @Group("parallel4_tick_concurrentSimpleRateMeter")
   @GroupThreads(4)
-  public void parallel4_tick_linearizableRateMeter(final RateMeterContainer_GroupScope state) {
-    tick(state.linearizableRateMeter);
+  public void parallel4_tick_concurrentSimpleRateMeter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSimpleRateMeter);
   }
 
   @Benchmark
-  @Group("parallel4_tick$10rate$1_linearizableRateMeter")
+  @Group("parallel4_tick$10rate$1_concurrentSimpleRateMeter")
   @GroupThreads(4)
-  public void parallel4_tick$10rate$1_linearizableRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.linearizableRateMeter, bh, counter.v++, 10);
+  public void parallel4_tick$10rate$1_concurrentSimpleRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSimpleRateMeter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  @Group("parallel4_tick$1rate$1_linearizableRateMeter")
+  @Group("parallel4_tick$1rate$1_concurrentSimpleRateMeter")
   @GroupThreads(4)
-  public void parallel4_tick$1rate$1_linearizableRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    tickAndRate(state.linearizableRateMeter, bh, counter.v++, 1);
+  public void parallel4_tick$1rate$1_concurrentSimpleRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    tickAndRate(state.concurrentSimpleRateMeter, bh, counter.v++, 1);
   }
 
   @Benchmark
-  @Group("parallel4_tick$1rate$10_linearizableRateMeter")
+  @Group("parallel4_tick$1rate$10_concurrentSimpleRateMeter")
   @GroupThreads(4)
-  public void parallel4_tick$1rate$10_linearizableRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
-    rateAndTick(state.linearizableRateMeter, bh, counter.v++, 10);
+  public void parallel4_tick$1rate$10_concurrentSimpleRateMeter(final RateMeterContainer_GroupScope state, final IntCounter_ThreadScope counter, final Blackhole bh) {
+    rateAndTick(state.concurrentSimpleRateMeter, bh, counter.v++, 10);
   }
 
   @Benchmark
-  @Group("parallel4_tick$1_rate$1_linearizableRateMeter")
+  @Group("parallel4_tick$1_rate$1_concurrentSimpleRateMeter")
   @GroupThreads(2)
-  public void parallel4_TICK$1_rate$1_linearizableRateMeter(final RateMeterContainer_GroupScope state) {
-    tick(state.linearizableRateMeter);
+  public void parallel4_TICK$1_rate$1_concurrentSimpleRateMeter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSimpleRateMeter);
   }
 
   @Benchmark
-  @Group("parallel4_tick$1_rate$1_linearizableRateMeter")
+  @Group("parallel4_tick$1_rate$1_concurrentSimpleRateMeter")
   @GroupThreads(2)
-  public void parallel4_tick$1_RATE$1_linearizableRateMeter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
-    rate(state.linearizableRateMeter, bh);
+  public void parallel4_tick$1_RATE$1_concurrentSimpleRateMeter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.concurrentSimpleRateMeter, bh);
   }
 
   @Benchmark
-  @Group("parallel4_tick$1_rate$3_linearizableRateMeter")
+  @Group("parallel4_tick$1_rate$3_concurrentSimpleRateMeter")
   @GroupThreads(1)
-  public void parallel4_TICK$1_rate$3_linearizableRateMeter(final RateMeterContainer_GroupScope state) {
-    tick(state.linearizableRateMeter);
+  public void parallel4_TICK$1_rate$3_concurrentSimpleRateMeter(final RateMeterContainer_GroupScope state) {
+    tick(state.concurrentSimpleRateMeter);
   }
 
   @Benchmark
-  @Group("parallel4_tick$1_rate$3_linearizableRateMeter")
+  @Group("parallel4_tick$1_rate$3_concurrentSimpleRateMeter")
   @GroupThreads(3)
-  public void parallel4_tick$1_RATE$3_linearizableRateMeter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
-    rate(state.linearizableRateMeter, bh);
+  public void parallel4_tick$1_RATE$3_concurrentSimpleRateMeter(final RateMeterContainer_GroupScope state, final Blackhole bh) {
+    rate(state.concurrentSimpleRateMeter, bh);
   }
 
   private static final void tick(final RateMeter rm) {
@@ -575,7 +574,7 @@ public class RateMeterPerformanceTest {
     ConcurrentNavigableMapRateMeter concurrentNavigableMapRateMeter;
     RingBufferRateMeter ringBufferRateMeter;
     ConcurrentRingBufferRateMeter concurrentRingBufferRateMeter;
-    LinearizableRateMeter linearizableRateMeter;
+    ConcurrentSimpleRateMeter concurrentSimpleRateMeter;
 
     public RateMeterContainer_ThreadScope() {
     }
@@ -603,13 +602,13 @@ public class RateMeterPerformanceTest {
           .setHl(2);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
-      linearizableRateMeter = new LinearizableRateMeter(
+      concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter(
           new RingBufferRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSuppplier.get()
                   .setTicksCounterSupplier(LongTicksCounter::new)
                   .setHl(2)
                   .build()),
-          SynchronizationType.RW_LOCK);
+          new StampedLockingStrategy());
     }
   }
 
@@ -617,7 +616,7 @@ public class RateMeterPerformanceTest {
   public static class RateMeterContainer_GroupScope {
     ConcurrentNavigableMapRateMeter concurrentNavigableMapRateMeter;
     ConcurrentRingBufferRateMeter concurrentRingBufferRateMeter;
-    LinearizableRateMeter linearizableRateMeter;
+    ConcurrentSimpleRateMeter concurrentSimpleRateMeter;
 
     public RateMeterContainer_GroupScope() {
     }
@@ -632,18 +631,18 @@ public class RateMeterPerformanceTest {
           = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build());
       concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
           .setWaitStrategySupplier(YieldWaitStrategy::instance)
-          .setLockStrategySupplier(() -> new StampedLockStrategy())
+          .setLockStrategySupplier(() -> new StampedLockingStrategy())
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
           .setHl(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
-      linearizableRateMeter = new LinearizableRateMeter(
+      concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter(
           new RingBufferRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSuppplier.get()
                   .setTicksCounterSupplier(LongTicksCounter::new)
                   .setHl(2)
                   .build()),
-          SynchronizationType.RW_LOCK);
+          new StampedLockingStrategy());
     }
 
     @TearDown(Level.Trial)
@@ -652,8 +651,8 @@ public class RateMeterPerformanceTest {
       assertEquals(0, concurrentNavigableMapRateMeter.stats().failedAccuracyEventsCountForRate(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
       assertEquals(0, concurrentRingBufferRateMeter.stats().failedAccuracyEventsCountForTick(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
       assertEquals(0, concurrentRingBufferRateMeter.stats().failedAccuracyEventsCountForRate(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-      assertEquals(0, linearizableRateMeter.stats().failedAccuracyEventsCountForTick(), 0);
-      assertEquals(0, linearizableRateMeter.stats().failedAccuracyEventsCountForRate(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
+      assertEquals(0, concurrentSimpleRateMeter.stats().failedAccuracyEventsCountForTick(), 0);
+      assertEquals(0, concurrentSimpleRateMeter.stats().failedAccuracyEventsCountForRate(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
     }
   }
 

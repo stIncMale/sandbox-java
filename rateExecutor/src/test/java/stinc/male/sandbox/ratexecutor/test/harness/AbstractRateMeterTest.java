@@ -1,9 +1,12 @@
-package stinc.male.sandbox.ratexecutor;
+package stinc.male.sandbox.ratexecutor.test.harness;
 
 import java.time.Duration;
 import java.util.function.Supplier;
+import stinc.male.sandbox.ratexecutor.RateMeter;
+import stinc.male.sandbox.ratexecutor.RateMeterConfig;
+import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
 
-abstract class AbstractRateMeterTest<B extends RateMeterConfig.Builder, C extends RateMeterConfig> {
+abstract class AbstractRateMeterTest<B extends Builder, C extends RateMeterConfig> {
   private final Supplier<B> rateMeterConfigBuilderSupplier;
   private final RateMeterCreator<C> rateMeterCreator;
 

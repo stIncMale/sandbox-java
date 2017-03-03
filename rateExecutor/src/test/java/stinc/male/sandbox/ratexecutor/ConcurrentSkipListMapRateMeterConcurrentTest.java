@@ -1,15 +1,17 @@
 package stinc.male.sandbox.ratexecutor;
 
 import org.junit.experimental.categories.Category;
-import stinc.male.ConcurrencyTest;
+import stinc.male.test.harness.ConcurrencyTest;
+import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
+import stinc.male.sandbox.ratexecutor.test.harness.AbstractRateMeterConcurrencyTest;
 
 @Category(ConcurrencyTest.class)
-public final class ConcurrentSkipListMapRateMeterConcurrentTest extends AbstractRateMeterConcurrencyTest<RateMeterConfig.Builder, RateMeterConfig> {
+public final class ConcurrentSkipListMapRateMeterConcurrentTest extends AbstractRateMeterConcurrencyTest<Builder, RateMeterConfig> {
   public ConcurrentSkipListMapRateMeterConcurrentTest() {
     super(
-        RateMeterConfig.Builder::new,
+        () -> new RateMeterConfig.Builder()
+            .setTicksCounterSupplier(ConcurrentNavigableMapRateMeter.defaultConfig().getTicksCounterSupplier()),
         ConcurrentNavigableMapRateMeter::new,
-        ConcurrentNavigableMapRateMeter.defaultConfig().getTicksCounterSupplier(),
         Math.max(2, Runtime.getRuntime().availableProcessors()));
   }
 }

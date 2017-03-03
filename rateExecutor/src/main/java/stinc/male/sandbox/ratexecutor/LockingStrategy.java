@@ -3,7 +3,7 @@ package stinc.male.sandbox.ratexecutor;
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
-public interface LockStrategy {
+public interface LockingStrategy {
   long sharedLock();
 
   void unlockShared(long stamp);
