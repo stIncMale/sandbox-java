@@ -60,141 +60,141 @@ public class RateMeterPerformanceTest {
   public RateMeterPerformanceTest() {
   }
 
-//  @Test
-//  public void serial_throughput_baseline() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".*baseline_.*")
-//        .threads(1)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void serial_throughput_navigableMapRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".*serial_.*navigableMapRateMeter")
-//        .threads(1)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void serial_throughput_concurrentNavigableMapRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".*serial_.*concurrentNavigableMapRateMeter")
-//        .threads(1)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void serial_throughput_ringBufferRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".*serial_.*ringBufferRateMeter")
-//        .threads(1)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void serial_throughput_concurrentRingBufferRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".*serial_.*concurrentRingBufferRateMeter")
-//        .threads(1)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void serial_throughput_concurrentSimpleRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".*serial_.*concurrentSimpleRateMeter")
-//        .threads(1)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void serial_latency_concurrentNavigableMapRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.AverageTime)
-//        .timeUnit(TimeUnit.NANOSECONDS)
-//        .include(getClass().getName() + ".*serial_tick_concurrentNavigableMapRateMeter")
-//        .include(getClass().getName() + ".*serial_tick\\$1rate\\$10_concurrentNavigableMapRateMeter")
-//        .threads(1)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void serial_latency_concurrentRingBufferRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.AverageTime)
-//        .timeUnit(TimeUnit.NANOSECONDS)
-//        .include(getClass().getName() + ".*serial_tick_concurrentRingBufferRateMeter")
-//        .include(getClass().getName() + ".*serial_tick\\$1rate\\$10_concurrentRingBufferRateMeter")
-//        .threads(1)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void serial_latency_concurrentSimpleRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.AverageTime)
-//        .timeUnit(TimeUnit.NANOSECONDS)
-//        .include(getClass().getName() + ".*serial_tick_concurrentSimpleRateMeter")
-//        .include(getClass().getName() + ".*serial_tick\\$1rate\\$10_concurrentSimpleRateMeter")
-//        .threads(1)
-//        .build())
-//        .run();
-//  }
-//
-//
-//  @Test
-//  public void parallel4_throughput_baseline() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
-//        .threads(4)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void parallel4_throughput_concurrentNavigableMapRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".parallel4.*concurrentNavigableMapRateMeter")
-//        .threads(4)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void parallel4_throughput_concurrentRingBufferRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".parallel4.*concurrentRingBufferRateMeter")
-//        .threads(4)
-//        .build())
-//        .run();
-//  }
+  @Test
+  public void serial_throughput_baseline() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(getClass().getName() + ".*baseline_.*")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_throughput_navigableMapRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(getClass().getName() + ".*serial_.*navigableMapRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_throughput_concurrentNavigableMapRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(getClass().getName() + ".*serial_.*concurrentNavigableMapRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_throughput_ringBufferRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(getClass().getName() + ".*serial_.*ringBufferRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_throughput_concurrentRingBufferRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(getClass().getName() + ".*serial_.*concurrentRingBufferRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_throughput_concurrentSimpleRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(getClass().getName() + ".*serial_.*concurrentSimpleRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_latency_concurrentNavigableMapRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*serial_tick_concurrentNavigableMapRateMeter")
+        .include(getClass().getName() + ".*serial_tick\\$1rate\\$10_concurrentNavigableMapRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_latency_concurrentRingBufferRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*serial_tick_concurrentRingBufferRateMeter")
+        .include(getClass().getName() + ".*serial_tick\\$1rate\\$10_concurrentRingBufferRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_latency_concurrentSimpleRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*serial_tick_concurrentSimpleRateMeter")
+        .include(getClass().getName() + ".*serial_tick\\$1rate\\$10_concurrentSimpleRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+
+  @Test
+  public void parallel4_throughput_baseline() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
+        .threads(4)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void parallel4_throughput_concurrentNavigableMapRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(getClass().getName() + ".parallel4.*concurrentNavigableMapRateMeter")
+        .threads(4)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void parallel4_throughput_concurrentRingBufferRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(getClass().getName() + ".parallel4.*concurrentRingBufferRateMeter")
+        .threads(4)
+        .build())
+        .run();
+  }
 
   @Test
   public void parallel4_throughput_concurrentSimpleRateMeter() throws RunnerException {
@@ -207,31 +207,31 @@ public class RateMeterPerformanceTest {
         .run();
   }
 
-//  @Test
-//  public void parallel4_latency_concurrentNavigableMapRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.AverageTime)
-//        .timeUnit(TimeUnit.NANOSECONDS)
-//        .include(getClass().getName() + ".*parallel4_tick_concurrentNavigableMapRateMeter")
-//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentNavigableMapRateMeter")
-//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentNavigableMapRateMeter")
-//        .threads(4)
-//        .build())
-//        .run();
-//  }
-//
-//  @Test
-//  public void parallel4_latency_concurrentRingBufferRateMeter() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.AverageTime)
-//        .timeUnit(TimeUnit.NANOSECONDS)
-//        .include(getClass().getName() + ".*parallel4_tick_concurrentRingBufferRateMeter")
-//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentRingBufferRateMeter")
-//        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentRingBufferRateMeter")
-//        .threads(4)
-//        .build())
-//        .run();
-//  }
+  @Test
+  public void parallel4_latency_concurrentNavigableMapRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*parallel4_tick_concurrentNavigableMapRateMeter")
+        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentNavigableMapRateMeter")
+        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentNavigableMapRateMeter")
+        .threads(4)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void parallel4_latency_concurrentRingBufferRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*parallel4_tick_concurrentRingBufferRateMeter")
+        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$3_concurrentRingBufferRateMeter")
+        .include(getClass().getName() + ".*parallel4_tick\\$1_rate\\$1_concurrentRingBufferRateMeter")
+        .threads(4)
+        .build())
+        .run();
+  }
 
   @Test
   public void parallel4_latency_concurrentSimpleRateMeter() throws RunnerException {
