@@ -54,7 +54,7 @@ public class RateMeterPerformanceTest {
     }
     return result;
   };
-  private static final Supplier<WaitStrategy> waitStrategySupplier = () -> YieldWaitStrategy.instance();
+  private static final Supplier<WaitStrategy> waitStrategySupplier = () -> ParkWaitStrategy.instance();
   private static final Supplier<LockingStrategy> lockingStrategySupplier = () -> new StampedLockingStrategy();
   private static final Supplier<Builder> rateMeterConfigBuilderSuppplier = () -> RateMeterConfig.newBuilder()
       .setTimeSensitivity(timeSensitivity);
