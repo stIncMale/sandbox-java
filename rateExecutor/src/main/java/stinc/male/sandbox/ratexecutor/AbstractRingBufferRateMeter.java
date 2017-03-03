@@ -25,6 +25,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   private final StampedLock ticksCountStampedLock;
   @Nullable
   private final WaitStrategy completedSamplesWindowShiftStepsWaitStrategy;
+  private final long maxTicksCountAttempts;
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -73,6 +74,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
     samplesWindowShiftSteps = 0;
     atomicCompletedSamplesWindowShiftSteps = sequential ? null : new AtomicLong();
     this.sequential = sequential;
+    maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
   }
 
   @Override
@@ -93,7 +95,6 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
         result += samplesHistory.get(idx);
       }
     } else {
-      final long maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
       long ticksCountReadLockStamp = 0;
       try {
         long samplesWindowShiftSteps = this.atomicSamplesWindowShiftSteps.get();
@@ -138,7 +139,6 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
         value += samplesHistory.get(idx);
       }
     } else {
-      final int maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
       long ticksCountReadLockStamp = 0;
       try {
         for (int ri = 0; ri < maxTicksCountAttempts || ticksCountReadLockStamp != 0; ri++) {

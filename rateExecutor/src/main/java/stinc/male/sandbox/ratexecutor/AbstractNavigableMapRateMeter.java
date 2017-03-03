@@ -21,6 +21,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   @Nullable
   private final StampedLock ticksCountRwLock;
   private final double gcRatio = 0.3;//(0; 1] the bigger, the less frequently GC happens, but the older elements are maintained in the samples history.
+  private final long maxTicksCountAttempts;
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -52,6 +53,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
             timeSensitivityNanos, getSamplesIntervalNanos()));
     this.sequential = sequential;
     ticksCountRwLock = sequential ? null : new StampedLock();
+    maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
   }
 
   @Override
@@ -68,7 +70,6 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long leftNanos = rightNanos - samplesIntervalNanos;
       result = count(leftNanos, rightNanos);
     } else {
-      final long maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
       long ticksCountReadLockStamp = 0;
       try {
         for (long ri = 0; ri < maxTicksCountAttempts; ri++) {
@@ -104,7 +105,6 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
       final long leftNanos = rightNanos - samplesIntervalNanos;
       value = count(leftNanos, rightNanos);
     } else {
-      final int maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
       long ticksCountReadLockStamp = 0;
       try {
         for (int ri = 0; ri < maxTicksCountAttempts; ri++) {

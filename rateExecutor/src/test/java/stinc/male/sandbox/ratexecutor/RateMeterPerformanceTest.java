@@ -38,7 +38,7 @@ public class RateMeterPerformanceTest {
         .syncIterations(true)
         .shouldFailOnError(true)
         .shouldDoGC(true)
-        .timeout(milliseconds(30_000));
+        .timeout(milliseconds(90_000));
     if (QUICK) {
       result.warmupTime(milliseconds(samplesInterval.toMillis() * 3))
           .warmupIterations(1)
@@ -46,14 +46,16 @@ public class RateMeterPerformanceTest {
           .measurementIterations(1)
           .forks(1);
     } else {
-      result.warmupTime(milliseconds(750))
+      result.warmupTime(milliseconds(1000))
           .warmupIterations(3)
-          .measurementTime(milliseconds(1000))
-          .measurementIterations(3)
-          .forks(3);
+          .measurementTime(milliseconds(2000))
+          .measurementIterations(5)
+          .forks(5);
     }
     return result;
   };
+  private static final Supplier<WaitStrategy> waitStrategySupplier = () -> YieldWaitStrategy.instance();
+  private static final Supplier<LockingStrategy> lockingStrategySupplier = () -> new StampedLockingStrategy();
   private static final Supplier<Builder> rateMeterConfigBuilderSuppplier = () -> RateMeterConfig.newBuilder()
       .setTimeSensitivity(timeSensitivity);
 
@@ -588,8 +590,8 @@ public class RateMeterPerformanceTest {
               .build());
       concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
-              .setTicksCounterSupplier(LongTicksCounter::new)
-              .setHl(2)
+              .setTicksCounterSupplier(LongAdderTicksCounter::new)
+              .setHl(3)
               .build());
       ringBufferRateMeter = new RingBufferRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
@@ -598,8 +600,11 @@ public class RateMeterPerformanceTest {
               .build());
       final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
           = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build());
-      concurrentRingBufferRateMeterConfigBuilder.setTicksCounterSupplier(LongAdderTicksCounter::new)
-          .setHl(2);
+      concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
+          .setWaitStrategySupplier(waitStrategySupplier)
+          .setLockStrategySupplier(lockingStrategySupplier)
+          .setTicksCounterSupplier(LongAdderTicksCounter::new)
+          .setHl(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
       concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter(
@@ -608,7 +613,7 @@ public class RateMeterPerformanceTest {
                   .setTicksCounterSupplier(LongTicksCounter::new)
                   .setHl(2)
                   .build()),
-          new StampedLockingStrategy());
+          lockingStrategySupplier.get());
     }
   }
 
@@ -626,12 +631,13 @@ public class RateMeterPerformanceTest {
       concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSuppplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
+              .setHl(3)
               .build());
       final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
           = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSuppplier.get().build());
       concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
-          .setWaitStrategySupplier(YieldWaitStrategy::instance)
-          .setLockStrategySupplier(() -> new StampedLockingStrategy())
+          .setWaitStrategySupplier(waitStrategySupplier)
+          .setLockStrategySupplier(lockingStrategySupplier)
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
           .setHl(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
@@ -642,7 +648,7 @@ public class RateMeterPerformanceTest {
                   .setTicksCounterSupplier(LongTicksCounter::new)
                   .setHl(2)
                   .build()),
-          new StampedLockingStrategy());
+          lockingStrategySupplier.get());
     }
 
     @TearDown(Level.Trial)
