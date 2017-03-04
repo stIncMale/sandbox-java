@@ -30,7 +30,7 @@ public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.of(1, ChronoUnit.MILLIS);
   private static final Duration timeSensitivity = Duration.of(50, ChronoUnit.MICROS);
   private static final boolean SERVER = true;
-  private static final boolean QUICK = false;
+  private static final boolean QUICK = true;
   private static final long ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL = 0;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder()
@@ -38,7 +38,7 @@ public class RateMeterPerformanceTest {
         .syncIterations(true)
         .shouldFailOnError(true)
         .shouldDoGC(true)
-        .timeout(milliseconds(90_000));
+        .timeout(milliseconds(30_000));
     if (QUICK) {
       result.warmupTime(milliseconds(samplesInterval.toMillis() * 3))
           .warmupIterations(1)
@@ -46,11 +46,11 @@ public class RateMeterPerformanceTest {
           .measurementIterations(1)
           .forks(1);
     } else {
-      result.warmupTime(milliseconds(1000))
+      result.warmupTime(milliseconds(750))
           .warmupIterations(3)
-          .measurementTime(milliseconds(2000))
-          .measurementIterations(5)
-          .forks(5);
+          .measurementTime(milliseconds(1000))
+          .measurementIterations(3)
+          .forks(3);
     }
     return result;
   };
@@ -258,7 +258,7 @@ public class RateMeterPerformanceTest {
   }
 
   @Benchmark
-  public void baseline_time(final Blackhole bh) {
+  public void baseline_time(final Blackhole bh) {//for latency and granularity see https://github.com/shipilev/timers-bench
     bh.consume(nanoTime());
   }
 
