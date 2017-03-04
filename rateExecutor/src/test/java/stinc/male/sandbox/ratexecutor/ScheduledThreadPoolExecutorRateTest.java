@@ -110,9 +110,9 @@ public class ScheduledThreadPoolExecutorRateTest {
     {//setup
       final ConcurrentRingBufferRateMeterConfig.Builder rmCfg = ConcurrentRingBufferRateMeter.defaultConfig()
           .toBuilder();
-      rmCfg.setHl(3);
+      rmCfg.setHl(20);
       rmCfg.setStrictTick(false);
-      rmCfg.setTimeSensitivity(Duration.of(50, ChronoUnit.MICROS));
+      rmCfg.setTimeSensitivity(Duration.of(200, ChronoUnit.MICROS));
       rm = new ConcurrentRingBufferRateMeter(
           nanoTime(),
           ofMillis(1),
@@ -182,8 +182,8 @@ public class ScheduledThreadPoolExecutorRateTest {
           .mapToDouble(Double::doubleValue)
           .sum() / measurements.size();
       final double averageRate = (double) ofMillis(1).toNanos() * (double) (endCount - startCount) / (endNanos - startNanos);
-      assertEquals(0, rm.stats().failedAccuracyEventsCountForRate());
-      assertEquals(0, rm.stats().failedAccuracyEventsCountForTick());
+      assertEquals(0d, rm.stats().failedAccuracyEventsCountForRate(), 0);
+      assertEquals(0d, rm.stats().failedAccuracyEventsCountForTick(), 200);
       System.out.println(scheduleType.toString()
           + " measured rate " + format(rate) + "ops/ms"
           + ", measured average rate " + format(rm.rateAverage(ofMillis(1))) + "ops/ms"

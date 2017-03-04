@@ -3,12 +3,12 @@ package stinc.male.sandbox.ratexecutor;
 import java.util.Locale;
 import java.util.function.Supplier;
 
-final class Preconditions {
+public final class Preconditions {
   private static final String format(final String format, final Object... args) {
     return String.format(Locale.ROOT, format, args);
   }
 
-  static final void checkNotNull(
+  public static final void checkNotNull(
       final Object argument,
       final String safeParamName) throws NullPointerException {
     if (argument == null) {
@@ -16,7 +16,7 @@ final class Preconditions {
     }
   }
 
-  static final void checkArgument(
+  public static final void checkArgument(
       final boolean checkArgumentExpression,
       final String safeParamName,
       final String safeParamRestrictionDescription) throws IllegalArgumentException {
@@ -26,7 +26,7 @@ final class Preconditions {
     }
   }
 
-  static final void checkArgument(
+  public static final void checkArgument(
       final boolean checkArgumentExpression,
       final String safeParamName,
       final Supplier<String> safeParamRestrictionDescriptionSupplier) throws IllegalArgumentException {
