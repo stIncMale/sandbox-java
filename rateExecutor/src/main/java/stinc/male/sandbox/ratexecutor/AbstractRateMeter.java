@@ -2,7 +2,6 @@ package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
-import static stinc.male.sandbox.ratexecutor.RateMeterMath.checkUnit;
 import static stinc.male.sandbox.ratexecutor.RateMeterMath.convertRate;
 
 abstract class AbstractRateMeter implements RateMeter {
@@ -113,24 +112,18 @@ abstract class AbstractRateMeter implements RateMeter {
   }
 
   protected final void checkArgument(final long tNanos, final String safeParamName) throws IllegalArgumentException {
-    if (config.isCheckArguments()) {
-      RateMeterMath.checkTNanos(tNanos, startNanos, maxTNanos, safeParamName);
-    }
+    RateMeterMath.checkTNanos(tNanos, startNanos, maxTNanos, safeParamName);
   }
 
   protected final void checkArgument(final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
-    if (config.isCheckArguments()) {
-      checkUnit(unit, safeUnitParamName);
-    }
+    RateMeterMath.checkUnit(unit, safeUnitParamName);
   }
 
   protected final void checkArguments(
       final long tNanos, final String safeTNanosParamName,
       final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
-    if (config.isCheckArguments()) {
-      RateMeterMath.checkTNanos(tNanos, startNanos, maxTNanos, safeTNanosParamName);
-      checkUnit(unit, safeUnitParamName);
-    }
+    RateMeterMath.checkTNanos(tNanos, startNanos, maxTNanos, safeTNanosParamName);
+    RateMeterMath.checkUnit(unit, safeUnitParamName);
   }
 
   @Override

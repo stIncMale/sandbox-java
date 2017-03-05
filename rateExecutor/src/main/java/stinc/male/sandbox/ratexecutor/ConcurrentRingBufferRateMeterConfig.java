@@ -14,7 +14,6 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   private final Supplier<? extends LockingStrategy> lockStrategySupplier;
 
    protected ConcurrentRingBufferRateMeterConfig(
-      final boolean checkArguments,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
       final boolean collectStats,
@@ -24,7 +23,6 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
       final Supplier<? extends WaitStrategy> waitStrategySupplier,
       final Supplier<? extends LockingStrategy> lockStrategySupplier) {
     super(
-        checkArguments,
         ticksCounterSupplier,
         timeSensitivity,
         collectStats,
@@ -76,8 +74,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   @Override
   public String toString() {
     return getClass().getSimpleName()
-        + "(checkArguments=" + isCheckArguments()
-        + ", ticksCounterSupplier=" + getTicksCounterSupplier()
+        + "(ticksCounterSupplier=" + getTicksCounterSupplier()
         + ", timeSensitivity=" + getTimeSensitivity()
         + ", collectStats=" + isCollectStats()
         + ", maxTicksCountAttempts=" + getMaxTicksCountAttempts()
@@ -142,7 +139,6 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
     @Override
     public ConcurrentRingBufferRateMeterConfig build() {
       return new ConcurrentRingBufferRateMeterConfig(
-          checkArguments,
           ticksCounterSupplier,
           timeSensitivity,
           collectStats,

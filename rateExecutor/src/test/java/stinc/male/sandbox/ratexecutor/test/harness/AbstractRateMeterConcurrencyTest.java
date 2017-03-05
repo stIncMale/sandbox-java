@@ -71,7 +71,6 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
     @SuppressWarnings("unchecked")
     final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
         .get()
-        .setCheckArguments(true)
         .setTimeSensitivity(ofNanos(1))
         .build();
     final RateMeter rm = getRateMeterCreator().create(

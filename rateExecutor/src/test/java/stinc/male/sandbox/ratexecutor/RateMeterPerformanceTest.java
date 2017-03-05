@@ -62,16 +62,16 @@ public class RateMeterPerformanceTest {
   public RateMeterPerformanceTest() {
   }
 
-  @Test
-  public void serial_throughput_baseline() throws RunnerException {
-    new Runner(jmhOptionsBuilderSupplier.get()
-        .mode(Mode.Throughput)
-        .timeUnit(TimeUnit.MILLISECONDS)
-        .include(getClass().getName() + ".*baseline_.*")
-        .threads(1)
-        .build())
-        .run();
-  }
+//  @Test
+//  public void serial_throughput_baseline() throws RunnerException {
+//    new Runner(jmhOptionsBuilderSupplier.get()
+//        .mode(Mode.Throughput)
+//        .timeUnit(TimeUnit.MILLISECONDS)
+//        .include(getClass().getName() + ".*baseline_.*")
+//        .threads(1)
+//        .build())
+//        .run();
+//  }
 
   @Test
   public void serial_throughput_navigableMapRateMeter() throws RunnerException {
@@ -165,16 +165,16 @@ public class RateMeterPerformanceTest {
   }
 
 
-  @Test
-  public void parallel4_throughput_baseline() throws RunnerException {
-    new Runner(jmhOptionsBuilderSupplier.get()
-        .mode(Mode.Throughput)
-        .timeUnit(TimeUnit.MILLISECONDS)
-        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
-        .threads(4)
-        .build())
-        .run();
-  }
+//  @Test
+//  public void parallel4_throughput_baseline() throws RunnerException {
+//    new Runner(jmhOptionsBuilderSupplier.get()
+//        .mode(Mode.Throughput)
+//        .timeUnit(TimeUnit.MILLISECONDS)
+//        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
+//        .threads(4)
+//        .build())
+//        .run();
+//  }
 
   @Test
   public void parallel4_throughput_concurrentNavigableMapRateMeter() throws RunnerException {
@@ -545,7 +545,7 @@ public class RateMeterPerformanceTest {
   private static final void rate(final RateMeter rm, final Blackhole bh) {
     bh.consume(rm.rate());
 //    bh.consume(rm.rate(new RateMeterReading()));
-//    bh.consume(rm.rate(nanoTime()));
+//    bh.consume(rm.rate(samplesInterval));
 //    bh.consume(rm.rate(rm.rightSamplesWindowBoundary()));
   }
 

@@ -307,7 +307,6 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     @SuppressWarnings("unchecked")
     final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
         .get()
-        .setCheckArguments(true)
         .setTimeSensitivity(timeSensitivity)
         .build();
     return getRateMeterCreator().create(

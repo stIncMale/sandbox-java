@@ -13,7 +13,6 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
  */
 @Immutable
 public class RateMeterConfig {
-  private final boolean checkArguments;
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final Duration timeSensitivity;
   private final boolean collectStats;
@@ -21,13 +20,11 @@ public class RateMeterConfig {
   private final int hl;
 
   protected RateMeterConfig(
-      final boolean checkArguments,
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
       final boolean collectStats,
       final int maxTicksCountAttempts,
       final int hl) {
-    this.checkArguments = checkArguments;
     this.ticksCounterSupplier = ticksCounterSupplier;
     this.timeSensitivity = timeSensitivity;
     this.collectStats = collectStats;
@@ -41,16 +38,6 @@ public class RateMeterConfig {
 
   public Builder toBuilder() {
     return new Builder(this);
-  }
-
-  /**
-   * Checking of arguments of {@link RateMeter} methods requires some computations,
-   * but is not practical in most cases. This configuration parameter specifies if
-   * {@link AbstractRateMeter} MUST do this checking, or MUST omit it.
-   * @return {@code false} by default.
-   */
-  public final boolean isCheckArguments() {
-    return checkArguments;
   }
 
   /**
@@ -114,8 +101,7 @@ public class RateMeterConfig {
   @Override
   public String toString() {
     return getClass().getSimpleName()
-        + "(checkArguments=" + checkArguments
-        + ", ticksCounterSupplier=" + ticksCounterSupplier
+        + "(ticksCounterSupplier=" + ticksCounterSupplier
         + ", timeSensitivity=" + timeSensitivity
         + ", collectStats=" + collectStats
         + ", maxTicksCountAttempts=" + maxTicksCountAttempts
@@ -125,7 +111,6 @@ public class RateMeterConfig {
 
   @NotThreadSafe
   public static class Builder {
-    protected boolean checkArguments;
     protected Function<Long, ? extends TicksCounter> ticksCounterSupplier;
     protected Duration timeSensitivity;
     protected boolean collectStats;
@@ -133,7 +118,6 @@ public class RateMeterConfig {
     protected int hl;
 
     protected Builder() {
-      checkArguments = false;
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = Duration.ofNanos(200);
       collectStats = true;
@@ -142,20 +126,11 @@ public class RateMeterConfig {
     }
 
     protected Builder(final RateMeterConfig config) {
-      checkArguments = config.isCheckArguments();
       ticksCounterSupplier = config.getTicksCounterSupplier();
       timeSensitivity = config.getTimeSensitivity();
       collectStats = config.isCollectStats();
       maxTicksCountAttempts = config.getMaxTicksCountAttempts();
       hl = config.getHl();
-    }
-
-    /**
-     * @see RateMeterConfig#isCheckArguments()
-     */
-    public final Builder setCheckArguments(final boolean checkArguments) {
-      this.checkArguments = checkArguments;
-      return this;
     }
 
     /**
@@ -210,7 +185,6 @@ public class RateMeterConfig {
 
     public RateMeterConfig build() {
       return new RateMeterConfig(
-          checkArguments,
           ticksCounterSupplier,
           timeSensitivity,
           collectStats,
