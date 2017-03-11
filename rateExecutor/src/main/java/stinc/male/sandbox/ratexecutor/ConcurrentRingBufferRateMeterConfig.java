@@ -48,7 +48,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
 
   /**
    * Specifies if {@link ConcurrentRingBufferRateMeter} must guarantee absence of race condition in the {@link RateMeter#tick(long, long)} method.
-   * @return {@code false} by default.
+   * @return {@code true} by default.
    * @see RateMeterStats#failedAccuracyEventsCountForTick()
    */
   public final boolean isStrictTick() {
@@ -92,7 +92,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
     private Supplier<? extends LockingStrategy> lockStrategySupplier;
 
     protected Builder() {
-      strictTick = false;
+      strictTick = true;
       waitStrategySupplier = YieldWaitStrategy::instance;
       lockStrategySupplier = () -> new SpinLockingStrategy(YieldWaitStrategy.instance());
     }
@@ -105,7 +105,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
 
     protected Builder(final RateMeterConfig config) {
       super(config);
-      strictTick = false;
+      strictTick = true;
       waitStrategySupplier = YieldWaitStrategy::instance;
       lockStrategySupplier = () -> new SpinLockingStrategy(YieldWaitStrategy.instance());
     }

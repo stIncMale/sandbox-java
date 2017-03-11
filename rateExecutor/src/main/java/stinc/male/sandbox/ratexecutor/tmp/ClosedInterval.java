@@ -64,6 +64,6 @@ public final class ClosedInterval {
 
   @Override
   public final String toString() {
-    return '[' + left + "; " + right + ']';
+    return "[" + left + "; " + right + "]";
   }
 }

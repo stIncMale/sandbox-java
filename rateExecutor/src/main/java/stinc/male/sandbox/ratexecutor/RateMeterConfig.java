@@ -61,7 +61,7 @@ public class RateMeterConfig {
    * and <a href="https://shipilev.net/blog/2014/nanotrusting-nanotime/">Nanotrusting the Nanotime</a> for measurements and explanations).
    * It is possible that there is no need to use a finer sensitivity.
    */
-  public final Duration getTimeSensitivity() {
+  public final Duration getTimeSensitivity() {//todo return null by default and use 1/20 of samplesInterval
     return timeSensitivity;
   }
 

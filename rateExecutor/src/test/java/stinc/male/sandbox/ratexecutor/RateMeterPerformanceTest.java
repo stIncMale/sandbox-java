@@ -54,24 +54,25 @@ public class RateMeterPerformanceTest {
     }
     return result;
   };
-  private static final Supplier<WaitStrategy> waitStrategySupplier = () -> ParkWaitStrategy.instance();
-  private static final Supplier<LockingStrategy> lockingStrategySupplier = () -> new StampedLockingStrategy();
+  private static final Supplier<WaitStrategy> waitStrategySupplier = () -> YieldWaitStrategy.instance();
+  private static final Supplier<LockingStrategy> lockingStrategySupplier = () -> new SpinLockingStrategy(waitStrategySupplier.get());
   private static final Supplier<Builder> rateMeterConfigBuilderSuppplier = () -> RateMeterConfig.newBuilder()
+      .setCollectStats(true)
       .setTimeSensitivity(timeSensitivity);
 
   public RateMeterPerformanceTest() {
   }
 
-//  @Test
-//  public void serial_throughput_baseline() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(getClass().getName() + ".*baseline_.*")
-//        .threads(1)
-//        .build())
-//        .run();
-//  }
+  @Test
+  public void serial_throughput_baseline() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(getClass().getName() + ".*baseline_.*")
+        .threads(1)
+        .build())
+        .run();
+  }
 
   @Test
   public void serial_throughput_navigableMapRateMeter() throws RunnerException {
@@ -164,17 +165,16 @@ public class RateMeterPerformanceTest {
         .run();
   }
 
-
-//  @Test
-//  public void parallel4_throughput_baseline() throws RunnerException {
-//    new Runner(jmhOptionsBuilderSupplier.get()
-//        .mode(Mode.Throughput)
-//        .timeUnit(TimeUnit.MILLISECONDS)
-//        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
-//        .threads(4)
-//        .build())
-//        .run();
-//  }
+  @Test
+  public void parallel4_throughput_baseline() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MILLISECONDS)
+        .include(RateMeterPerformanceTest.class.getName() + ".baseline_.*")
+        .threads(4)
+        .build())
+        .run();
+  }
 
   @Test
   public void parallel4_throughput_concurrentNavigableMapRateMeter() throws RunnerException {
