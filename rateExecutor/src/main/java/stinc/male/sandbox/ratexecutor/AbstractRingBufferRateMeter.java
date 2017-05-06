@@ -10,7 +10,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 /**
  * @param <T>
  */
-public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends AbstractRateMeter {
+public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMeterConfig, T extends LongArray> extends AbstractRateMeter<C> {
   private final boolean sequential;
   private final T samplesHistory;//length is multiple of HL
   @Nullable
@@ -37,7 +37,7 @@ public abstract class AbstractRingBufferRateMeter<T extends LongArray> extends A
   AbstractRingBufferRateMeter(
       final long startNanos,
       final Duration samplesInterval,
-      final ConcurrentRingBufferRateMeterConfig config,
+      final C config,
       final Function<Integer, ? extends T> samplesHistorySuppplier,
       final boolean sequential) {
     super(startNanos, samplesInterval, config);

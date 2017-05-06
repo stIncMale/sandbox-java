@@ -4,21 +4,21 @@ import java.time.Duration;
 import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratexecutor.RateMeterMath.convertRate;
 
-abstract class AbstractRateMeter implements RateMeter {
+abstract class AbstractRateMeter<C extends RateMeterConfig> implements ConfigurableRateMeter<C> {
   private final TicksCounter ticksTotal;
   private final long startNanos;
   private final Duration samplesInterval;
   private final long samplesIntervalNanos;
   private final long maxTNanos;
   private final ConcurrentRateMeterStats stats;
-  private final RateMeterConfig config;
+  private final C config;
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
    * @param samplesInterval Size of the samples window.
    * @param config Additional configuration parameters.
    */
-  AbstractRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
+  AbstractRateMeter(final long startNanos, final Duration samplesInterval, final C config) {
     checkNotNull(samplesInterval, "samplesInterval");
     Preconditions.checkArgument(!samplesInterval.isZero(), "samplesInterval", "Must not be zero");
     Preconditions.checkArgument(!samplesInterval.isNegative(), "samplesInterval", "Must be positive");
@@ -92,7 +92,8 @@ abstract class AbstractRateMeter implements RateMeter {
     return stats;
   }
 
-  public final RateMeterConfig getConfig() {
+  @Override
+  public final C getConfig() {
     return config;
   }
 

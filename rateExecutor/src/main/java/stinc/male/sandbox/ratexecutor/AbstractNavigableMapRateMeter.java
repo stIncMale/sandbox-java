@@ -12,7 +12,7 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
 /**
  * @param <T>
  */
-public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter {
+public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T extends NavigableMap<Long, TicksCounter>> extends AbstractRateMeter<C> {
   private final boolean sequential;
   private final T samplesHistory;
   private final long timeSensitivityNanos;
@@ -36,7 +36,7 @@ public abstract class AbstractNavigableMapRateMeter<T extends NavigableMap<Long,
   public AbstractNavigableMapRateMeter(
       final long startNanos,
       final Duration samplesInterval,
-      final RateMeterConfig config,
+      final C config,
       final Supplier<T> samplesHistorySupplier,
       final boolean sequential) {
     super(startNanos, samplesInterval, config);

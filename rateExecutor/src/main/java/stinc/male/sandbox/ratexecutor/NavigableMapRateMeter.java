@@ -5,7 +5,7 @@ import java.util.TreeMap;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
-public class NavigableMapRateMeter extends AbstractNavigableMapRateMeter<TreeMap<Long, TicksCounter>> {
+public class NavigableMapRateMeter extends AbstractNavigableMapRateMeter<RateMeterConfig, TreeMap<Long, TicksCounter>> {
   private static final RateMeterConfig defaultConfigInstance = RateMeterConfig.newBuilder()
           .setTicksCounterSupplier(LongTicksCounter::new)
           .setHl(2)

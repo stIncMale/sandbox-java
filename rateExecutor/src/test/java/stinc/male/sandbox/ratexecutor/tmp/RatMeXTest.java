@@ -1,11 +1,12 @@
 package stinc.male.sandbox.ratexecutor.tmp;
 
 import java.time.Duration;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import org.junit.Test;
-import stinc.male.sandbox.ratexecutor.ConcurrentRingBufferRateMeter;
-import stinc.male.sandbox.ratexecutor.RateMeter;
+import stinc.male.sandbox.ratexecutor.RingBufferRateMeter;
 
 public final class RatMeXTest {
   public RatMeXTest() {
@@ -13,15 +14,36 @@ public final class RatMeXTest {
 
   @Test
   public final void test() throws Exception {
-    final Executor executor = Executors.newFixedThreadPool(4);
-    final RateMeter rateMeter = new ConcurrentRingBufferRateMeter(System.nanoTime(), Duration.ofMillis(1_000));
-    final RatMeX ratmex = new RatMeX(executor, rateMeter);
-    ratmex.submit(() -> {
-//      if (System.currentTimeMillis() % 1000 == 0) System.out.println(rateMeter.rate());
-      ;
-    }, new ClosedInterval(1, 1));
-    Thread.sleep(100_000);
-    System.out.println(new ClosedInterval(10_000, 10_000));
-    System.out.println(rateMeter.rateAverage());
+    final ExecutorService executor = Executors.newFixedThreadPool(1);
+    final RatMeX ratmex = new RatMeX(executor);
+    final ClosedInterval interval = new ClosedInterval(2000, 2000);
+    final Duration samplesInterval = Duration.ofMillis(50);
+    final Duration timeSensitivity = Duration.ofMillis(10);
+    final LongAdder counter = new LongAdder();
+    final long durationMillis = 5000;
+    final AtomicLong aStartMillis = new AtomicLong();
+    final AtomicLong aStopMillis = new AtomicLong();
+    ratmex.submit(
+        () -> {
+          final long currentMillis = System.currentTimeMillis();
+          aStartMillis.compareAndSet(0, currentMillis);
+          counter.increment();
+          aStopMillis.accumulateAndGet(currentMillis, Math::max);
+        },
+        samplesInterval,
+        RingBufferRateMeter.defaultConfig()
+            .toBuilder()
+            .setTimeSensitivity(timeSensitivity)
+            .build(),
+        interval);
+    Thread.sleep(durationMillis);
+    ratmex.shutdown();
+    final long actualDurationMillis = aStopMillis.get() - aStartMillis.get();
+    final double averageRate = actualDurationMillis == 0
+        ? counter.longValue()//there were only a single tick
+        : (double)(counter.longValue() * samplesInterval.toMillis()) / (aStopMillis.get() - aStartMillis.get());
+    System.out.println(interval);
+    System.out.println("durationMillis=" + durationMillis + ", actualDurationMillis=" + actualDurationMillis);
+    System.out.println("averageRate=" + averageRate);
   }
 }
