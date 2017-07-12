@@ -14,11 +14,11 @@ public final class RatMeXTest {
 
   @Test
   public final void test() throws Exception {
-    final ExecutorService executor = Executors.newFixedThreadPool(1);
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
     final RatMeX ratmex = new RatMeX(executor);
-    final ClosedInterval interval = new ClosedInterval(2000, 2000);
-    final Duration samplesInterval = Duration.ofMillis(50);
-    final Duration timeSensitivity = Duration.ofMillis(10);
+      final ClosedInterval interval = new ClosedInterval(150, 160);
+    final Duration samplesInterval = Duration.ofMillis(1000);
+    final Duration timeSensitivity = Duration.ofMillis(200);
     final LongAdder counter = new LongAdder();
     final long durationMillis = 5000;
     final AtomicLong aStartMillis = new AtomicLong();
@@ -38,12 +38,14 @@ public final class RatMeXTest {
         interval);
     Thread.sleep(durationMillis);
     ratmex.shutdown();
+    final long count = counter.longValue();
     final long actualDurationMillis = aStopMillis.get() - aStartMillis.get();
     final double averageRate = actualDurationMillis == 0
-        ? counter.longValue()//there were only a single tick
-        : (double)(counter.longValue() * samplesInterval.toMillis()) / (aStopMillis.get() - aStartMillis.get());
-    System.out.println(interval);
+        ? count//there was only a single tick
+        : (double)(count * samplesInterval.toMillis()) / actualDurationMillis;
+    System.out.println("interval=" + interval);
     System.out.println("durationMillis=" + durationMillis + ", actualDurationMillis=" + actualDurationMillis);
+    System.out.println("count=" + count);
     System.out.println("averageRate=" + averageRate);
   }
 }

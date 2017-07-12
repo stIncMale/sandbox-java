@@ -27,36 +27,47 @@ public final class RatMeX {//TODO use interface
       final long samplesIntervalNanos = samplesInterval.toNanos();
       final long timeSensitivityNanos = rateMeterConfig.getTimeSensitivity().toNanos();
       final double targetTicksCountPerNano = targetRateInterval.getMean() / samplesIntervalNanos;
+      final double maxTicksCountPerNano = targetRateInterval.getRight() / samplesIntervalNanos;
+      final double minTicksCountPerNano = targetRateInterval.getLeft() / samplesIntervalNanos;
       final RateMeter rateMeter = new RingBufferRateMeter(startNanos, samplesInterval, rateMeterConfig);
       RateMeterReading rateMeterReading = new RateMeterReading();
-      while(true) {
+      System.out.println("Before the cycle targetTicksCountPerNano=" + targetTicksCountPerNano);
+      while (!Thread.currentThread().isInterrupted()) {
         final long currentNanos = System.nanoTime();
         final long passedNanos = currentNanos - startNanos;
+        println("Iteration currentNanos=" + currentNanos + " passedNanos=" + passedNanos);
         rateMeterReading = rateMeter.rate(currentNanos, rateMeterReading);
-        final long ticksCount = rateMeterReading.getLongValue();
         final long ticksTotalCount = rateMeter.ticksTotalCount();
-        final long targetTicksCount = (long)(targetTicksCountPerNano * passedNanos);
-        final long targetTicksTotalCount = (long)(targetTicksCountPerNano * passedNanos);
-        final long ticksCountDeviation = ticksCount - targetTicksCount;
+        final long targetTicksTotalCount = (long) (targetTicksCountPerNano * passedNanos);
         final long ticksTotalCountDeviation = ticksTotalCount - targetTicksTotalCount;
-        System.out.println(rateMeterReading);
-        if (ticksCountDeviation < 0) {//deficit
-          for (int i = 0; i < -ticksCountDeviation; i++) {
+        println("\t" + rateMeterReading + ", ticksTotalCountDeviation=" + ticksTotalCountDeviation);
+        if (ticksTotalCountDeviation < 0 && rateMeterReading.getLongValue() < targetRateInterval.getRight()) {//deficit and we still have a budget
+          final long requiredTicksCount = Math.min(-ticksTotalCountDeviation, targetRateInterval.getRight() - rateMeterReading.getLongValue());
+          for (int i = 0; i < requiredTicksCount; i++) {
             executor.execute(task);
           }
-          rateMeter.tick(-ticksCountDeviation, currentNanos);
-        } else {//surplus
-          long sleepNanos = (long)((double)ticksCountDeviation / targetTicksCountPerNano);
-          sleepNanos = Math.max(sleepNanos, timeSensitivityNanos);
-          System.out.println("Sleep currentNanos=" + currentNanos + " durationNanos=" + sleepNanos);
-          sleepUninterruptibly(currentNanos, sleepNanos);
+          println("\ttick(" + requiredTicksCount + ", " + currentNanos + ")");
+          rateMeter.tick(requiredTicksCount, currentNanos);
         }
-//        if (tNanos < startNanos + samplesIntervalNanos) {//we have just recently started
-//          ;
-//        } else {
-//          ;
+        try {
+          sleep(currentNanos, timeSensitivityNanos);
+        } catch (final InterruptedException e) {
+          break;
+        }
+
+//        else if (ticksTotalCountDeviation < 0) {//deficit that can not be covered right now
+//          try {
+//            sleep(currentNanos, timeSensitivityNanos);
+//          } catch (final InterruptedException e) {
+//            break;
+//          }
+//        } else {//surplus
+//          long sleepNanos = (long)((double)ticksTotalCountDeviation / targetTicksCountPerNano);
+//          sleepNanos = Math.max(sleepNanos, timeSensitivityNanos);
+//          sleepUninterruptibly(currentNanos, sleepNanos);
 //        }
       }
+      System.out.println("After the cycle rateAverage=" + rateMeter.rateAverage());
     });
   }
 
@@ -66,9 +77,25 @@ public final class RatMeX {//TODO use interface
     } finally {
       executor.shutdownNow();
     }
+    try {
+      Thread.sleep(1000);
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private static final void sleep(long tNanos, final long durationNanos) throws InterruptedException {
+    println("\tsleep tNanos=" + tNanos + " durationNanos=" + durationNanos);
+    final long targetTNanos = tNanos + durationNanos;
+    long currentNanos = System.nanoTime();
+    while (NanosComparator.compare(currentNanos, targetTNanos) < 0 && !Thread.currentThread().isInterrupted()) {
+      LockSupport.parkNanos(currentNanos - targetTNanos);
+      currentNanos = System.nanoTime();
+    }
   }
 
   private static final void sleepUninterruptibly(long tNanos, final long durationNanos) {
+    println("\tsleep tNanos=" + tNanos + " durationNanos=" + durationNanos);
     final long targetTNanos = tNanos + durationNanos;
     long currentNanos = System.nanoTime();
     boolean interrupted = false;
@@ -85,5 +112,9 @@ public final class RatMeX {//TODO use interface
         Thread.currentThread().interrupt();
       }
     }
+  }
+
+  private static final void println(final String s) {
+    System.out.println(s);
   }
 }
