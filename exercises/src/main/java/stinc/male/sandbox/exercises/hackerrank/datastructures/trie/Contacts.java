@@ -1,30 +1,34 @@
-package stinc.male.sandbox.exercises.hackerrank;
+package stinc.male.sandbox.exercises.hackerrank.datastructures.trie;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 /**
  * <a href="https://www.hackerrank.com/challenges/contacts">Contacts</a>
  */
 public class Contacts {
   public static void main(String[] args) {
-    Scanner in = new Scanner(System.in);
-    int numberOfOps = in.nextInt();
-    Node trie = new Node();
-    for (int i = 0; i < numberOfOps; i++) {
-      String opName = in.next();
-      String opArgument = in.next();
-      if (opName.length() == 3) {//add opName
-        add(opArgument, trie);
-      } else {//find opName
-        final int opResult = find(opArgument, trie);
-        if (i == numberOfOps - 1) {//last operation
-          System.out.print(opResult);
-        } else {
-          System.out.println(opResult);
+    try (Scanner in = new Scanner(System.in)) {
+      int numberOfOps = in.nextInt();
+      Node trie = new Node();
+      for (int i = 0; i < numberOfOps; i++) {
+        String opName = in.next();
+        String opArgument = in.next();
+        if (opName.length() == 3) {//add opName
+          add(opArgument, trie);
+        } else {//find opName
+          final int opResult = find(opArgument, trie);
+          if (i == numberOfOps - 1) {//last operation
+            System.out.print(opResult);
+          } else {
+            System.out.println(opResult);
+          }
         }
       }
     }
-    in.close();
   }
 
   static void add(String name, Node trie) {

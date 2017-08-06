@@ -1,42 +1,47 @@
-package stinc.male.sandbox.exercises.hackerrank;
+package stinc.male.sandbox.exercises.hackerrank.datastructures.trees;
 
-import java.util.*;
-import java.util.stream.*;
-import java.util.concurrent.atomic.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NavigableMap;
+import java.util.Scanner;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * <a href="https://www.hackerrank.com/challenges/swap-nodes-algo">Swap Nodes [Algo]</a>
  */
 public class SwapNodesAlgo {
   public static void main(String[] args) {
-    Scanner in = new Scanner(System.in);
-    int numberOfNodes = in.nextInt();
-    SortedMap<Integer, Node> nodes = new TreeMap<>();
-    final AtomicInteger depth = new AtomicInteger(1);
-    for (int i = 1; i <= 2 * numberOfNodes; i++) {
-      int nodeIdx = i % 2 == 0
-          ? i / 2
-          : 1 + i / 2;
-      Node node = nodes.computeIfAbsent(nodeIdx, idx -> new Node(idx, depth.get()));
-      depth.set(node.d);
-      int childNodeIdx = in.nextInt();
-      if (childNodeIdx > 1) {
-        nodes.computeIfAbsent(childNodeIdx, idx -> new Node(idx, depth.get() + 1));
-        if (i % 2 != 0) {//left
-          node.l = childNodeIdx;
-        } else {//right
-          node.r = childNodeIdx;
+    try (Scanner in = new Scanner(System.in)) {
+      int numberOfNodes = in.nextInt();
+      SortedMap<Integer, Node> nodes = new TreeMap<>();
+      final AtomicInteger depth = new AtomicInteger(1);
+      for (int i = 1; i <= 2 * numberOfNodes; i++) {
+        int nodeIdx = i % 2 == 0
+            ? i / 2
+            : 1 + i / 2;
+        Node node = nodes.computeIfAbsent(nodeIdx, idx -> new Node(idx, depth.get()));
+        depth.set(node.d);
+        int childNodeIdx = in.nextInt();
+        if (childNodeIdx > 1) {
+          nodes.computeIfAbsent(childNodeIdx, idx -> new Node(idx, depth.get() + 1));
+          if (i % 2 != 0) {//left
+            node.l = childNodeIdx;
+          } else {//right
+            node.r = childNodeIdx;
+          }
         }
       }
+      NavigableMap<Integer, List<Node>> layers = createLayers(nodes);
+      int numberOfSwapOperations = in.nextInt();
+      for (int i = 0; i < numberOfSwapOperations; i++) {
+        int k = in.nextInt();
+        swapOperation(layers, k);
+        printTraverse(nodes);
+      }
     }
-    NavigableMap<Integer, List<Node>> layers = createLayers(nodes);
-    int numberOfSwapOperations = in.nextInt();
-    for (int i = 0; i < numberOfSwapOperations; i++) {
-      int k = in.nextInt();
-      swapOperation(layers, k);
-      printTraverse(nodes);
-    }
-    in.close();
   }
 
   static NavigableMap<Integer, List<Node>> createLayers(SortedMap<Integer, Node> nodes) {

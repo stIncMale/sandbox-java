@@ -1,21 +1,24 @@
-package stinc.male.sandbox.exercises.hackerrank;
+package stinc.male.sandbox.exercises.hackerrank.datastructures.trees;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Scanner;
 
 /**
  * <a href="https://www.hackerrank.com/challenges/tree-level-order-traversal">Tree: Level Order Traversal</a>
  */
 public class TreeLevelOrderTraversal {
   public static void main(String[] args) {
-    Scanner in = new Scanner(System.in);
-    int t = in.nextInt();
-    Node root = null;
-    while (t-- > 0) {
-      int data = in.nextInt();
-      root = insert(root, data);
+    try (Scanner in = new Scanner(System.in)) {
+      int t = in.nextInt();
+      Node root = null;
+      while (t-- > 0) {
+        int data = in.nextInt();
+        root = insert(root, data);
+      }
+      Solution.levelOrder(root);
     }
-    in.close();
-    Solution.levelOrder(root);
   }
 
   static class Solution {

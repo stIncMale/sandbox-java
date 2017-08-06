@@ -1,22 +1,22 @@
-package stinc.male.sandbox.exercises.hackerrank;
+package stinc.male.sandbox.exercises.hackerrank.datastructures.trees;
 
-import java.util.*;
+import java.util.Scanner;
 
 /**
  * <a href="https://www.hackerrank.com/challenges/tree-height-of-a-binary-tree">Tree: Height of a Binary Tree</a>
  */
 public class TreeHeightOfABinaryTree {
   public static void main(String[] args) {
-    Scanner in = new Scanner(System.in);
-    int t = in.nextInt();
-    Node root = null;
-    while(t-- > 0){
-      int data = in.nextInt();
-      root = insert(root, data);
+    try (Scanner in = new Scanner(System.in)) {
+      int t = in.nextInt();
+      Node root = null;
+      while(t-- > 0){
+        int data = in.nextInt();
+        root = insert(root, data);
+      }
+      int height = Solution.height(root);
+      System.out.println(height);
     }
-    in.close();
-    int height = Solution.height(root);
-    System.out.println(height);
   }
 
   static class Solution {
