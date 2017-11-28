@@ -16,9 +16,11 @@ public final class RatMeXTest {
   public final void test() throws Exception {
     final ExecutorService executor = Executors.newSingleThreadExecutor();
     final RatMeX ratmex = new RatMeX(executor);
-      final ClosedInterval interval = new ClosedInterval(150, 160);
+//    final ClosedInterval rateInterval = ClosedInterval.of(1000000, 0.01);
+    final ClosedInterval rateInterval = ClosedInterval.of(3, 0.01);
     final Duration samplesInterval = Duration.ofMillis(1000);
-    final Duration timeSensitivity = Duration.ofMillis(200);
+//    final Duration timeSensitivity = Duration.ofMillis(10);
+    final Duration timeSensitivity = Duration.ofMillis(1000);
     final LongAdder counter = new LongAdder();
     final long durationMillis = 5000;
     final AtomicLong aStartMillis = new AtomicLong();
@@ -26,7 +28,9 @@ public final class RatMeXTest {
     ratmex.submit(
         () -> {
           final long currentMillis = System.currentTimeMillis();
-          aStartMillis.compareAndSet(0, currentMillis);
+          if (aStartMillis.get() == 0) {
+            aStartMillis.compareAndSet(0, currentMillis);
+          }
           counter.increment();
           aStopMillis.accumulateAndGet(currentMillis, Math::max);
         },
@@ -35,17 +39,20 @@ public final class RatMeXTest {
             .toBuilder()
             .setTimeSensitivity(timeSensitivity)
             .build(),
-        interval);
+        rateInterval);
     Thread.sleep(durationMillis);
     ratmex.shutdown();
     final long count = counter.longValue();
-    final long actualDurationMillis = aStopMillis.get() - aStartMillis.get();
-    final double averageRate = actualDurationMillis == 0
-        ? count//there was only a single tick
-        : (double)(count * samplesInterval.toMillis()) / actualDurationMillis;
-    System.out.println("interval=" + interval);
-    System.out.println("durationMillis=" + durationMillis + ", actualDurationMillis=" + actualDurationMillis);
+    final long durationMillisActual = aStopMillis.get() - aStartMillis.get();
+    final double rateAverageCalculated = durationMillisActual == 0
+        ? count
+        : (double)(count * samplesInterval.toMillis()) / (double)durationMillisActual;
+    System.out.println();
+    System.out.println("rateInterval=" + rateInterval);
+    System.out.println("samplesInterval=" + samplesInterval);
+    System.out.println("timeSensitivity=" + timeSensitivity);
+    System.out.println("durationMillis=" + durationMillis + ", durationMillisActual=" + durationMillisActual);
     System.out.println("count=" + count);
-    System.out.println("averageRate=" + averageRate);
+    System.out.println("rateAverageCalculated=" + rateAverageCalculated);
   }
 }

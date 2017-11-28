@@ -7,7 +7,6 @@
     Examples.
   </description>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>stinc.male.sandbox</groupId>
   <artifactId>sandbox-examples</artifactId>
   <packaging>jar</packaging>
   <name>sandbox-examples</name>

@@ -1,58 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project
-		xmlns = "http://maven.apache.org/POM/4.0.0"
-		xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
-		xsi:schemaLocation = "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<description>
-		An ancestor of any other Maven project with groupId 'stinc.male.sandbox'.
-	</description>
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>stinc.male.sandbox</groupId>
-	<artifactId>sandbox-root</artifactId>
-	<version>0.0.0-SNAPSHOT</version>
-	<packaging>pom</packaging>
-	<name>sandbox-root</name>
-	<url>${sandbox.url}</url>
-	<licenses>
-		<license>
-			<name>${sandbox.licenseName}</name>
-			<url>${sandbox.licenseUrl}</url>
-		</license>
-	</licenses>
-	<inceptionYear>${sandbox.inceptionYear}</inceptionYear>
-	<organization>
-		<name>${sandbox.organizationName}</name>
-		<url>${sandbox.organizationUrl}</url>
-	</organization>
-	<properties>
-		<sandbox.charset>UTF-8</sandbox.charset>
-		<project.build.sourceEncoding>${sandbox.charset}</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>${sandbox.charset}</project.reporting.outputEncoding>
-		<sandbox.url>https://github.com/stIncMale/sandbox</sandbox.url>
-		<sandbox.licenseName>WTFPL</sandbox.licenseName>
-		<sandbox.licenseUrl>http://www.wtfpl.net/</sandbox.licenseUrl>
-		<sandbox.inceptionYear>2015</sandbox.inceptionYear>
-		<sandbox.organizationName>Valentin Kovalenko</sandbox.organizationName>
-		<sandbox.organizationUrl>https://sites.google.com/site/aboutmale/</sandbox.organizationUrl>
-	</properties>
-	<repositories>
-		<repository>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-			<id>central</id>
-			<name>bintray</name>
-			<url>http://jcenter.bintray.com</url>
-		</repository>
-	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-			<id>central</id>
-			<name>bintray-plugins</name>
-			<url>http://jcenter.bintray.com</url>
-		</pluginRepository>
-	</pluginRepositories>
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <description>
+    An ancestor of any other Maven project with groupId 'stinc.male.sandbox'.
+  </description>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>stinc.male.sandbox</groupId>
+  <artifactId>sandbox-root</artifactId>
+  <version>0.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>sandbox-root</name>
+  <url>${sandbox.url}</url>
+  <licenses>
+    <license>
+      <name>${sandbox.licenseName}</name>
+      <url>${sandbox.licenseUrl}</url>
+    </license>
+  </licenses>
+  <inceptionYear>${sandbox.inceptionYear}</inceptionYear>
+  <organization>
+    <name>${sandbox.organizationName}</name>
+    <url>${sandbox.organizationUrl}</url>
+  </organization>
+  <properties>
+    <sandbox.charset>UTF-8</sandbox.charset>
+    <project.build.sourceEncoding>${sandbox.charset}</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>${sandbox.charset}</project.reporting.outputEncoding>
+    <sandbox.url>https://github.com/stIncMale/sandbox</sandbox.url>
+    <sandbox.licenseName>WTFPL</sandbox.licenseName>
+    <sandbox.licenseUrl>http://www.wtfpl.net/</sandbox.licenseUrl>
+    <sandbox.inceptionYear>2015</sandbox.inceptionYear>
+    <sandbox.organizationName>Valentin Kovalenko</sandbox.organizationName>
+    <sandbox.organizationUrl>https://sites.google.com/site/aboutmale/</sandbox.organizationUrl>
+  </properties>
+  <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>central</id>
+      <name>bintray</name>
+      <url>http://jcenter.bintray.com</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>central</id>
+      <name>bintray-plugins</name>
+      <url>http://jcenter.bintray.com</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>

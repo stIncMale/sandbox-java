@@ -39,16 +39,17 @@ public final class RatMeX {//TODO use interface
         rateMeterReading = rateMeter.rate(currentNanos, rateMeterReading);
         final long ticksTotalCount = rateMeter.ticksTotalCount();
         final long targetTicksTotalCount = (long) (targetTicksCountPerNano * passedNanos);
-        final long ticksTotalCountDeviation = ticksTotalCount - targetTicksTotalCount;
+        final long ticksTotalCountDeviation = ticksTotalCount - targetTicksTotalCount;//VAKOTODO deviation must be calculated locally, not globally
         println("\t" + rateMeterReading + ", ticksTotalCountDeviation=" + ticksTotalCountDeviation);
         if (ticksTotalCountDeviation < 0 && rateMeterReading.getLongValue() < targetRateInterval.getRight()) {//deficit and we still have a budget
-          final long requiredTicksCount = Math.min(-ticksTotalCountDeviation, targetRateInterval.getRight() - rateMeterReading.getLongValue());
-          for (int i = 0; i < requiredTicksCount; i++) {
+          final long affordableTicksCount = Math.min(-ticksTotalCountDeviation, targetRateInterval.getRight() - rateMeterReading.getLongValue());
+          for (int i = 0; i < affordableTicksCount; i++) {
             executor.execute(task);
           }
-          println("\ttick(" + requiredTicksCount + ", " + currentNanos + ")");
-          rateMeter.tick(requiredTicksCount, currentNanos);
+          println("\ttick(" + affordableTicksCount + ", " + currentNanos + ")");
+          rateMeter.tick(affordableTicksCount, currentNanos);
         }
+
         try {
           sleep(currentNanos, timeSensitivityNanos);
         } catch (final InterruptedException e) {
@@ -67,7 +68,7 @@ public final class RatMeX {//TODO use interface
 //          sleepUninterruptibly(currentNanos, sleepNanos);
 //        }
       }
-      System.out.println("After the cycle rateAverage=" + rateMeter.rateAverage());
+      System.out.println("After the cycle rateAverageMeasured=" + rateMeter.rateAverage() + ", durationMillisMeasured=" + Duration.ofNanos(rateMeter.rightSamplesWindowBoundary() - startNanos).toMillis());
     });
   }
 
