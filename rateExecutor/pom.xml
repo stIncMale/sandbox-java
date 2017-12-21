@@ -7,7 +7,6 @@
     A rate executor.
   </description>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>stinc.male.sandbox</groupId>
   <artifactId>sandbox-rateExecutor</artifactId>
   <packaging>jar</packaging>
   <name>sandbox-rateExecutor</name>
@@ -24,8 +23,13 @@
       <artifactId>jsr305</artifactId>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apiguardian</groupId><!-- required because of JUnit5 -->
+      <artifactId>apiguardian-api</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

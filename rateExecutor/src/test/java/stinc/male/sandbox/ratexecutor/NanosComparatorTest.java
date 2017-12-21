@@ -1,9 +1,9 @@
 package stinc.male.sandbox.ratexecutor;
 
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class NanosComparatorTest {
   private static final Sample[] samples = {
@@ -65,8 +65,7 @@ public final class NanosComparatorTest {
   }
 
   private static final void unsafeAssertCompareSymmetry(final Long l1, final Long l2, final NanosComparator comparator) {
-    assertSame(String.format("l1 = %s, l2 = %s", l1, l2),
-        Integer.signum(comparator.compare(l1, l2)), -Integer.signum(comparator.compare(l2, l1)));
+    assertSame(Integer.signum(comparator.compare(l1, l2)), -Integer.signum(comparator.compare(l2, l1)), String.format("l1 = %s, l2 = %s", l1, l2));
   }
 
   private static final void assertCompare(final Long l1, final Long l2, final CompareResult expected, final NanosComparator comparator) {
@@ -75,15 +74,15 @@ public final class NanosComparatorTest {
     }
     switch (expected) {
       case LOWER: {
-        assertTrue(String.format("l1 = %s, l2 = %s", l1, l2), comparator.compare(l1, l2) < 0);
+        assertTrue(comparator.compare(l1, l2) < 0, String.format("l1 = %s, l2 = %s", l1, l2));
         break;
       }
       case GREATER: {
-        assertTrue(String.format("l1 = %s, l2 = %s", l1, l2), comparator.compare(l1, l2) > 0);
+        assertTrue(comparator.compare(l1, l2) > 0, String.format("l1 = %s, l2 = %s", l1, l2));
         break;
       }
       case EQUAL: {
-        assertTrue(String.format("l1 = %s, l2 = %s", l1, l2), comparator.compare(l1, l2) == 0);
+        assertTrue(comparator.compare(l1, l2) == 0, String.format("l1 = %s, l2 = %s", l1, l2));
         break;
       }
       case UNSUPPORTED: {
@@ -93,9 +92,7 @@ public final class NanosComparatorTest {
         } catch (final IllegalArgumentException e) {
           illegalArguments = true;
         }
-        assertTrue(String.format(
-            "l1 = %s, l2 = %s, illegalArguments = %s", l1, l2, illegalArguments),
-            illegalArguments);
+        assertTrue(illegalArguments, String.format("l1 = %s, l2 = %s, illegalArguments = %s", l1, l2, illegalArguments));
         break;
       }
       default: {

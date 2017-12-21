@@ -10,7 +10,7 @@ public class TreeHeightOfABinaryTree {
     try (Scanner in = new Scanner(System.in)) {
       int t = in.nextInt();
       Node root = null;
-      while(t-- > 0){
+      while (t-- > 0) {
         int data = in.nextInt();
         root = insert(root, data);
       }
@@ -46,16 +46,14 @@ public class TreeHeightOfABinaryTree {
   }
 
   static Node insert(Node root, int data) {
-    if(root == null){
+    if (root == null) {
       return new Node(data);
-    }
-    else {
+    } else {
       Node cur;
-      if(data <= root.data){
+      if (data <= root.data) {
         cur = insert(root.left, data);
         root.left = cur;
-      }
-      else{
+      } else {
         cur = insert(root.right, data);
         root.right = cur;
       }

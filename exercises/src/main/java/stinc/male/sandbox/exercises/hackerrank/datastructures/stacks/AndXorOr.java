@@ -10,15 +10,16 @@ public class AndXorOr {
     try (Scanner in = new Scanner(System.in)) {
       int n = in.nextInt();
       int[] a = new int[n];
-      for(int i = 0; i < n; i++){
+      for (int i = 0; i < n; i++) {
         a[i] = in.nextInt();
       }
       int maxS = 0;
-      for(int i = 0; i < a.length - 1; i++){
-        for(int j = i + 1; j < a.length; j++){
+      for (int i = 0; i < a.length - 1; i++) {
+        for (int j = i + 1; j < a.length; j++) {
           maxS = Math.max(maxS, s(a[i], a[j]));
-          if(a[j] <= a[i] || ( j < a.length - 1 && a[j + 1] > a[j]))
+          if (a[j] <= a[i] || (j < a.length - 1 && a[j + 1] > a[j])) {
             break;
+          }
         }
       }
       System.out.print(maxS);

@@ -2,16 +2,16 @@ package stinc.male.sandbox.ratexecutor.test.harness;
 
 import java.time.Duration;
 import java.util.function.Supplier;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import stinc.male.sandbox.ratexecutor.RateMeter;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
 import stinc.male.sandbox.ratexecutor.RateMeterReading;
 import static java.time.Duration.ofNanos;
-import static junit.framework.TestCase.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {
   protected AbstractRateMeterUnitTest(final Supplier<B> rateMeterConfigBuilderSupplier, final RateMeterCreator<C> rateMeterCreator) {
@@ -23,27 +23,27 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     newRateMeter(0, ofNanos(10), ofNanos(10));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public final void create2() {
-    newRateMeter(0, ofNanos(10), ofNanos(11));
+    assertThrows(IllegalArgumentException.class, () -> newRateMeter(0, ofNanos(10), ofNanos(11)));
   }
 
   @Test
   public final void getStartNanos() {
     final long startNanos = 123;
-    Assert.assertEquals(startNanos, newRateMeter(startNanos, ofNanos(10)).getStartNanos());
+    assertEquals(startNanos, newRateMeter(startNanos, ofNanos(10)).getStartNanos());
   }
 
   @Test
   public final void getSamplesInterval() {
     final Duration samplesInterval = ofNanos(10);
-    Assert.assertEquals(samplesInterval, newRateMeter(0, samplesInterval).getSamplesInterval());
+    assertEquals(samplesInterval, newRateMeter(0, samplesInterval).getSamplesInterval());
   }
 
   @Test
   public final void rightSamplesWindowBoundary1() {
     final long startNanos = 123;
-    Assert.assertEquals(startNanos, newRateMeter(startNanos, ofNanos(10)).rightSamplesWindowBoundary());
+    assertEquals(startNanos, newRateMeter(startNanos, ofNanos(10)).rightSamplesWindowBoundary());
   }
 
   @Test
@@ -106,28 +106,28 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     assertEquals(1 + 4 + 2, rm.ticksTotalCount());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public final void tick1() {
-    newRateMeter(-1, ofNanos(10))
-        .tick(-1, Long.MAX_VALUE);
+    assertThrows(IllegalArgumentException.class, () -> newRateMeter(-1, ofNanos(10))
+        .tick(-1, Long.MAX_VALUE));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public final void tick2() {
-    newRateMeter(0, ofNanos(10))
-        .tick(0, Long.MIN_VALUE);
+    assertThrows(IllegalArgumentException.class, () -> newRateMeter(0, ofNanos(10))
+        .tick(0, Long.MIN_VALUE));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public final void tick3() {
-    newRateMeter(1, ofNanos(10))
-        .tick(1, 0);
+    assertThrows(IllegalArgumentException.class, () -> newRateMeter(1, ofNanos(10))
+        .tick(1, 0));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public final void tick4() {
-    newRateMeter(Long.MAX_VALUE, ofNanos(1))
-        .tick(1, -1);
+    assertThrows(IllegalArgumentException.class, () -> newRateMeter(Long.MAX_VALUE, ofNanos(1))
+        .tick(1, -1));
   }
 
   @Test
@@ -304,8 +304,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
   }
 
   private final RateMeter newRateMeter(final long startNanos, final Duration samplesInterval, final Duration timeSensitivity) {
-    @SuppressWarnings("unchecked")
-    final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
+    @SuppressWarnings("unchecked") final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
         .get()
         .setTimeSensitivity(timeSensitivity)
         .build();
@@ -315,11 +314,15 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
         rateMeterConfig);
   }
 
-  private static final void assertDoubleEquals(final double extected, final double actual) {
-    assertEquals(extected, actual, 0.000000000001);
+  private static final void assertDoubleEquals(final double expected, final double actual) {
+    assertEquals(expected, actual, 0.000000000001);
   }
 
-  private static final void assertReading(final long expectedValue, final long expectedTNanos, final boolean accurate, final RateMeterReading reading) {
+  private static final void assertReading(
+      final long expectedValue,
+      final long expectedTNanos,
+      final boolean accurate,
+      final RateMeterReading reading) {
     assertEquals(expectedValue, reading.getLongValue());
     assertEquals(expectedTNanos, reading.getTNanos());
     if (accurate) {
@@ -329,7 +332,11 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     }
   }
 
-  private static final void assertReading(final double expectedValue, final long expectedTNanos, final boolean accurate, final RateMeterReading reading) {
+  private static final void assertReading(
+      final double expectedValue,
+      final long expectedTNanos,
+      final boolean accurate,
+      final RateMeterReading reading) {
     assertDoubleEquals(expectedValue, reading.getDoubleValue());
     assertEquals(expectedTNanos, reading.getTNanos());
     if (accurate) {

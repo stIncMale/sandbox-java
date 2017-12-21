@@ -10,7 +10,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
@@ -24,13 +24,13 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import stinc.male.test.harness.ConcurrencyTest;
+import stinc.male.test.harness.TestTag;
 import static java.lang.System.nanoTime;
 import static java.time.Duration.ofMillis;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
-@Category(ConcurrencyTest.class)//todo do something with this?
+@Tag(TestTag.CONCURRENCY)//TODO do something with this?
 public class ScheduledThreadPoolExecutorRateTest {
   private static final long NUMBER_OF_ACTIONS_PER_MEASUREMENT = 10_000;
   private static final boolean SERVER = true;
@@ -61,7 +61,7 @@ public class ScheduledThreadPoolExecutorRateTest {
   public ScheduledThreadPoolExecutorRateTest() {
   }
 
-//  @Test
+  //  @Test
   public final void reference() throws RunnerException {
     final Collection<RunResult> results = new Runner(jmhOptionsBuilderSupplier.get()
         .mode(Mode.AverageTime)
@@ -77,29 +77,30 @@ public class ScheduledThreadPoolExecutorRateTest {
       final double score = primaryResult.getScore();
       final String scoreUnit = primaryResult.getScoreUnit();
       final String[] scoreUnits = scoreUnit.split("/");
-      final double rate = (double) NUMBER_OF_ACTIONS_PER_MEASUREMENT / score;
-      final String description = runResult.getPrimaryResult().getLabel();
+      final double rate = (double)NUMBER_OF_ACTIONS_PER_MEASUREMENT / score;
+      final String description = runResult.getPrimaryResult()
+          .getLabel();
       System.out.println(description
           + ": rate " + format(rate) + scoreUnits[1] + "s/" + scoreUnits[0]);
     });
   }
 
-//  @Test
+  //  @Test
   public final void baseline_scheduleAtFixedRate() throws RunnerException {
     rate(ScheduleType.FIXED_RATE, true);
   }
 
-//  @Test
+  //  @Test
   public final void baseline_scheduleWithFixedDelay() throws RunnerException {
     rate(ScheduleType.FIXED_DELAY, true);
   }
 
-//  @Test
+  //  @Test
   public final void scheduleAtFixedRate() throws RunnerException {
     rate(ScheduleType.FIXED_RATE, false);
   }
 
-//  @Test
+  //  @Test
   public final void scheduleWithFixedDelay() throws RunnerException {
     rate(ScheduleType.FIXED_DELAY, false);
   }
@@ -122,22 +123,22 @@ public class ScheduledThreadPoolExecutorRateTest {
         case FIXED_RATE: {
           ex.scheduleAtFixedRate(
               baseline
-                  ? () -> counter.getAndIncrement()
+                  ? counter::getAndIncrement
                   : () -> {
-                rm.tick(1, nanoTime());
-                counter.getAndIncrement();
-              },
+                    rm.tick(1, nanoTime());
+                    counter.getAndIncrement();
+                  },
               0, 1, TimeUnit.NANOSECONDS);
           break;
         }
         case FIXED_DELAY: {
           ex.scheduleWithFixedDelay(
               baseline
-                  ? () -> counter.getAndIncrement()
+                  ? counter::getAndIncrement
                   : () -> {
-                rm.tick(1, nanoTime());
-                counter.getAndIncrement();
-              },
+                    rm.tick(1, nanoTime());
+                    counter.getAndIncrement();
+                  },
               0, 1, TimeUnit.NANOSECONDS);
           break;
         }
@@ -160,7 +161,8 @@ public class ScheduledThreadPoolExecutorRateTest {
       }
       measurements.clear();
       try {
-        Thread.sleep(rm.getSamplesInterval().toMillis() + 1);
+        Thread.sleep(rm.getSamplesInterval()
+            .toMillis() + 1);
       } catch (final InterruptedException e) {
         throw new RuntimeException(e);
       }
@@ -181,9 +183,17 @@ public class ScheduledThreadPoolExecutorRateTest {
       final double rate = measurements.stream()
           .mapToDouble(Double::doubleValue)
           .sum() / measurements.size();
-      final double averageRate = (double) ofMillis(1).toNanos() * (double) (endCount - startCount) / (endNanos - startNanos);
-      assertEquals(0d, rm.stats().failedAccuracyEventsCountForRate(), 0);
-      assertEquals(0d, rm.stats().failedAccuracyEventsCountForTick(), 200);
+      final double averageRate = (double)ofMillis(1).toNanos() * (double)(endCount - startCount) / (endNanos - startNanos);
+      assertEquals(
+          0,
+          rm.stats()
+              .failedAccuracyEventsCountForRate(),
+          0);
+      assertEquals(
+          0,
+          rm.stats()
+              .failedAccuracyEventsCountForTick(),
+          200);
       System.out.println(scheduleType.toString()
           + " measured rate " + format(rate) + "ops/ms"
           + ", measured average rate " + format(rm.rateAverage(ofMillis(1))) + "ops/ms"
@@ -195,14 +205,16 @@ public class ScheduledThreadPoolExecutorRateTest {
   public void reference_scheduleAtFixedRate(final Reference_ScheduleAtFixedRate s) {
     final long counter = s.counter.get();
     final long targetCounter = counter + NUMBER_OF_ACTIONS_PER_MEASUREMENT;
-    while (s.counter.get() < targetCounter) ;
+    while (s.counter.get() < targetCounter) {
+    }
   }
 
   @Benchmark
   public void reference_scheduleWithFixedDelay(final Reference_ScheduleWithFixedDelay s) {
     final long counter = s.counter.get();
     final long targetCounter = counter + NUMBER_OF_ACTIONS_PER_MEASUREMENT;
-    while (s.counter.get() < targetCounter) ;
+    while (s.counter.get() < targetCounter) {
+    }
   }
 
   @State(Scope.Thread)

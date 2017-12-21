@@ -46,11 +46,12 @@ public class SwapNodesAlgo {
 
   static NavigableMap<Integer, List<Node>> createLayers(SortedMap<Integer, Node> nodes) {
     NavigableMap<Integer, List<Node>> result = new TreeMap<>();
-    nodes.values().forEach(node -> {
-      int depth = node.d;
-      List<Node> layer = result.computeIfAbsent(depth, d -> new ArrayList<>());
-      layer.add(node);
-    });
+    nodes.values()
+        .forEach(node -> {
+          int depth = node.d;
+          List<Node> layer = result.computeIfAbsent(depth, d -> new ArrayList<>());
+          layer.add(node);
+        });
     return result;
   }
 

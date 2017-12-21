@@ -16,17 +16,20 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import stinc.male.sandbox.ratexecutor.NanosComparator;
 import stinc.male.sandbox.ratexecutor.RateMeter;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
 import stinc.male.sandbox.ratexecutor.RateMeterReading;
+import stinc.male.test.harness.TestTag;
 import static java.time.Duration.ofNanos;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Tag(TestTag.CONCURRENCY)
 public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {
   private final int numberOfThreads;
   private ExecutorService ex;
@@ -55,21 +58,20 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
     }
   }
 
-  @Before
-  public final void before() {
+  @BeforeEach
+  public final void beforeEach() {
     ex = Executors.newFixedThreadPool(numberOfThreads);
   }
 
-  @After
-  public final void after() {
+  @AfterEach
+  public final void afterEach() {
     ex.shutdownNow();
   }
 
   private final void doTest(final int iterationIdx, final TestParams tp, final ExecutorService ex) {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     final long startNanos = rnd.nextLong();
-    @SuppressWarnings("unchecked")
-    final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
+    @SuppressWarnings("unchecked") final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
         .get()
         .setTimeSensitivity(ofNanos(1))
         .build();
@@ -79,7 +81,7 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
         rateMeterConfig);
     final TickGenerator tickGenerator = new TickGenerator(
         startNanos,
-        startNanos + (long) (rnd.nextDouble(0, 500) * tp.samplesInterval.toNanos()),
+        startNanos + (long)(rnd.nextDouble(0, 500) * tp.samplesInterval.toNanos()),
         tp.repeatingInstants,
         tp.numberOfSamples,
         tp.numberOfThreads);
@@ -96,10 +98,13 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
             throw new RuntimeException(e);
           }
         });
-    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), 0, rm.stats().failedAccuracyEventsCountForTick(), 0);
-    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary());
-    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount());
-    assertEquals(String.format("Iteration#%s, %s", iterationIdx, tp), tickGenerator.totalCount(), rm.ticksTotalCount());
+    assertEquals(0,
+        rm.stats()
+            .failedAccuracyEventsCountForTick(),
+        String.format("Iteration#%s, %s", iterationIdx, tp));
+    assertEquals(tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary(), String.format("Iteration#%s, %s", iterationIdx, tp));
+    assertEquals(tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
+    assertEquals(tickGenerator.totalCount(), rm.ticksTotalCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
   }
 
   private static final class TestParams {
@@ -167,12 +172,17 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
       splitN = -1;
     }
 
-    final Future<?> generate(final RateMeter rm, boolean orderTicksByTime, int tickToRateRatio, final ExecutorService ex, final CountDownLatch latch) {
+    final Future<?> generate(
+        final RateMeter rm,
+        boolean orderTicksByTime,
+        int tickToRateRatio,
+        final ExecutorService ex,
+        final CountDownLatch latch) {
       final List<Entry<Long, Long>> shuffledSamples = new ArrayList<>(samples.entrySet());
       if (!orderTicksByTime) {
         Collections.shuffle(shuffledSamples);
       }
-      final Future<?> result = ex.submit(() -> {
+      return ex.submit(() -> {
         latch.countDown();
         try {
           if (!latch.await(1, TimeUnit.SECONDS)) {
@@ -185,20 +195,18 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
         shuffledSamples.forEach(sample -> {
           rm.tick(sample.getValue(), sample.getKey());
           if (tickToRateRatio > 0 && i % tickToRateRatio == 0) {
-            final int randomInt = ThreadLocalRandom.current().nextInt(4);
+            final int randomInt = ThreadLocalRandom.current()
+                .nextInt(4);
             if (randomInt == 0) {
               rm.rate();
             } else if (randomInt == 1) {
               rm.rate(rm.rightSamplesWindowBoundary());
-            } else if (randomInt == 1) {
-              rm.rate(new RateMeterReading());
             } else {
               rm.rate(rm.rightSamplesWindowBoundary(), new RateMeterReading());
             }
           }
         });
       });
-      return result;
     }
 
     final Collection<TickGenerator> split() {
@@ -219,14 +227,15 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
         }
       }
       return splitSamples.stream()
-          .map(splitSample -> new TickGenerator(splitSample))
+          .map(TickGenerator::new)
           .collect(Collectors.toList());
     }
 
     final long countRightmost(final long samplesIntervalNanos) {
       final long rightNanos = rightmostTNanos();
       final long leftNanos = rightNanos - samplesIntervalNanos;
-      return samples.subMap(leftNanos, false, rightNanos, true).values()
+      return samples.subMap(leftNanos, false, rightNanos, true)
+          .values()
           .stream()
           .mapToLong(Long::longValue)
           .sum() * (repeatingInstants ? splitN : 1);

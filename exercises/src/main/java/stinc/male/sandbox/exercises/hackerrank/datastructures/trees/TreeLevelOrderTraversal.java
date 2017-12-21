@@ -34,11 +34,13 @@ public class TreeLevelOrderTraversal {
         prevLevel.forEach(node -> {
           if (node.left != null) {
             level.add(node.left);
-            s.append(" ").append(node.left.data);
+            s.append(" ")
+                .append(node.left.data);
           }
           if (node.right != null) {
             level.add(node.right);
-            s.append(" ").append(node.right.data);
+            s.append(" ")
+                .append(node.right.data);
           }
         });
         prevLevel = level;

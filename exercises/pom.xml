@@ -7,7 +7,6 @@
     Exercises.
   </description>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>stinc.male.sandbox</groupId>
   <artifactId>sandbox-exercises</artifactId>
   <packaging>jar</packaging>
   <name>sandbox-exercises</name>

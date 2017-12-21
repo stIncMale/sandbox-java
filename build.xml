@@ -36,7 +36,7 @@
               <!-- TODO Option -Xlint:exports is disabled because of http://bugs.java.com/bugdatabase/view_bug.do?bug_id=JDK-8191112 -->
               <!--<arg>-Xlint:all,-exports,-try,-processing,-requires-automatic,-requires-transitive-automatic</arg>-->
               <!--<arg>-Xlint:all,-exports,-processing</arg>-->
-              <arg>-Xlint:all</arg>
+              <arg>-Xlint:all,-processing</arg>
             </compilerArgs>
           </configuration>
         </plugin>
@@ -61,8 +61,11 @@
             <trimStackTrace>false</trimStackTrace>
             <parallel>${sandbox.maven-surefire-plugin.parallel}</parallel>
             <threadCount>5</threadCount>
-            <groups>${sandbox.maven-surefire-plugin.groups}</groups>
-            <excludedGroups>${sandbox.maven-surefire-plugin.excludedGroups}</excludedGroups>
+            <properties>
+              <includeTags>${sandbox.maven-surefire-plugin.includeTags}</includeTags><!-- TODO will not work until https://github.com/junit-team/junit5/issues/809#issuecomment-352654645 -->
+              <excludeTags>${sandbox.maven-surefire-plugin.excludeTags}</excludeTags>
+              <argLine>-enableassertions</argLine>
+            </properties>
           </configuration>
           <dependencies>
             <dependency>
@@ -136,12 +139,11 @@
                 </packages>
               </group>
             </groups>
-            <links>
-              <link>http://docs.oracle.com/javase/8/docs/api/</link>
-              <link>http://docs.oracle.com/javaee/7/api/</link>
-              <link>http://stincmale.github.io/jsr-305/javadoc/</link>
-              <link>http://google-guice.googlecode.com/git/javadoc/</link>
-              <link>http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/</link>
+            <links><!-- TODO reconfigure -->
+              <link>https://docs.oracle.com/javase/9/docs/api</link>
+              <link>https://javaee.github.io/javaee-spec/javadocs</link>
+              <link>https://www.javadoc.io/doc/com.google.code.findbugs/jsr305/3.0.2</link>
+              <link>https://google.github.io/guava/releases/snapshot-jre/api/docs</link>
             </links>
             <validateLinks>true</validateLinks>
             <includeDependencySources>false</includeDependencySources>
@@ -197,9 +199,8 @@
       <properties>
         <maven.test.skip>false</maven.test.skip>
         <sandbox.maven-surefire-plugin.parallel>all</sandbox.maven-surefire-plugin.parallel>
-        <sandbox.maven-surefire-plugin.groups/>
-        <sandbox.maven-surefire-plugin.excludedGroups>stinc.male.test.harness.PerformanceTest, stinc.male.test.harness.ConcurrencyTest
-        </sandbox.maven-surefire-plugin.excludedGroups>
+        <sandbox.maven-surefire-plugin.includeTags/>
+        <sandbox.maven-surefire-plugin.excludeTags>performance, concurrency</sandbox.maven-surefire-plugin.excludeTags>
       </properties>
     </profile>
     <profile>
@@ -207,8 +208,8 @@
       <properties>
         <maven.test.skip>false</maven.test.skip>
         <sandbox.maven-surefire-plugin.parallel/>
-        <sandbox.maven-surefire-plugin.groups>stinc.male.test.harness.PerformanceTest</sandbox.maven-surefire-plugin.groups>
-        <sandbox.maven-surefire-plugin.excludedGroups>stinc.male.test.harness.ConcurrencyTest</sandbox.maven-surefire-plugin.excludedGroups>
+        <sandbox.maven-surefire-plugin.includeTags>performance</sandbox.maven-surefire-plugin.includeTags>
+        <sandbox.maven-surefire-plugin.excludeTags>concurrency</sandbox.maven-surefire-plugin.excludeTags>
       </properties>
     </profile>
     <profile>
@@ -216,12 +217,15 @@
       <properties>
         <maven.test.skip>false</maven.test.skip>
         <sandbox.maven-surefire-plugin.parallel/>
-        <sandbox.maven-surefire-plugin.groups>stinc.male.test.harness.ConcurrencyTest</sandbox.maven-surefire-plugin.groups>
-        <sandbox.maven-surefire-plugin.excludedGroups>stinc.male.test.harness.PerformanceTest</sandbox.maven-surefire-plugin.excludedGroups>
+        <sandbox.maven-surefire-plugin.includeTags>concurrency</sandbox.maven-surefire-plugin.includeTags>
+        <sandbox.maven-surefire-plugin.excludeTags>performance</sandbox.maven-surefire-plugin.excludeTags>
       </properties>
     </profile>
     <profile>
       <id>assembly</id>
+      <properties>
+        <maven.test.skip>true</maven.test.skip>
+      </properties>
       <build>
         <plugins>
           <plugin>
@@ -233,6 +237,9 @@
     </profile>
     <profile>
       <id>doc</id>
+      <properties>
+        <maven.test.skip>true</maven.test.skip>
+      </properties>
       <build>
         <plugins>
           <plugin>
