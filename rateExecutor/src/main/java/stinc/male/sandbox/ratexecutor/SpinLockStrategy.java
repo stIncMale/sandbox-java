@@ -4,11 +4,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
-public final class SpinLockingStrategy implements LockingStrategy {
+public final class SpinLockStrategy implements LockStrategy {
   private final AtomicBoolean atomicBoolean;
   private final WaitStrategy waitStrategy;
 
-  public SpinLockingStrategy(final WaitStrategy waitStrategy) {
+  public SpinLockStrategy(final WaitStrategy waitStrategy) {
     atomicBoolean = new AtomicBoolean();
     this.waitStrategy = waitStrategy;
   }

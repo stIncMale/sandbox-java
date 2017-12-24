@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -25,6 +26,7 @@ import stinc.male.test.harness.TestTag;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
+@Disabled
 @Tag(TestTag.PERFORMANCE)
 public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.of(1, ChronoUnit.MILLIS);
@@ -56,7 +58,7 @@ public class RateMeterPerformanceTest {
     return result;
   };
   private static final Supplier<WaitStrategy> waitStrategySupplier = YieldWaitStrategy::instance;
-  private static final Supplier<LockingStrategy> lockingStrategySupplier = () -> new SpinLockingStrategy(waitStrategySupplier.get());
+  private static final Supplier<LockStrategy> lockStrategySupplier = () -> new SpinLockStrategy(waitStrategySupplier.get());
   private static final Supplier<Builder> rateMeterConfigBuilderSupplier = () -> RateMeterConfig.newBuilder()
       .setCollectStats(true)
       .setTimeSensitivity(timeSensitivity);
@@ -676,7 +678,7 @@ public class RateMeterPerformanceTest {
           .build());
       concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
           .setWaitStrategySupplier(waitStrategySupplier)
-          .setLockStrategySupplier(lockingStrategySupplier)
+          .setLockStrategySupplier(lockStrategySupplier)
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
           .setHl(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
@@ -687,7 +689,7 @@ public class RateMeterPerformanceTest {
                   .setTicksCounterSupplier(LongTicksCounter::new)
                   .setHl(2)
                   .build()),
-          lockingStrategySupplier.get());
+          lockStrategySupplier.get());
     }
   }
 
@@ -712,7 +714,7 @@ public class RateMeterPerformanceTest {
           .build());
       concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
           .setWaitStrategySupplier(waitStrategySupplier)
-          .setLockStrategySupplier(lockingStrategySupplier)
+          .setLockStrategySupplier(lockStrategySupplier)
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
           .setHl(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
@@ -723,7 +725,7 @@ public class RateMeterPerformanceTest {
                   .setTicksCounterSupplier(LongTicksCounter::new)
                   .setHl(2)
                   .build()),
-          lockingStrategySupplier.get());
+          lockStrategySupplier.get());
     }
 
     @TearDown(Level.Trial)

@@ -45,6 +45,11 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements Configura
   }
 
   @Override
+  public final Duration getTimeSensitivity() {
+    return config.getTimeSensitivity();
+  }
+
+  @Override
   public final long ticksTotalCount() {
     return ticksTotal.get();
   }

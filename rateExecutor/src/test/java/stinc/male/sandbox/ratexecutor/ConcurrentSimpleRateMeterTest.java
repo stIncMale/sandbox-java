@@ -8,6 +8,6 @@ public final class ConcurrentSimpleRateMeterTest extends AbstractRateMeterUnitTe
     super(
         RateMeterConfig.Builder::new,
         (startNanos, samplesInterval, config) -> new ConcurrentSimpleRateMeter(
-            new RingBufferRateMeter(startNanos, samplesInterval, config), new StampedLockingStrategy()));
+            new RingBufferRateMeter(startNanos, samplesInterval, config), new StampedLockStrategy()));
   }
 }

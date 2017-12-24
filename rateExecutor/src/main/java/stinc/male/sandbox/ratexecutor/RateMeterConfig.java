@@ -44,6 +44,7 @@ public class RateMeterConfig {
    * Specifies a supplier which MUST be used by {@link AbstractRateMeter} to create ticks counters.
    * Note that if {@link AbstractRateMeter} is used concurrently
    * then supplier MUST provide a thread-safe implementation of {@link TicksCounter}.
+   *
    * @return {@code LongAdderTicksCounter::new} by default.
    */
   public final Function<Long, ? extends TicksCounter> getTicksCounterSupplier() {
@@ -51,15 +52,9 @@ public class RateMeterConfig {
   }
 
   /**
-   * Specifies the time sensitivity which affects behaviour of {@link AbstractRateMeter#tick(long, long)} method
-   * in a way that allows an implementation to score the specified sample at an instant
-   * that differ from the specified one not more than by the time sensitivity.
-   * <p>
-   * It is recommended to specify here an resolution (accuracy, granularity) of the used timer.
-   * @return {@code Duration.ofNanos(200)} by default, which is an approximation of the {@link System#nanoTime()} accuracy
-   * (see <a href="https://github.com/shipilev/timers-bench">timers-bench</a>
-   * and <a href="https://shipilev.net/blog/2014/nanotrusting-nanotime/">Nanotrusting the Nanotime</a> for measurements and explanations).
-   * It is possible that there is no need to use a finer sensitivity.
+   * @return {@code Duration.ofNanos(200)} by default.
+   *
+   * @see RateMeter#getTimeSensitivity()
    */
   public final Duration getTimeSensitivity() {//todo return null by default and use 1/20 of samplesInterval
     return timeSensitivity;
@@ -67,7 +62,8 @@ public class RateMeterConfig {
 
   /**
    * This configuration parameter specifies if
-   * {@link AbstractRateMeter} must collect stats.
+   * {@link AbstractRateMeter} must collect {@link RateMeterStats stats}.
+   *
    * @return {@code true} by default.
    */
   public final boolean isCollectStats() {
@@ -81,6 +77,7 @@ public class RateMeterConfig {
    * (such a race may be caused by allowing to move the samples window while counting current ticks).
    * Note that this is just a hint, so an implementation may choose to do more attempts,
    * but the number of attempts must be finite.
+   *
    * @return 5 by default.
    */
   public final int getMaxTicksCountAttempts() {
@@ -92,6 +89,7 @@ public class RateMeterConfig {
    * Note that the specification of {@link RateMeter#rate(long)} implies that any {@link RateMeter}
    * must maintain samples history for at least 2 samples intervals.
    * Actual samples history length maintained by {@link RateMeter} must be within [HL; HL + 1].
+   *
    * @return 3 by default.
    */
   public final int getHl() {
@@ -135,6 +133,7 @@ public class RateMeterConfig {
 
     /**
      * @param ticksCounterSupplier Must be immutable.
+     *
      * @see RateMeterConfig#getTicksCounterSupplier()
      */
     public final Builder setTicksCounterSupplier(final Function<Long, ? extends TicksCounter> ticksCounterSupplier) {
@@ -145,6 +144,7 @@ public class RateMeterConfig {
 
     /**
      * @param timeSensitivity Must be positive (not {@linkplain Duration#isNegative() negative} and not {@linkplain Duration#isZero() zero}).
+     *
      * @see RateMeterConfig#getTimeSensitivity()
      */
     public final Builder setTimeSensitivity(final Duration timeSensitivity) {
@@ -165,6 +165,7 @@ public class RateMeterConfig {
 
     /**
      * @param maxTicksCountAttempts Must be positive.
+     *
      * @see RateMeterConfig#getMaxTicksCountAttempts()
      */
     public final Builder setMaxTicksCountAttempts(final int maxTicksCountAttempts) {
@@ -175,6 +176,7 @@ public class RateMeterConfig {
 
     /**
      * @param hl Must be greater than or equal to 2.
+     *
      * @see RateMeterConfig#getHl()
      */
     public final Builder setHl(final int hl) {

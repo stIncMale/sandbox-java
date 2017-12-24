@@ -12,11 +12,11 @@ public final class RateMeterReading {
     public RateMeterReading() {
     }
 
-    public final double getDoubleValue() {
+    public final double getDoubleValue() {//TODO remove
         return doubleValue;
     }
 
-    public final long getLongValue() {
+    public final long getLongValue() {//TODO getRate
         return longValue;
     }
 

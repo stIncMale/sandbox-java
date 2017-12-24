@@ -1,10 +1,12 @@
 package stinc.male.sandbox.ratexecutor;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
 import stinc.male.sandbox.ratexecutor.test.harness.AbstractRateMeterConcurrencyTest;
 import stinc.male.test.harness.TestTag;
 
+@Disabled
 @Tag(TestTag.CONCURRENCY)
 public final class ConcurrentSimpleRateMeterConcurrentTest extends AbstractRateMeterConcurrencyTest<Builder, RateMeterConfig> {
   public ConcurrentSimpleRateMeterConcurrentTest() {
@@ -13,7 +15,7 @@ public final class ConcurrentSimpleRateMeterConcurrentTest extends AbstractRateM
             .setTicksCounterSupplier(ConcurrentRingBufferRateMeter.defaultConfig()
                 .getTicksCounterSupplier()),
         (startNanos, samplesInterval, config) -> new ConcurrentSimpleRateMeter(
-            new RingBufferRateMeter(startNanos, samplesInterval, config), new StampedLockingStrategy()),
+            new RingBufferRateMeter(startNanos, samplesInterval, config), new StampedLockStrategy()),
         Math.max(
             2,
             Runtime.getRuntime()

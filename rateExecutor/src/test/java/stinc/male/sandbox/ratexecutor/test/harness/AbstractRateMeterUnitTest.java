@@ -7,6 +7,7 @@ import stinc.male.sandbox.ratexecutor.RateMeter;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig;
 import stinc.male.sandbox.ratexecutor.RateMeterConfig.Builder;
 import stinc.male.sandbox.ratexecutor.RateMeterReading;
+import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofNanos;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -297,6 +298,34 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     assertReading(rm.rateAverage(), 60, false, rm.rate(30, r));
     assertDoubleEquals((-2d - 1) / (30d / 15), rm.rate(70, ofNanos(15)));
     assertReading(rm.rate(70, ofNanos(15)), 70, true, rm.rate(70, ofNanos(15), r));
+  }
+
+  @Test
+  public final void rateBug() {
+    final RateMeter rm1 = newRateMeter(0, ofNanos(6), ofNanos(3));
+    rm1.tick(1, 1);
+    rm1.tick(6, 4);
+    assertEquals(6, rm1.rate(7));
+    final RateMeter rm2 = newRateMeter(0, ofNanos(1000), ofNanos(500));
+    rm2.tick(1, 44);
+    rm2.tick(6, 549);
+    assertEquals(6, rm2.rate(1046));
+  }
+
+  /*There was a bug (not related neither to concurrency nor to a race condition) in AbstractRingBufferRateMeter.samplesWindowShiftSteps
+    causing method ConcurrentRingBufferRateMeter.rate (more precisely AbstractRingBufferRateMeter.count) to hang in some cases.*/
+  @Test
+  public final void rateHangingBug1() {
+    final RateMeter rm = newRateMeter(0, ofNanos(4), ofNanos(2));
+    rm.rate(2);
+  }
+
+  /*There was a bug (not related neither to concurrency nor to a race condition) in AbstractRingBufferRateMeter.count
+    causing method ConcurrentRingBufferRateMeter.rate (more precisely AbstractRingBufferRateMeter.count) to hang in some cases.*/
+  @Test
+  public final void rateHangingBug2() {
+    final RateMeter rm = newRateMeter(0, ofNanos(4), ofNanos(2));
+    rm.rate(3);
   }
 
   private final RateMeter newRateMeter(final long startNanos, final Duration samplesInterval) {

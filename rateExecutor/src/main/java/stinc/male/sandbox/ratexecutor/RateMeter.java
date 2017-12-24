@@ -67,13 +67,16 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * and provide different guarantees on the accuracy.
  * Implementations with weaker guarantees may be more performant because they
  * can sacrifice accuracy for the sake of performance and yet may produce sufficiently accurate results in practice.
- * Implementations are recommended to aim for accuracy on the best effort basis.
+ * Implementations are recommended to aim for accuracy on the best effort basis, but all {@code ...Count} and all {@code rate...} methods are
+ * allowed to produce approximate results. An implementation can report detected inaccuracies via {@link #stats()}.
  * <p>
- * All {@code ...Count} and all {@code rate...} methods are allowed to produce approximate results.
+ * Implementations may not internally use nanosecond {@linkplain #getTimeSensitivity time sensitivity} (resolution, accuracy, granularity). In
+ * fact, there is no sense in using resolution better than the resolution of the timer that is used by a user of {@link RateMeter}.
  */
 public interface RateMeter {
   /**
    * @return A starting point that is used to calculate elapsed nanoseconds.
+   *
    * @see System#nanoTime()
    */
   long getStartNanos();
@@ -85,6 +88,25 @@ public interface RateMeter {
    * and not {@linkplain Duration#isNegative() negative}.
    */
   Duration getSamplesInterval();
+
+  /**
+   * A time sensitivity which affects the behaviour of {@link RateMeter#tick(long, long)} method in a way that allows scoring the specified sample
+   * at an instant that differs from the specified one not more than by the time sensitivity, which may be observed via
+   * {@link #rightSamplesWindowBoundary()}.
+   * <p>
+   * This method, just as {@link RateMeterReading#isAccurate()}, can be considered as an important implementation detail leaked through
+   * {@link RateMeter}'s <a href="https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/">leaky abstraction</a>.
+   * <p>
+   * <b>Implementation considerations</b><br>
+   * It is recommended to use a resolution (accuracy, granularity) of the timer used by a user of {@link RateMeter}.
+   * For example 200ns may be a good approximation of the {@link System#nanoTime()} accuracy
+   * (see <a href="https://github.com/shipilev/timers-bench">timers-bench</a>
+   * and <a href="https://shipilev.net/blog/2014/nanotrusting-nanotime/">Nanotrusting the Nanotime</a> for measurements and explanations).
+   *
+   * @return A positive, i.e. not {@linkplain Duration#isNegative() negative} and not {@linkplain Duration#isZero() zero} time sensitivity which
+   * is used internally.
+   */
+  Duration getTimeSensitivity();
 
   /**
    * Instant that corresponds to the right border of the samples window.
@@ -143,6 +165,7 @@ public interface RateMeter {
    *
    * @param unit A time interval to use as a unit.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
+   *
    * @return Average rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
   default double rateAverage(final Duration unit) {
@@ -167,6 +190,7 @@ public interface RateMeter {
    * @param tNanos
    * @param unit A time interval to use as a unit.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
+   *
    * @return Average rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
   default double rateAverage(final long tNanos, final Duration unit) {
@@ -202,6 +226,7 @@ public interface RateMeter {
    *
    * @param unit A time interval to use as a unit.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
+   *
    * @return Current rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
   default double rate(final Duration unit) {
@@ -236,6 +261,7 @@ public interface RateMeter {
    * @param tNanos An effective (imaginary) right boundary of a samples window.
    * @param unit A time interval to use as a unit.
    * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
+   *
    * @return Current rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
   default double rate(final long tNanos, final Duration unit) {

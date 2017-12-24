@@ -10,6 +10,8 @@ public class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateMeter<C
   static {
     final ConcurrentRingBufferRateMeterConfig.Builder defaultConfigBuilder = ConcurrentRingBufferRateMeterConfig.newBuilder();
     defaultConfigBuilder.setTicksCounterSupplier(LongAdderTicksCounter::new);
+    defaultConfigBuilder.setWaitStrategySupplier(ParkWaitStrategy::instance);
+    defaultConfigBuilder.setLockStrategySupplier(StampedLockStrategy::new);
     defaultConfigInstance = defaultConfigBuilder.build();
   }
 

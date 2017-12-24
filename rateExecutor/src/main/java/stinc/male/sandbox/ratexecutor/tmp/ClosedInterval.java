@@ -5,20 +5,26 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
 
 @Immutable
 public final class ClosedInterval {
-  private final long left;
-  private final long right;
+  private final long min;
+  private final long max;
   private final double mean;
 
-  public ClosedInterval(final long left, final long right) {
-    checkArgument(left <= right, "right", () -> String.format("Must not be less than %s, but actual value is %s", left, right));
-    this.left = left;
-    this.right = right;
-    mean = (double)Math.addExact(right, left) / 2d;
+  public ClosedInterval(final long min, final long max) {
+    checkArgument(min <= max, "max", () -> String.format("Must not be less than %s, but actual value is %s", min, max));
+    this.min = min;
+    this.max = max;
+    mean = (double)Math.addExact(max, min) / 2d;
   }
 
   public static ClosedInterval of(final long mean, final double relativeDeviation) {
-    checkArgument(relativeDeviation >= 0, "relativeDeviation", () -> String.format("Must not be less than 0, but actual value is %s", relativeDeviation));
-    checkArgument(relativeDeviation <= 1, "relativeDeviation", () -> String.format("Must not be greater than 1, but actual value is %s", relativeDeviation));
+    checkArgument(
+        relativeDeviation >= 0,
+        "relativeDeviation",
+        () -> String.format("Must not be less than 0, but actual value is %s", relativeDeviation));
+    checkArgument(
+        relativeDeviation <= 1,
+        "relativeDeviation",
+        () -> String.format("Must not be greater than 1, but actual value is %s", relativeDeviation));
     final long absoluteDeviation = Math.round(relativeDeviation * mean);
     return of(mean, absoluteDeviation);
   }
@@ -27,12 +33,12 @@ public final class ClosedInterval {
     return new ClosedInterval(Math.subtractExact(mean, absoluteDeviation), Math.addExact(mean, absoluteDeviation));
   }
 
-  public final long getLeft() {
-    return left;
+  public final long getMin() {
+    return min;
   }
 
-  public final long getRight() {
-    return right;
+  public final long getMax() {
+    return max;
   }
 
   public final double getMean() {
@@ -40,7 +46,7 @@ public final class ClosedInterval {
   }
 
   public final boolean isWithin(final long v) {
-    return v >= left && v <= right;
+    return v >= min && v <= max;
   }
 
   @Override
@@ -49,8 +55,8 @@ public final class ClosedInterval {
     if (this == o) {
       result = true;
     } else if (o instanceof ClosedInterval) {
-      final ClosedInterval obj = (ClosedInterval) o;
-      return left == obj.left && right == obj.right;
+      final ClosedInterval obj = (ClosedInterval)o;
+      return min == obj.min && max == obj.max;
     } else {
       result = false;
     }
@@ -59,11 +65,11 @@ public final class ClosedInterval {
 
   @Override
   public final int hashCode() {
-    return (int) (left + right);
+    return (int)(min + max);
   }
 
   @Override
   public final String toString() {
-    return "[" + left + "; " + right + "]";
+    return "[" + min + "; " + max + "]";
   }
 }
