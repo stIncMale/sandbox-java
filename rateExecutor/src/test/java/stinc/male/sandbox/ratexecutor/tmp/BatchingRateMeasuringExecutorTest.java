@@ -2,6 +2,7 @@ package stinc.male.sandbox.ratexecutor.tmp;
 
 import java.text.NumberFormat;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -33,6 +34,7 @@ import stinc.male.sandbox.ratexecutor.RateMeterReading;
 import stinc.male.sandbox.ratexecutor.RingBufferRateMeter;
 import stinc.male.sandbox.ratexecutor.StampedLockStrategy;
 import static java.lang.Math.round;
+import static java.time.Duration.of;
 
 @Disabled
 public final class BatchingRateMeasuringExecutorTest {
@@ -117,16 +119,17 @@ public final class BatchingRateMeasuringExecutorTest {
       });
       latch.countDown();
     }
-    System.out.println("Threads have been started");
+    println("Threads have been started", 2);
     final AtomicLong submitDurationNanos = new AtomicLong();
-    final Duration timeSensitivity = Duration.ofNanos(5_000);
-    final Duration samplesInterval = Duration.ofNanos(10_000);
-    final long targetRatePerSecond = 5_000_000;
-    final long targetSubmitsTotal = targetRatePerSecond * 5L;
-    final ClosedInterval targetSubmits = ClosedInterval.of(
-        round((double)targetRatePerSecond * (double)samplesInterval.toNanos() / (double)Duration.ofSeconds(1)
-            .toNanos()),
+    final Duration timeSensitivity = of(1, ChronoUnit.MICROS);
+    final Duration samplesInterval = of(10, ChronoUnit.MICROS);
+    final long targetRatePerSecond = 20_000_000;
+    final long targetSubmitsTotal = targetRatePerSecond * 10L;
+    final ClosedInterval targetSubmits = ClosedInterval.withRelativeDeviation(
+        (double)targetRatePerSecond * samplesInterval.toNanos() / Duration.ofSeconds(1)
+            .toNanos(),
         0.05);
+    println("targetSubmits=" + targetSubmits + ", targetSubmits.getMean=" + targetSubmits.getMean(), 1);
     final long startNanos = System.nanoTime();
     final RateMeter submitterRateMeter = new RingBufferRateMeter(
         startNanos,
@@ -163,8 +166,8 @@ public final class BatchingRateMeasuringExecutorTest {
         submitsCounter = 0;
         task = new RateMeterAwareRunnable(() -> {
           globalCompleteCounter.increment();
-          ThreadLocalRandom.current()
-              .nextGaussian();
+//          ThreadLocalRandom.current()
+//              .nextGaussian();
         }, completionRateMeter);
         submitterReading = new RateMeterReading();
         completionReading = new RateMeterReading();
@@ -184,7 +187,7 @@ public final class BatchingRateMeasuringExecutorTest {
         }
         if (submitsCounter >= targetSubmitsTotal) {
           submitDurationNanos.set(tNanos - startNanos);
-          System.out.println(Duration.ofNanos(submitDurationNanos.get()));
+          println(Duration.ofNanos(submitDurationNanos.get()), 2);
           throw new CancellationException();
         }
       }
@@ -200,55 +203,61 @@ public final class BatchingRateMeasuringExecutorTest {
         if (measuredSubmits < targetSubmits.getMean()) {//as expected; the interval (prevTNanos; tNanos] is fresh and we are deciding submits for it
           if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
             result = round(ratio * targetSubmits.getMax());
-//            System.out.println("1 " + result +
-//                ", passedT(ms)=" + Duration.ofNanos(tNanos - startNanos)
-//                .toMillis() +
-//                ", deltaT(ms)=" + Duration.ofNanos(tNanos - prevTNanos)
-//                .toMillis() +
-//                ", measuredSubmits=" + measuredSubmits +
-//                ", ratio=" + ratio);
+                        println("1 " + result +
+                            ", passedT(ms)=" + Duration.ofNanos(tNanos - startNanos)
+                            .toMillis() +
+                            ", deltaT(ms)=" + Duration.ofNanos(tNanos - prevTNanos)
+                            .toMillis() +
+                            ", measuredSubmits=" + measuredSubmits +
+                            ", ratio=" + ratio, 1);
           } else {//too fast in average; submit as few as possible to satisfy the min
             result = round(ratio * targetSubmits.getMin());
-//            System.out.println("2 " + result);
+            println("2 " + result, 1);
           }
         } else {//too fast
           if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
             result = round(ratio * targetSubmits.getMax());
-//            System.out.println("3 " + result);
+            println("3 " + result, 1);
           } else {//too fast in average; do not submit anything
             result = 0;
-//            System.out.println("4 " + result);
+            println("4 " + result +
+                ", passedT(ms)=" + Duration.ofNanos(tNanos - startNanos)
+                .toMillis() +
+                ", deltaT(ms)=" + Duration.ofNanos(tNanos - prevTNanos)
+                .toMillis() +
+                ", measuredSubmits=" + measuredSubmits +
+                ", ratio=" + ratio, 1);
           }
         }
-//        if (measuredSubmits < targetSubmits.getMean()) {//as expected; the interval (prevTNanos; tNanos] is fresh and we are deciding submits for it
-//          if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
-//            result = measuredSubmits < targetSubmits.getMax()
-//                ? round(ratio * (targetSubmits.getMax() - measuredSubmits))
-//                : 0;
-//            System.out.println("1 " + result +
-//                ", passedT(ms)=" + Duration.ofNanos(tNanos - startNanos)
-//                .toMillis() +
-//                ", deltaT(ms)=" + Duration.ofNanos(tNanos - prevTNanos)
-//                .toMillis() +
-//                ", measuredSubmits=" + measuredSubmits +
-//                ", ratio=" + ratio);
-//          } else {//too fast in average; submit as few as possible to satisfy the min
-//            result = measuredSubmits < targetSubmits.getMin()
-//                ? round(ratio * (targetSubmits.getMin() - measuredSubmits))
-//                : 0;
-//            System.out.println("2 " + result);
-//          }
-//        } else {//too fast
-//          if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
-//            result = measuredSubmits < targetSubmits.getMax()
-//                ? round(ratio * (targetSubmits.getMax() - measuredSubmits))
-//                : 0;
-//            System.out.println("3 " + result);
-//          } else {//too fast in average; do not submit anything
-//            result = 0;
-//            System.out.println("4 " + result);
-//          }
-//        }
+        //        if (measuredSubmits < targetSubmits.getMean()) {//as expected; the interval (prevTNanos; tNanos] is fresh and we are deciding submits for it
+        //          if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
+        //            result = measuredSubmits < targetSubmits.getMax()
+        //                ? round(ratio * (targetSubmits.getMax() - measuredSubmits))
+        //                : 0;
+        //            println("1 " + result +
+        //                ", passedT(ms)=" + Duration.ofNanos(tNanos - startNanos)
+        //                .toMillis() +
+        //                ", deltaT(ms)=" + Duration.ofNanos(tNanos - prevTNanos)
+        //                .toMillis() +
+        //                ", measuredSubmits=" + measuredSubmits +
+        //                ", ratio=" + ratio);
+        //          } else {//too fast in average; submit as few as possible to satisfy the min
+        //            result = measuredSubmits < targetSubmits.getMin()
+        //                ? round(ratio * (targetSubmits.getMin() - measuredSubmits))
+        //                : 0;
+        //            println("2 " + result);
+        //          }
+        //        } else {//too fast
+        //          if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
+        //            result = measuredSubmits < targetSubmits.getMax()
+        //                ? round(ratio * (targetSubmits.getMax() - measuredSubmits))
+        //                : 0;
+        //            println("3 " + result);
+        //          } else {//too fast in average; do not submit anything
+        //            result = 0;
+        //            println("4 " + result);
+        //          }
+        //        }
         return result;
       }
     };
@@ -269,23 +278,23 @@ public final class BatchingRateMeasuringExecutorTest {
       Locale.setDefault(Locale.ROOT);
       final NumberFormat format = NumberFormat.getIntegerInstance();
       format.setGroupingUsed(true);
-      System.out.println("submitterRateMeter.ticksTotalCount=" + format.format(submitterRateMeter.ticksTotalCount()) +
+      println("submitterRateMeter.ticksTotalCount=" + format.format(submitterRateMeter.ticksTotalCount()) +
           ", submitterRateMeter.rateAverage=" + format.format(submitterRateMeter.rateAverage(Duration.ofSeconds(1))) +
-          ", submitterRateMeter.rate=" + format.format(submitterRateMeter.rate(Duration.ofSeconds(1))));
-      System.out.println("completionRateMeter.ticksTotalCount=" + format.format(completionRateMeter.ticksTotalCount()) +
+          ", submitterRateMeter.rate=" + format.format(submitterRateMeter.rate(Duration.ofSeconds(1))), 2);
+      println("completionRateMeter.ticksTotalCount=" + format.format(completionRateMeter.ticksTotalCount()) +
           ", completionRateMeter.rateAverage=" + format.format((completionRateMeter.rateAverage(Duration.ofSeconds(1)))) +
-          ", completionRateMeter.rate=" + format.format(completionRateMeter.rate(Duration.ofSeconds(1))));
-      System.out.println("globalCompleteCounter=" + format.format(globalCompleteCounter) +
+          ", completionRateMeter.rate=" + format.format(completionRateMeter.rate(Duration.ofSeconds(1))), 2);
+      println("globalCompleteCounter=" + format.format(globalCompleteCounter) +
           ", globalCompleteCounter/submitDurationNanos=" + format.format((double)globalCompleteCounter.sum() /
           ((double)submitDurationNanos.get() / (double)Duration.ofSeconds(1)
-              .toNanos())));
-      System.out.println("targetRatePerSecond=" + format.format(targetRatePerSecond) +
-          ", targetSubmits=" + targetSubmits);
-      System.out.println("failedAccuracyEventsCountForTick=" + submitterRateMeter.stats()
+              .toNanos())), 2);
+      println("targetRatePerSecond=" + format.format(targetRatePerSecond) +
+          ", targetSubmits=" + targetSubmits,2);
+      println("failedAccuracyEventsCountForTick=" + submitterRateMeter.stats()
           .failedAccuracyEventsCountForTick() +
           ", failedAccuracyEventsCountForRate=" + submitterRateMeter.stats()
-          .failedAccuracyEventsCountForRate());
-      System.out.println("batchCache.size=" + batchCache.size());
+          .failedAccuracyEventsCountForRate(), 2);
+      println("batchCache.size=" + batchCache.size(), 2);
     }
   }
 
@@ -308,7 +317,7 @@ public final class BatchingRateMeasuringExecutorTest {
       } else {
         result = null;
       }
-      System.out.println(result);
+      println(result, 2);
       return result;
     }
   }
@@ -320,7 +329,7 @@ public final class BatchingRateMeasuringExecutorTest {
     @Override
     public final Thread newThread(final Runnable r) {
       final Thread result = new Thread(r);
-      System.out.println(result);
+      println(result, 2);
       return result;
     }
   }
@@ -338,6 +347,12 @@ public final class BatchingRateMeasuringExecutorTest {
     public final void run() {
       r.run();
       rateMeter.tick(1, System.nanoTime());
+    }
+  }
+
+  private static final void println(final Object o, final int level) {
+    if (level > 1) {
+      System.out.println(o);
     }
   }
 }

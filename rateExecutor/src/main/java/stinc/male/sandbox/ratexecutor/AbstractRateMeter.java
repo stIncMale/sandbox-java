@@ -133,7 +133,7 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements Configura
   }
 
   @Override
-  public String toString() {
+  public String toString() {//TODO replace ( with { everywhere in toString
     return getClass().getSimpleName()
         + "(startNanos=" + startNanos
         + ", samplesIntervalNanos=" + samplesIntervalNanos

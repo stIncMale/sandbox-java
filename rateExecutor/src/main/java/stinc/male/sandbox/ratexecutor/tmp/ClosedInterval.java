@@ -5,18 +5,18 @@ import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
 
 @Immutable
 public final class ClosedInterval {
-  private final long min;
-  private final long max;
+  private final double min;
+  private final double max;
   private final double mean;
 
-  public ClosedInterval(final long min, final long max) {
+  public ClosedInterval(final double min, final double max) {
     checkArgument(min <= max, "max", () -> String.format("Must not be less than %s, but actual value is %s", min, max));
     this.min = min;
     this.max = max;
-    mean = (double)Math.addExact(max, min) / 2d;
+    mean = (min + max) / 2;
   }
 
-  public static ClosedInterval of(final long mean, final double relativeDeviation) {
+  public static ClosedInterval withRelativeDeviation(final double mean, final double relativeDeviation) {
     checkArgument(
         relativeDeviation >= 0,
         "relativeDeviation",
@@ -25,19 +25,18 @@ public final class ClosedInterval {
         relativeDeviation <= 1,
         "relativeDeviation",
         () -> String.format("Must not be greater than 1, but actual value is %s", relativeDeviation));
-    final long absoluteDeviation = Math.round(relativeDeviation * mean);
-    return of(mean, absoluteDeviation);
+    return withAbsoluteDeviation(mean, relativeDeviation * mean);
   }
 
-  public static ClosedInterval of(final long mean, final long absoluteDeviation) {
-    return new ClosedInterval(Math.subtractExact(mean, absoluteDeviation), Math.addExact(mean, absoluteDeviation));
+  public static ClosedInterval withAbsoluteDeviation(final double mean, final double absoluteDeviation) {
+    return new ClosedInterval(mean - absoluteDeviation, mean + absoluteDeviation);
   }
 
-  public final long getMin() {
+  public final double getMin() {
     return min;
   }
 
-  public final long getMax() {
+  public final double getMax() {
     return max;
   }
 
@@ -45,7 +44,7 @@ public final class ClosedInterval {
     return mean;
   }
 
-  public final boolean isWithin(final long v) {
+  public final boolean isWithin(final double v) {
     return v >= min && v <= max;
   }
 
@@ -65,7 +64,7 @@ public final class ClosedInterval {
 
   @Override
   public final int hashCode() {
-    return (int)(min + max);
+    return (int)(min + 31 * max);
   }
 
   @Override
