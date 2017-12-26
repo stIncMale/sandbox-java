@@ -28,24 +28,24 @@ public final class RateMeterReading {
         return accurate;
     }
 
-    final RateMeterReading setValue(final double value) {
+    public final RateMeterReading setValue(final double value) {
         longValue = (long)value;
         doubleValue = value;
         return this;
     }
 
-    final RateMeterReading setValue(final long value) {
+    public final RateMeterReading setValue(final long value) {
         longValue = value;
         doubleValue = value;
         return this;
     }
 
-    final RateMeterReading setTNanos(final long tNanos) {
+    public final RateMeterReading setTNanos(final long tNanos) {
         this.tNanos = tNanos;
         return this;
     }
 
-    final RateMeterReading setAccurate(final boolean accurate) {
+    public final RateMeterReading setAccurate(final boolean accurate) {
         this.accurate = accurate;
         return this;
     }
@@ -53,10 +53,10 @@ public final class RateMeterReading {
     @Override
     public final String toString() {
         return getClass().getSimpleName()
-                + "(longValue=" + longValue
+                + "{longValue=" + longValue
                 + ", doubleValue=" + doubleValue
                 + ", tNanos=" + tNanos
                 + ", accurate=" + accurate
-                + ')';
+                + '}';
     }
 }

@@ -2,7 +2,7 @@ package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
 import javax.annotation.concurrent.ThreadSafe;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkNotNull;
 
 @ThreadSafe
 public final class ConcurrentSimpleRateMeter implements RateMeter {

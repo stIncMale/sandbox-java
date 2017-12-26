@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import stinc.male.sandbox.ratexecutor.RateMeter;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkNotNull;
 
 @ThreadSafe
 public final class BatchingRateMeasuringExecutor implements RateMeasuringExecutor {
@@ -22,7 +22,7 @@ public final class BatchingRateMeasuringExecutor implements RateMeasuringExecuto
     submitter = Executors.newScheduledThreadPool(1, new BoundedThreadFactory(submitterThreadFactory, 1));
   }
 
-  //  public final void submit(final Runnable task, final Duration samplesInterval, final RateMeterConfig rateMeterConfig, final ClosedInterval targetRateInterval) {
+  //  public final void submit(final Runnable task, final Duration samplesInterval, final RateMeterConfig rateMeterConfig, final Rate targetRateInterval) {
   //    submitter.submit(() -> {
   //      final long startNanos = System.nanoTime();
   //      final long samplesIntervalNanos = samplesInterval.toNanos();
@@ -65,7 +65,7 @@ public final class BatchingRateMeasuringExecutor implements RateMeasuringExecuto
   //  }
 
   @Override
-  public final Future<?> submit(final Runnable task, final RateMeter rateMeter, final ClosedInterval closedInterval, final Duration delay) {
+  public final Future<?> submit(final Runnable task, final RateMeter rateMeter, final Rate rate, final Duration delay) {
     return null;
   }
 

@@ -1,4 +1,4 @@
-package stinc.male.sandbox.ratexecutor;
+package stinc.male.sandbox.ratexecutor.util.internal;
 
 import java.util.Locale;
 import java.util.function.Supplier;

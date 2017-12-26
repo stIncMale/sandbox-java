@@ -5,7 +5,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkNotNull;
 
 @Immutable
 public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {

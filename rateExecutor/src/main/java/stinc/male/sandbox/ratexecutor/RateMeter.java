@@ -1,11 +1,11 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
-import static stinc.male.sandbox.ratexecutor.RateMeterMath.checkTNanos;
-import static stinc.male.sandbox.ratexecutor.RateMeterMath.checkUnit;
-import static stinc.male.sandbox.ratexecutor.RateMeterMath.convertRate;
-import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratexecutor.util.internal.ConversionsAndChecks.checkTNanos;
+import static stinc.male.sandbox.ratexecutor.util.internal.ConversionsAndChecks.checkUnit;
+import static stinc.male.sandbox.ratexecutor.util.internal.ConversionsAndChecks.convertRate;
+import static stinc.male.sandbox.ratexecutor.util.internal.ConversionsAndChecks.maxTNanos;
 
 /**
  * A utility that measures rate of {@linkplain #tick(long, long) ticks}.
@@ -65,7 +65,7 @@ import static stinc.male.sandbox.ratexecutor.RateMeterMath.maxTNanos;
  * There may be a bunch of challenges like the one mentioned above. Different implementations may
  * conform different correctness conditions (a.k.a. consistency models)
  * and provide different guarantees on the accuracy.
- * Implementations with weaker guarantees may be more performant because they
+ * Implementations with weaker guarantees may display better performance because they
  * can sacrifice accuracy for the sake of performance and yet may produce sufficiently accurate results in practice.
  * Implementations are recommended to aim for accuracy on the best effort basis, but all {@code ...Count} and all {@code rate...} methods are
  * allowed to produce approximate results. An implementation can report detected inaccuracies via {@link #stats()}.
@@ -122,7 +122,7 @@ public interface RateMeter {
    *
    * @return Number of current ticks.
    */
-  default long ticksCount() {
+  default long ticksCount() {//TODO remove?
     return ticksCount(new RateMeterReading()).getLongValue();
   }
 

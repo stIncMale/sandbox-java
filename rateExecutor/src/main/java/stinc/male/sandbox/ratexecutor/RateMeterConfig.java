@@ -4,8 +4,8 @@ import java.time.Duration;
 import java.util.function.Function;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkArgument;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkNotNull;
 
 /**
  * The {@code @}{@link Immutable} here only guarantees that the {@code get...} methods

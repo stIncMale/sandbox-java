@@ -1,23 +1,23 @@
-package stinc.male.sandbox.ratexecutor;
+package stinc.male.sandbox.ratexecutor.util.internal;
 
 import java.time.Duration;
 import javax.annotation.Nullable;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
+import stinc.male.sandbox.ratexecutor.NanosComparator;
+import stinc.male.sandbox.ratexecutor.RateMeterReading;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkArgument;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkNotNull;
 
-/**
- * This class is only required because in Java 8 one can not define a private or package private method,
- * so it is not possible to define this methods as package private in {@link RateMeter}.
- */
-final class RateMeterMath {
+public final class ConversionsAndChecks {
   /**
    * Checks if {@code tNanos} is a valid value for the given {@code safeStartNanos} and {@code safeMaxTNanos}.
    *
    * @param tNanos Value to check.
-   * @param safeParamName Name of the method parameter with value {@code tNanos} which will be used to generate error if {@code tNanos} is not a valid value.
+   * @param safeParamName Name of the method parameter with value {@code tNanos}
+   * which will be used to generate error if {@code tNanos} is not a valid value.
+   *
    * @throws IllegalArgumentException If {@code tNanos} is invalid.
    */
-  static final void checkTNanos(
+  public static final void checkTNanos(
       final long tNanos,
       final long safeStartNanos,
       final long safeMaxTNanos,
@@ -37,17 +37,17 @@ final class RateMeterMath {
     }
   }
 
-  static final void checkUnit(final Duration unit, final String safeParamName) throws IllegalArgumentException {
+  public static final void checkUnit(final Duration unit, final String safeParamName) throws IllegalArgumentException {
     checkNotNull(unit, safeParamName);
     checkArgument(!unit.isZero(), safeParamName, "Must not be zero");
-    checkArgument(!unit.isNegative(), safeParamName, "Must be positive");
+    checkArgument(!unit.isNegative(), safeParamName, "Must not be negative");
   }
 
-  static final long maxTNanos(final long startNanos, final long safeSamplesIntervalNanos, final long safeHl) {
+  public static final long maxTNanos(final long startNanos, final long safeSamplesIntervalNanos, final long safeHl) {
     return startNanos - safeHl * safeSamplesIntervalNanos + Long.MAX_VALUE;
   }
 
-  static final double rateAverage(
+  public static final double rateAverage(
       final long safeRightNanos,
       final long safeUnitSizeNanos,
       final long safeStartNanos,
@@ -58,16 +58,16 @@ final class RateMeterMath {
         : (double)safeTicksTotalCount / ((double)totalNanos / safeUnitSizeNanos);
   }
 
-  static final double convertRate(
+  public static final double convertRate(
       final double rateInSamplesIntervals,
       final long safeSamplesIntervalNanos,
       final long safeUnitSizeNanos) {
     return (safeUnitSizeNanos == safeSamplesIntervalNanos)
         ? rateInSamplesIntervals
-        : rateInSamplesIntervals / ((double) safeSamplesIntervalNanos / safeUnitSizeNanos);
+        : rateInSamplesIntervals / ((double)safeSamplesIntervalNanos / safeUnitSizeNanos);
   }
 
-  static final RateMeterReading convertRate(
+  public static final RateMeterReading convertRate(
       final RateMeterReading rateReadingInSamplesIntervals,
       final long safeSamplesIntervalNanos,
       final long safeUnitSizeNanos) {
@@ -75,7 +75,7 @@ final class RateMeterMath {
         convertRate(rateReadingInSamplesIntervals.getDoubleValue(), safeSamplesIntervalNanos, safeUnitSizeNanos));
   }
 
-  private RateMeterMath() {
+  private ConversionsAndChecks() {
     throw new UnsupportedOperationException("The class isn't designed to be instantiated");
   }
 }

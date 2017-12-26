@@ -67,7 +67,6 @@ public final class BatchingRateMeasuringExecutorTest {
       final long batchesCount,
       final RateMeter rateMeter,
       final long tNanos) {
-    rateMeter.tick(tasksCount, tNanos);
     final long batchSize = tasksCount / batchesCount;
     if (batchSize > 1) {
       final Runnable baseBatch = batch(task, batchSize);
@@ -90,6 +89,7 @@ public final class BatchingRateMeasuringExecutorTest {
     } else {//batching is not appropriate
       execute(ex, task, tasksCount);
     }
+    rateMeter.tick(tasksCount, tNanos);
   }
 
   private final void execute(
@@ -103,7 +103,7 @@ public final class BatchingRateMeasuringExecutorTest {
 
   @Test
   public final void test() throws Exception {
-    final int threadsCount = 2;
+    final int threadsCount = 5;
     final ScheduledExecutorService submitterEx = Executors.newScheduledThreadPool(1, new BoundedThreadFactory(1));
     submitterEx.submit(() -> {});
     final ExecutorService ex = Executors.newFixedThreadPool(threadsCount, new PrintThreadFactory());
@@ -121,14 +121,11 @@ public final class BatchingRateMeasuringExecutorTest {
     }
     println("Threads have been started", 2);
     final AtomicLong submitDurationNanos = new AtomicLong();
-    final Duration timeSensitivity = of(1, ChronoUnit.MICROS);
-    final Duration samplesInterval = of(10, ChronoUnit.MICROS);
+    final Duration timeSensitivity = of(1, ChronoUnit.MILLIS);
+    final Duration samplesInterval = of(100, ChronoUnit.MILLIS);
     final long targetRatePerSecond = 20_000_000;
     final long targetSubmitsTotal = targetRatePerSecond * 10L;
-    final ClosedInterval targetSubmits = ClosedInterval.withRelativeDeviation(
-        (double)targetRatePerSecond * samplesInterval.toNanos() / Duration.ofSeconds(1)
-            .toNanos(),
-        0.05);
+    final Rate targetSubmits = Rate.withRelativeDeviation(targetRatePerSecond, 0.05, Duration.ofSeconds(1));
     println("targetSubmits=" + targetSubmits + ", targetSubmits.getMean=" + targetSubmits.getMean(), 1);
     final long startNanos = System.nanoTime();
     final RateMeter submitterRateMeter = new RingBufferRateMeter(
@@ -185,6 +182,8 @@ public final class BatchingRateMeasuringExecutorTest {
         if (submitsRequired > 0) {
           prevTNanos = tNanos;
         }
+        submitterRateMeter.rate(tNanos, submitterReading);
+        completionRateMeter.rate(tNanos, completionReading);
         if (submitsCounter >= targetSubmitsTotal) {
           submitDurationNanos.set(tNanos - startNanos);
           println(Duration.ofNanos(submitDurationNanos.get()), 2);
@@ -196,7 +195,6 @@ public final class BatchingRateMeasuringExecutorTest {
         final double measuredAverageSubmits = submitterRateMeter.rateAverage();
         final double deltaAverage = measuredAverageSubmits - targetSubmits.getMean();
         submitterRateMeter.rate(tNanos, submitterReading);
-        completionRateMeter.rate(tNanos, completionReading);
         final long measuredSubmits = submitterReading.getLongValue();
         final double ratio = (tNanos - prevTNanos) / (double)samplesIntervalNanos;
         final long result;
@@ -278,6 +276,7 @@ public final class BatchingRateMeasuringExecutorTest {
       Locale.setDefault(Locale.ROOT);
       final NumberFormat format = NumberFormat.getIntegerInstance();
       format.setGroupingUsed(true);
+      submitterRateMeter.rateAverage(Duration.ofSeconds(1));//TODO check why 100_000 rate
       println("submitterRateMeter.ticksTotalCount=" + format.format(submitterRateMeter.ticksTotalCount()) +
           ", submitterRateMeter.rateAverage=" + format.format(submitterRateMeter.rateAverage(Duration.ofSeconds(1))) +
           ", submitterRateMeter.rate=" + format.format(submitterRateMeter.rate(Duration.ofSeconds(1))), 2);

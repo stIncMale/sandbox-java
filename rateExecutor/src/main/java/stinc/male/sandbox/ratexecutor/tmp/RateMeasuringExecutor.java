@@ -15,10 +15,10 @@ public interface RateMeasuringExecutor extends AutoCloseable {
    * @param task
    * @param rateMeter must be {@link ThreadSafe}. Must not contain any ticks and must have its startNanos not after start = now + delay
    * initialDelay
-   * @param closedInterval
+   * @param rate
    * @return
    */
-  Future<?> submit(Runnable task, RateMeter rateMeter, ClosedInterval closedInterval, Duration delay);
+  Future<?> submit(Runnable task, RateMeter rateMeter, Rate rate, Duration delay);
 
   void shutdown(boolean shutdownWorker);
 

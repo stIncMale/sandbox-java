@@ -1,8 +1,10 @@
 package stinc.male.sandbox.ratexecutor;
 
 import java.time.Duration;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
-import static stinc.male.sandbox.ratexecutor.RateMeterMath.convertRate;
+import stinc.male.sandbox.ratexecutor.util.internal.ConversionsAndChecks;
+import stinc.male.sandbox.ratexecutor.util.internal.Preconditions;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratexecutor.util.internal.ConversionsAndChecks.convertRate;
 
 abstract class AbstractRateMeter<C extends RateMeterConfig> implements ConfigurableRateMeter<C> {
   private final TicksCounter ticksTotal;
@@ -28,7 +30,7 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements Configura
     samplesIntervalNanos = samplesInterval.toNanos();
     Preconditions.checkArgument(samplesIntervalNanos <= Long.MAX_VALUE / (config.getHl() + 1) - 1, "samplesInterval",
         () -> String.format("Must be less than (Long.MAX_VALUE - 1)nanos = %snanos, but actual value is %s", Long.MAX_VALUE - 1, samplesIntervalNanos));
-    maxTNanos = RateMeterMath.maxTNanos(startNanos, samplesIntervalNanos, config.getHl() + 1);
+    maxTNanos = ConversionsAndChecks.maxTNanos(startNanos, samplesIntervalNanos, config.getHl() + 1);
     this.config = config;
     ticksTotal = config.getTicksCounterSupplier().apply(0L);
     stats = config.isCollectStats() ? new ConcurrentRateMeterStats(true) : ConcurrentRateMeterStats.disabledInstance();
@@ -118,18 +120,18 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements Configura
   }
 
   protected final void checkArgument(final long tNanos, final String safeParamName) throws IllegalArgumentException {
-    RateMeterMath.checkTNanos(tNanos, startNanos, maxTNanos, safeParamName);
+    ConversionsAndChecks.checkTNanos(tNanos, startNanos, maxTNanos, safeParamName);
   }
 
   protected final void checkArgument(final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
-    RateMeterMath.checkUnit(unit, safeUnitParamName);
+    ConversionsAndChecks.checkUnit(unit, safeUnitParamName);
   }
 
   protected final void checkArguments(
       final long tNanos, final String safeTNanosParamName,
       final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
-    RateMeterMath.checkTNanos(tNanos, startNanos, maxTNanos, safeTNanosParamName);
-    RateMeterMath.checkUnit(unit, safeUnitParamName);
+    ConversionsAndChecks.checkTNanos(tNanos, startNanos, maxTNanos, safeTNanosParamName);
+    ConversionsAndChecks.checkUnit(unit, safeUnitParamName);
   }
 
   @Override

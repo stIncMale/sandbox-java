@@ -4,7 +4,7 @@ import java.util.Comparator;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkNotNull;
 
 /**
  * A {@linkplain Comparator comparator} that compares nanoseconds according to {@link System#nanoTime()} specification.

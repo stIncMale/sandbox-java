@@ -3,7 +3,7 @@ package stinc.male.sandbox.ratexecutor;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import javax.annotation.concurrent.ThreadSafe;
-import static stinc.male.sandbox.ratexecutor.Preconditions.checkArgument;
+import static stinc.male.sandbox.ratexecutor.util.internal.Preconditions.checkArgument;
 
 @ThreadSafe
 public final class ParkWaitStrategy implements WaitStrategy {
