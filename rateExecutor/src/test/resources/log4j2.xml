@@ -16,7 +16,7 @@
   <Loggers>
     <Root level="off">
     </Root>
-    <Logger name="stinc.male.sandbox.ratexecutor" level="trace">
+    <Logger name="stinc.male.sandbox.ratmex" level="trace">
       <AppenderRef ref="stdout"/>
     </Logger>
   </Loggers>
