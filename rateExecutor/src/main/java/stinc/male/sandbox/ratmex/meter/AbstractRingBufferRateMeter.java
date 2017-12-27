@@ -352,7 +352,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     checkNotNull(reading, "reading");
     reading.setTNanos(tNanos);
     reading.setAccurate(true);
-    final double value;
+    final boolean valueSet;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     final long samplesWindowShiftSteps;
     if (sequential) {
@@ -364,42 +364,52 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
     final long leftNanos = rightNanos - samplesIntervalNanos;
     if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
-      value = ConversionsAndChecks.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
       reading.setTNanos(rightNanos);
       reading.setAccurate(false);
+      final double value = ConversionsAndChecks.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
+      reading.setValue(Math.round(value), value, true);
+      valueSet = true;
     } else {//tNanos is within or ahead of the samples window
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
       if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {
         //tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
-        value = 0;
+        final long value = 0;
+        reading.setValue(value);
+        valueSet = true;
       } else {
         final long effectiveRightNanos = NanosComparator.compare(tNanos, rightNanos) <= 0
             ? tNanos//tNanos is within the samples window
             : rightNanos;//tNanos is ahead of samples window
         final long count = count(effectiveLeftNanos, effectiveRightNanos);
         if (sequential) {
-          value = count;
+          final long value = count;
+          reading.setValue(value);
+          valueSet = true;
         } else {
           final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
           long newSamplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
           if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samplesHistory.length()) {
             //the samples window may has been moved while we were counting, but count is still correct
-            value = count;
+            final long value = count;
+            reading.setValue(value);
+            valueSet = true;
           } else {//the samples window has been moved too far, return average
             final long newRightNanos = rightSamplesWindowBoundary(newSamplesWindowShiftSteps);
             reading.setTNanos(newRightNanos);
             reading.setAccurate(false);
-            getStats().ifPresent(ConcurrentRateMeterStats::accountFailedAccuracyEventForRate);
-            value = ConversionsAndChecks.rateAverage(
+            final double value = ConversionsAndChecks.rateAverage(
                 newRightNanos,
                 samplesIntervalNanos,
                 getStartNanos(),
                 ticksTotalCount());//this is the same as rateAverage()
+            reading.setValue(Math.round(value), value, true);
+            valueSet = true;
+            getStats().ifPresent(ConcurrentRateMeterStats::accountFailedAccuracyEventForRate);
           }
         }
       }
     }
-    reading.setValue(value);
+    assert valueSet;
     return reading;
   }
 

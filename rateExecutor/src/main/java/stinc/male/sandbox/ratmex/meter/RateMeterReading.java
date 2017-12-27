@@ -8,16 +8,17 @@ public final class RateMeterReading {
     private double doubleValue;
     private long tNanos;
     private boolean accurate;
+    private boolean rounded;
 
     public RateMeterReading() {
     }
 
-    public final double getDoubleValue() {//TODO getValueDouble
-        return doubleValue;
-    }
-
     public final long getLongValue() {//TODO getValueLong
         return longValue;
+    }
+
+    public final double getDoubleValue() {//TODO getValueDouble
+        return doubleValue;
     }
 
     public final long getTNanos() {
@@ -28,15 +29,21 @@ public final class RateMeterReading {
         return accurate;
     }
 
-    public final RateMeterReading setValue(final double value) {
-        longValue = (long)value;
-        doubleValue = value;
-        return this;
+    public final boolean isRounded() {
+        return rounded;
     }
 
     public final RateMeterReading setValue(final long value) {
         longValue = value;
         doubleValue = value;
+        rounded = false;
+        return this;
+    }
+
+    public final RateMeterReading setValue(final long valueLong, final double valueDouble, final boolean rounded) {//TODO refactor this method?
+        longValue = valueLong;
+        doubleValue = valueDouble;
+        this.rounded = true;
         return this;
     }
 
@@ -50,8 +57,6 @@ public final class RateMeterReading {
         return this;
     }
 
-    //TODO add isRounded method
-
     @Override
     public final String toString() {
         return getClass().getSimpleName()
@@ -59,6 +64,7 @@ public final class RateMeterReading {
                 + ", doubleValue=" + doubleValue
                 + ", tNanos=" + tNanos
                 + ", accurate=" + accurate
+                + ", rounded=" + rounded
                 + '}';
     }
 }
