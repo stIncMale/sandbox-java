@@ -12,11 +12,11 @@ public final class RateMeterReading {
     public RateMeterReading() {
     }
 
-    public final double getDoubleValue() {//TODO remove
+    public final double getDoubleValue() {//TODO getValueDouble
         return doubleValue;
     }
 
-    public final long getLongValue() {//TODO getRate
+    public final long getLongValue() {//TODO getValueLong
         return longValue;
     }
 
@@ -49,6 +49,8 @@ public final class RateMeterReading {
         this.accurate = accurate;
         return this;
     }
+
+    //TODO add isRounded method
 
     @Override
     public final String toString() {

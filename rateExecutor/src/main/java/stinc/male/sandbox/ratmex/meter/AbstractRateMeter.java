@@ -1,6 +1,7 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
+import java.util.Optional;
 import stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.util.internal.Preconditions;
 import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
@@ -12,7 +13,7 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements Configura
   private final Duration samplesInterval;
   private final long samplesIntervalNanos;
   private final long maxTNanos;
-  private final ConcurrentRateMeterStats stats;
+  private final Optional<ConcurrentRateMeterStats> optStats;
   private final C config;
 
   /**
@@ -33,7 +34,7 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements Configura
     maxTNanos = ConversionsAndChecks.maxTNanos(startNanos, samplesIntervalNanos, config.getHl() + 1);
     this.config = config;
     ticksTotal = config.getTicksCounterSupplier().apply(0L);
-    stats = config.isCollectStats() ? new ConcurrentRateMeterStats(true) : ConcurrentRateMeterStats.disabledInstance();
+    optStats = Optional.ofNullable(config.isCollectStats() ? new ConcurrentRateMeterStats() : null);
   }
 
   @Override
@@ -95,8 +96,8 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements Configura
   }
 
   @Override
-  public final RateMeterStats stats() {
-    return stats;
+  public final Optional<? extends RateMeterStats> stats() {
+    return optStats;
   }
 
   @Override
@@ -104,8 +105,8 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements Configura
     return config;
   }
 
-  protected final ConcurrentRateMeterStats getStats() {
-    return stats;
+  protected final Optional<ConcurrentRateMeterStats> getStats() {
+    return optStats;
   }
 
   protected final TicksCounter getTicksTotalCounter() {
@@ -135,12 +136,12 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements Configura
   }
 
   @Override
-  public String toString() {//TODO replace ( with { everywhere in toString
+  public String toString() {
     return getClass().getSimpleName()
-        + "(startNanos=" + startNanos
+        + "{startNanos=" + startNanos
         + ", samplesIntervalNanos=" + samplesIntervalNanos
         + ", config=" + config
-        + ", stats=" + stats
-        + ')';
+        + ", optStats=" + optStats
+        + '}';
   }
 }

@@ -96,6 +96,7 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
         });
     assertEquals(0,
         rm.stats()
+            .get()
             .failedAccuracyEventsCountForTick(),
         String.format("Iteration#%s, %s", iterationIdx, tp));
     assertEquals(tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary(), String.format("Iteration#%s, %s", iterationIdx, tp));
@@ -129,13 +130,13 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
     @Override
     public final String toString() {
       return getClass().getSimpleName()
-          + "(numberOfThreads=" + numberOfThreads
+          + "{numberOfThreads=" + numberOfThreads
           + ", numberOfSamples=" + numberOfSamples
           + ", orderTicksByTime=" + orderTicksByTime
           + ", tickToRateRatio=" + tickToRateRatio
           + ", samplesInterval=" + samplesInterval
           + ", repeatingInstants=" + repeatingInstants
-          + ')';
+          + '}';
     }
   }
 

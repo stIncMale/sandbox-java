@@ -1,6 +1,7 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
+import java.util.Optional;
 import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.checkTNanos;
 import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.checkUnit;
@@ -27,7 +28,8 @@ import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.maxTN
  * (comparison according to {@link System#nanoTime()}).
  * Samples window can only be moved to the right and the only way to do this is to call {@link #tick(long, long)}.
  * Current ticks are those inside the samples window.
- * Current rate is calculated base on current ticks only and by default is measured in samplesInterval<sup>-1</sup>.
+ * Current rate is calculated based on current ticks and by default is measured in samplesInterval<sup>-1</sup>,
+ * hence current rate value always equals to the current ticks count.
  * <p>
  * For example if samplesInterval is 30ns,<br>
  * startNanos is 10ns,<br>
@@ -48,14 +50,19 @@ import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.maxTN
  * </pre>
  * <p>
  * <b>Allowed values</b><br>
- * samplesInterval (in nanos) \u2208 [1, {@link Long#MAX_VALUE} / (HL + 1) - 1],<br>
- * tNanos \u2208 [startNanos, startNanos - (HL + 1) * samplesInterval + {@link Long#MAX_VALUE}]
+ * samplesInterval (in nanos) \u2208 [1, {@link Long#MAX_VALUE} / (historyLength + 1) - 1],<br>
+ * tNanos \u2208 [startNanos, startNanos - (historyLength + 1) * samplesInterval + {@link Long#MAX_VALUE}]
  * (comparison according to {@link System#nanoTime()}),
- * where HL is the size of samples history maintained by the {@link RateMeter} measured in samplesInterval units.
+ * where historyLength is the length of samples history maintained by the {@link RateMeter} measured in samplesInterval units.
  * Note that the specification of {@link RateMeter#rate(long)} implies that any {@link RateMeter}
  * must maintain samples history for at least 2samplesInterval.
  * <p>
- * <b>Implementation considerations</b><br>
+ * <b>API notes</b><br>
+ * This interface is designed to allow garbage-free implementations and usage scenarios.
+ * Methods with {@link RateMeterReading} parameter are specifically serve this purpose:
+ * they do not create {@link RateMeterReading} objects, thus allowing a user to reuse the same {@link RateMeterReading}.
+ * <p>
+ * <b>Implementation notes</b><br>
  * The obvious difficulty in concurrent implementation of this interface is the fact that samples window
  * may be moved by a thread running {@link #tick(long, long)} method, while some other thread
  * tries to count ticks (e.g. {@link #ticksCount()}) or to account new samples.
@@ -67,8 +74,9 @@ import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.maxTN
  * and provide different guarantees on the accuracy.
  * Implementations with weaker guarantees may display better performance because they
  * can sacrifice accuracy for the sake of performance and yet may produce sufficiently accurate results in practice.
- * Implementations are recommended to aim for accuracy on the best effort basis, but all {@code ...Count} and all {@code rate...} methods are
- * allowed to produce approximate results. An implementation can report detected inaccuracies via {@link #stats()}.
+ * Implementations are recommended to aim for accuracy on the best effort basis,
+ * but all methods which have analogs with {@link RateMeterReading} parameters are allowed to produce approximate results.
+ * An implementation should report detected inaccuracies via {@link #stats()} and {@link RateMeterReading}.
  * <p>
  * Implementations may not internally use nanosecond {@linkplain #getTimeSensitivity time sensitivity} (resolution, accuracy, granularity). In
  * fact, there is no sense in using resolution better than the resolution of the timer that is used by a user of {@link RateMeter}.
@@ -94,8 +102,9 @@ public interface RateMeter {
    * at an instant that differs from the specified one not more than by the time sensitivity, which may be observed via
    * {@link #rightSamplesWindowBoundary()}.
    * <p>
-   * This method, just as {@link RateMeterReading#isAccurate()}, can be considered as an important implementation detail leaked through
-   * {@link RateMeter}'s <a href="https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/">leaky abstraction</a>.
+   * This method, just as {@link RateMeterReading#isAccurate()} and {@link #stats()},
+   * can be considered as an important implementation detail leaked through {@link RateMeter}'s
+   * <a href="https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/">leaky abstraction</a>.
    * <p>
    * <b>Implementation considerations</b><br>
    * It is recommended to use a resolution (accuracy, granularity) of the timer used by a user of {@link RateMeter}.
@@ -122,7 +131,7 @@ public interface RateMeter {
    *
    * @return Number of current ticks.
    */
-  default long ticksCount() {//TODO remove?
+  default long ticksCount() {
     return ticksCount(new RateMeterReading()).getLongValue();
   }
 
@@ -140,7 +149,7 @@ public interface RateMeter {
    * If {@code tNanos} is greater than current {@link #rightSamplesWindowBoundary()}
    * then this method moves the samples window such that its right boundary is at {@code tNanos}.
    *
-   * @param count Number of ticks. MAY be negative, zero, or positive.
+   * @param count Number of ticks. May be negative, zero, or positive.
    * If zero then the method does nothing,
    * otherwise adds {@code count} to the currently scored number of ticks at the specified instant,
    * or just remembers {@code count} ticks if no ticks were scored at the specified instant.
@@ -149,7 +158,7 @@ public interface RateMeter {
   void tick(final long count, final long tNanos);
 
   /**
-   * Calculates average rate of ticks (measured in samplesInterval<sup>-1</sup>)
+   * Calculates an average (mean) rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * from the {@linkplain #getStartNanos() start}
    * till the {@link #rightSamplesWindowBoundary()}.
    *
@@ -160,11 +169,11 @@ public interface RateMeter {
   }
 
   /**
-   * Acts just like {@link #rateAverage()} but the result is measured in {@code unit}<sup>-1</sup>
-   * instead of samplesInterval<sup>-1</sup>.
+   * This method is equivalent to {@link #rateAverage()}
+   * but the result is measured in {@code unit}<sup>-1</sup> instead of samplesInterval<sup>-1</sup>.
    *
    * @param unit A time interval to use as a unit.
-   * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
+   * Must not be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
    *
    * @return Average rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
@@ -174,22 +183,24 @@ public interface RateMeter {
   }
 
   /**
-   * Calculates average rate of ticks (measured in samplesInterval<sup>-1</sup>)
+   * Calculates an average (mean) rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * from the {@linkplain #getStartNanos() start} till the {@code tNanos},
    * if {@code tNanos} is greater than {@link #rightSamplesWindowBoundary()},
    * otherwise returns {@link #rateAverage()}.
+   *
+   * @param tNanos An effective (imaginary) right boundary of the samples window.
    *
    * @return Average rate of ticks or 0 if {@code tNanos} is equal to {@link #getStartNanos()}.
    */
   double rateAverage(final long tNanos);
 
   /**
-   * Acts just like {@link #rateAverage(long)} but the result is measured in {@code unit}<sup>-1</sup>
-   * instead of samplesInterval<sup>-1</sup>.
+   * This method is equivalent to {@link #rateAverage(long)}
+   * but the result is measured in {@code unit}<sup>-1</sup> instead of samplesInterval<sup>-1</sup>.
    *
-   * @param tNanos
+   * @param tNanos An effective (imaginary) right boundary of the samples window.
    * @param unit A time interval to use as a unit.
-   * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
+   * Must not be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
    *
    * @return Average rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
@@ -215,17 +226,25 @@ public interface RateMeter {
     return ticksCount();
   }
 
+  /**
+   * This method is equivalent to {@link #rate()}, but provides a complete measured data,
+   * while {@link #rate()} returns only a rate value.
+   *
+   * @param reading A {@link RateMeterReading} to be filled with a measured data.
+   *
+   * @return {@code reading} filled with the measured data.
+   */
   default RateMeterReading rate(final RateMeterReading reading) {
     checkNotNull(reading, "reading");
     return ticksCount(reading);
   }
 
   /**
-   * Acts just like {@link #rate()} but the result is measured in {@code unit}<sup>-1</sup>
-   * instead of samplesInterval<sup>-1</sup>.
+   * This method is equivalent to {@link #rate()}
+   * but the result is measured in {@code unit}<sup>-1</sup> instead of samplesInterval<sup>-1</sup>.
    *
    * @param unit A time interval to use as a unit.
-   * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
+   * Must not be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
    *
    * @return Current rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
@@ -234,6 +253,16 @@ public interface RateMeter {
     return convertRate(rate(), getSamplesInterval().toNanos(), unit.toNanos());
   }
 
+  /**
+   * This method is equivalent to {@link #rate(Duration)}, but provides a complete measured data,
+   * while {@link #rate(Duration)} returns only a rate value.
+   *
+   * @param unit A time interval to use as a unit.
+   * Must not be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
+   * @param reading A {@link RateMeterReading} to be filled with a measured data.
+   *
+   * @return {@code reading} filled with the measured data.
+   */
   default RateMeterReading rate(final Duration unit, final RateMeterReading reading) {
     checkUnit(unit, "unit");
     checkNotNull(reading, "reading");
@@ -242,25 +271,35 @@ public interface RateMeter {
 
   /**
    * Calculates rate of ticks (measured in samplesInterval<sup>-1</sup>)
-   * as if {@code tNanos} were the right boundary of a samples window,
+   * as if {@code tNanos} were the right boundary of the samples window,
    * if {@code tNanos} is greater than {@link #rightSamplesWindowBoundary()} - {@link #getSamplesInterval()},
    * otherwise returns {@link #rateAverage()}.
    *
-   * @param tNanos An effective (imaginary) right boundary of a samples window.
+   * @param tNanos An effective (imaginary) right boundary of the samples window.
    */
   default double rate(long tNanos) {
     return rate(tNanos, new RateMeterReading()).getDoubleValue();
   }
 
+
+  /**
+   * This method is equivalent to {@link #rate(long)}, but provides a complete measured data,
+   * while {@link #rate(long)} returns only a rate value.
+   *
+   * @param tNanos An effective (imaginary) right boundary of the samples window.
+   * @param reading A {@link RateMeterReading} to be filled with a measured data.
+   *
+   * @return {@code reading} filled with the measured data.
+   */
   RateMeterReading rate(long tNanos, RateMeterReading reading);
 
   /**
-   * Acts just like {@link #rate(long)} but the result is measured in {@code unit}<sup>-1</sup>
-   * instead of samplesInterval<sup>-1</sup>.
+   * This method is equivalent to {@link #rate(long)}
+   * but the result is measured in {@code unit}<sup>-1</sup> instead of samplesInterval<sup>-1</sup>.
    *
-   * @param tNanos An effective (imaginary) right boundary of a samples window.
+   * @param tNanos An effective (imaginary) right boundary of the samples window.
    * @param unit A time interval to use as a unit.
-   * MUST NOT be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
+   * Must not be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
    *
    * @return Current rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
@@ -272,6 +311,17 @@ public interface RateMeter {
     return convertRate(rate(tNanos), samplesIntervalNanos, unit.toNanos());
   }
 
+  /**
+   * This method is equivalent to {@link #rate(long, Duration)}, but provides a complete measured data,
+   * while {@link #rate(long, Duration)} returns only a rate value.
+   *
+   * @param tNanos An effective (imaginary) right boundary of the samples window.
+   * @param unit A time interval to use as a unit.
+   * Must not be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
+   * @param reading A {@link RateMeterReading} to be filled with a measured data.
+   *
+   * @return {@code reading} filled with the measured data.
+   */
   default RateMeterReading rate(final long tNanos, final Duration unit, final RateMeterReading reading) {
     final long startNanos = getStartNanos();
     final long samplesIntervalNanos = getSamplesInterval().toNanos();
@@ -282,10 +332,10 @@ public interface RateMeter {
   }
 
   /**
-   * @return Statistics which may be {@linkplain RateMeterStats#isEmpty() empty} if the {@link RateMeter}
-   * does not collects it.
+   * @return {@link RateMeterStats} which may be not {@linkplain Optional#isPresent() present}
+   * if the {@link RateMeter} does not collect stats.
    */
-  RateMeterStats stats();
+  Optional<? extends RateMeterStats> stats();
 }
 //TODO verify javadocs and other comments and messages
 //TODO check inheritance/final methods

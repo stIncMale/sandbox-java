@@ -1,6 +1,7 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
+import java.util.Optional;
 import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
 
@@ -197,7 +198,7 @@ public final class ConcurrentSimpleRateMeter implements RateMeter {
   }
 
   @Override
-  public final RateMeterStats stats() {
+  public final Optional<? extends RateMeterStats> stats() {
     final long lockStamp = lockStrategy.sharedLock();
     try {
       return rm.stats();
@@ -209,8 +210,8 @@ public final class ConcurrentSimpleRateMeter implements RateMeter {
   @Override
   public final String toString() {
     return getClass().getSimpleName()
-        + "(rm=" + rm
+        + "{rm=" + rm
         + ", lockStrategy=" + lockStrategy
-        + ')';
+        + '}';
   }
 }

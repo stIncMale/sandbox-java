@@ -74,7 +74,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   @Override
   public String toString() {
     return getClass().getSimpleName()
-        + "(ticksCounterSupplier=" + getTicksCounterSupplier()
+        + "{ticksCounterSupplier=" + getTicksCounterSupplier()
         + ", timeSensitivity=" + getTimeSensitivity()
         + ", collectStats=" + isCollectStats()
         + ", maxTicksCountAttempts=" + getMaxTicksCountAttempts()
@@ -82,7 +82,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
         + ", strictTick=" + strictTick
         + ", waitStrategySupplier=" + waitStrategySupplier
         + ", lockStrategySupplier=" + lockStrategySupplier
-        + ')';
+        + '}';
   }
 
   @NotThreadSafe

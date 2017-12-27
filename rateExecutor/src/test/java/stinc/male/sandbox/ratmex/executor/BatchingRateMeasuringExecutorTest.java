@@ -278,7 +278,7 @@ public final class BatchingRateMeasuringExecutorTest {
       Locale.setDefault(Locale.ROOT);
       final NumberFormat format = NumberFormat.getIntegerInstance();
       format.setGroupingUsed(true);
-      submitterRateMeter.rateAverage(Duration.ofSeconds(1));//TODO check why 100_000 rate
+      submitterRateMeter.rateAverage(Duration.ofSeconds(1));
       println("submitterRateMeter.ticksTotalCount=" + format.format(submitterRateMeter.ticksTotalCount()) +
           ", submitterRateMeter.rateAverage=" + format.format(submitterRateMeter.rateAverage(Duration.ofSeconds(1))) +
           ", submitterRateMeter.rate=" + format.format(submitterRateMeter.rate(Duration.ofSeconds(1))), 2);
@@ -291,9 +291,9 @@ public final class BatchingRateMeasuringExecutorTest {
               .toNanos())), 2);
       println("targetRatePerSecond=" + format.format(targetRatePerSecond) +
           ", targetSubmits=" + targetSubmits,2);
-      println("failedAccuracyEventsCountForTick=" + submitterRateMeter.stats()
+      println("failedAccuracyEventsCountForTick=" + submitterRateMeter.stats().get()
           .failedAccuracyEventsCountForTick() +
-          ", failedAccuracyEventsCountForRate=" + submitterRateMeter.stats()
+          ", failedAccuracyEventsCountForRate=" + submitterRateMeter.stats().get()
           .failedAccuracyEventsCountForRate(), 2);
       println("batchCache.size=" + batchCache.size(), 2);
     }

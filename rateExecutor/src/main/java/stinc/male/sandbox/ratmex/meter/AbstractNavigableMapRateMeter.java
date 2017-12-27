@@ -208,7 +208,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
             result = count;
           } else {//the samples window has been moved too far, return average
-            getStats().accountFailedAccuracyEventForRate();
+            getStats().ifPresent(ConcurrentRateMeterStats::accountFailedAccuracyEventForRate);
             result = ConversionsAndChecks.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
           }
         }
@@ -247,7 +247,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
           } else {//the samples window has been moved too far, return average
             reading.setTNanos(newRightNanos);
             reading.setAccurate(false);
-            getStats().accountFailedAccuracyEventForRate();
+            getStats().ifPresent(ConcurrentRateMeterStats::accountFailedAccuracyEventForRate);
             value = ConversionsAndChecks.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
           }
         }

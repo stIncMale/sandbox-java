@@ -333,7 +333,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
             //the samples window may has been moved while we were counting, but count is still correct
             result = count;
           } else {//the samples window has been moved too far, return average
-            getStats().accountFailedAccuracyEventForRate();
+            getStats().ifPresent(ConcurrentRateMeterStats::accountFailedAccuracyEventForRate);
             result = ConversionsAndChecks.rateAverage(
                 rightSamplesWindowBoundary(newSamplesWindowShiftSteps),
                 samplesIntervalNanos,
@@ -389,7 +389,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
             final long newRightNanos = rightSamplesWindowBoundary(newSamplesWindowShiftSteps);
             reading.setTNanos(newRightNanos);
             reading.setAccurate(false);
-            getStats().accountFailedAccuracyEventForRate();
+            getStats().ifPresent(ConcurrentRateMeterStats::accountFailedAccuracyEventForRate);
             value = ConversionsAndChecks.rateAverage(
                 newRightNanos,
                 samplesIntervalNanos,
@@ -442,7 +442,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
         final long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
         if (targetSamplesWindowShiftSteps < samplesWindowShiftSteps - samplesHistory.length()) {
           //we could have accounted (but it is not necessary) the sample at the incorrect instant because samples window had been moved too far
-          getStats().accountFailedAccuracyEventForTick();
+          getStats().ifPresent(ConcurrentRateMeterStats::accountFailedAccuracyEventForTick);
         }
       } else {
         final long stamp = sharedLockTicksCount(targetIdx);

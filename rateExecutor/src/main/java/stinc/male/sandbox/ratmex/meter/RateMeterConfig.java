@@ -99,12 +99,12 @@ public class RateMeterConfig {
   @Override
   public String toString() {
     return getClass().getSimpleName()
-        + "(ticksCounterSupplier=" + ticksCounterSupplier
+        + "{ticksCounterSupplier=" + ticksCounterSupplier
         + ", timeSensitivity=" + timeSensitivity
         + ", collectStats=" + collectStats
         + ", maxTicksCountAttempts=" + maxTicksCountAttempts
         + ", hl=" + hl
-        + ')';
+        + '}';
   }
 
   @NotThreadSafe
@@ -179,7 +179,7 @@ public class RateMeterConfig {
      *
      * @see RateMeterConfig#getHl()
      */
-    public final Builder setHl(final int hl) {
+    public final Builder setHl(final int hl) {//TODO rename to setHistoryLength
       checkArgument(hl >= 2, "hl", "Must be greater than or equal to 2");
       this.hl = hl;
       return this;
