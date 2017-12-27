@@ -10,8 +10,7 @@ import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkArgumen
 /**
  * A representation of a rate.
  * Formally represents a set of probability distributions which have probability density functions equal to 0
- * for any values outside [{@linkplain #getMin() min}; {@linkplain #getMax() max}],
- * and {@linkplain #getMean() mean} equal to ({@linkplain #getMin() min} + {@linkplain #getMax() max}) / 2.
+ * for any values outside [{@linkplain #getMin() min}; {@linkplain #getMax() max}].
  */
 @Immutable
 public final class Rate {
@@ -36,31 +35,35 @@ public final class Rate {
 
   /**
    * This method is equivalent to
-   * {@link #withAbsoluteDeviation(double, double, Duration) withAbsoluteDeviation}{@code (mean, relativeDeviation * mean, unit)}.
+   * {@link #withAbsoluteDeviation(double, double, Duration) withAbsoluteDeviation}{@code (average, relativeDeviation * average, unit)}.
    *
-   * @param mean A {@linkplain #getMean() mean} rate value.
-   * @param relativeDeviation A relative deviation of rate values from the {@code mean}. Must not be negative.
+   * @param average An unweighted average rate value.
+   * @param relativeDeviation A maximal relative deviation of rate values from the {@code average}. Must not be negative.
    * @param unit See {@link #Rate(double, double, Duration)}.
    */
-  public static Rate withRelativeDeviation(final double mean, final double relativeDeviation, final Duration unit) {
+  public static Rate withRelativeDeviation(final double average, final double relativeDeviation, final Duration unit) {
     checkArgument(
         relativeDeviation >= 0,
         "relativeDeviation",
         () -> String.format("Must not be less than 0, but actual value is %s", relativeDeviation));
-    return withAbsoluteDeviation(mean, relativeDeviation * mean, unit);
+    return withAbsoluteDeviation(average, relativeDeviation * average, unit);
   }
 
   /**
    * This method is equivalent to
-   * {@code new }{@link #Rate(double, double, Duration) Rate}{@code (mean - absoluteDeviation, mean + absoluteDeviation, unit)},
+   * {@code new }{@link #Rate(double, double, Duration) Rate}{@code (average - absoluteDeviation, average + absoluteDeviation, unit)},
    * but may return not a new object.
    *
-   * @param mean A {@linkplain #getMean() mean} rate value.
-   * @param absoluteDeviation An absolute deviation of rate values from the {@code mean}.
+   * @param average An unweighted average rate value.
+   * @param absoluteDeviation An maximal absolute deviation of rate values from the {@code average}. Must not be negative.
    * @param unit See {@link #Rate(double, double, Duration)}.
    */
-  public static Rate withAbsoluteDeviation(final double mean, final double absoluteDeviation, final Duration unit) {
-    return new Rate(mean - absoluteDeviation, mean + absoluteDeviation, unit);
+  public static Rate withAbsoluteDeviation(final double average, final double absoluteDeviation, final Duration unit) {
+    checkArgument(
+            absoluteDeviation >= 0,
+            "absoluteDeviation",
+            () -> String.format("Must not be negative, but actual value is %s", absoluteDeviation));
+    return new Rate(average - absoluteDeviation, average + absoluteDeviation, unit);
   }
 
   /**
@@ -75,13 +78,6 @@ public final class Rate {
    */
   public final double getMax() {
     return max;
-  }
-
-  /**
-   * @return A mean rate value which is equal to ({@linkplain #getMin() min} + {@linkplain #getMax() max}) / 2.
-   */
-  public final double getMean() {
-    return (min + max) / 2;
   }
 
   /**

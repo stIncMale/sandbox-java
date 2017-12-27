@@ -126,7 +126,7 @@ public final class BatchingRateMeasuringExecutorTest {
     final long targetRatePerSecond = 20_000_000;
     final long targetSubmitsTotal = targetRatePerSecond * 10L;
     final Rate targetSubmits = Rate.withRelativeDeviation(targetRatePerSecond, 0.05, Duration.ofSeconds(1));
-    println("targetSubmits=" + targetSubmits + ", targetSubmits.getMean=" + targetSubmits.getMean(), 1);
+    println("targetSubmits=" + targetSubmits + ", targetSubmits.avg=" + ((targetSubmits.getMin() + targetSubmits.getMax()) / 2), 1);
     final long startNanos = System.nanoTime();
     final RateMeter submitterRateMeter = new RingBufferRateMeter(
         startNanos,
@@ -158,6 +158,7 @@ public final class BatchingRateMeasuringExecutorTest {
       private final RateMeterReading completionReading;
       private long prevTNanos;
       private final long samplesIntervalNanos;
+      private final double targetSubmitsMean;
 
       {
         submitsCounter = 0;
@@ -171,6 +172,7 @@ public final class BatchingRateMeasuringExecutorTest {
         samplesIntervalNanos = submitterRateMeter.getSamplesInterval()
             .toNanos();
         prevTNanos = startNanos;
+        targetSubmitsMean = (targetSubmits.getMin() + targetSubmits.getMax()) / 2;
       }
 
       @Override
@@ -193,12 +195,12 @@ public final class BatchingRateMeasuringExecutorTest {
 
       private final long submitsRequired(final long tNanos) {
         final double measuredAverageSubmits = submitterRateMeter.rateAverage();
-        final double deltaAverage = measuredAverageSubmits - targetSubmits.getMean();
+        final double deltaAverage = measuredAverageSubmits - targetSubmitsMean;
         submitterRateMeter.rate(tNanos, submitterReading);
         final long measuredSubmits = submitterReading.getLongValue();
         final double ratio = (tNanos - prevTNanos) / (double)samplesIntervalNanos;
         final long result;
-        if (measuredSubmits < targetSubmits.getMean()) {//as expected; the interval (prevTNanos; tNanos] is fresh and we are deciding submits for it
+        if (measuredSubmits < targetSubmitsMean) {//as expected; the interval (prevTNanos; tNanos] is fresh and we are deciding submits for it
           if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
             result = round(ratio * targetSubmits.getMax());
                         println("1 " + result +
@@ -227,7 +229,7 @@ public final class BatchingRateMeasuringExecutorTest {
                 ", ratio=" + ratio, 1);
           }
         }
-        //        if (measuredSubmits < targetSubmits.getMean()) {//as expected; the interval (prevTNanos; tNanos] is fresh and we are deciding submits for it
+        //        if (measuredSubmits < targetSubmitsMean) {//as expected; the interval (prevTNanos; tNanos] is fresh and we are deciding submits for it
         //          if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
         //            result = measuredSubmits < targetSubmits.getMax()
         //                ? round(ratio * (targetSubmits.getMax() - measuredSubmits))
