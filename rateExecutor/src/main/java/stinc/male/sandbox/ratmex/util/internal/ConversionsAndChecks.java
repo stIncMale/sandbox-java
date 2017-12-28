@@ -59,20 +59,26 @@ public final class ConversionsAndChecks {
   }
 
   public static final double convertRate(
-      final double rateInSamplesIntervals,
-      final long safeSamplesIntervalNanos,
-      final long safeUnitSizeNanos) {
-    return (safeUnitSizeNanos == safeSamplesIntervalNanos)
-        ? rateInSamplesIntervals
-        : rateInSamplesIntervals / ((double)safeSamplesIntervalNanos / safeUnitSizeNanos);
+      final double rateInUnits,
+      final long safeUnitSizeNanos,
+      final long newSafeUnitSizeNanos) {
+    return (newSafeUnitSizeNanos == safeUnitSizeNanos)
+        ? rateInUnits
+        : rateInUnits / ((double)safeUnitSizeNanos / newSafeUnitSizeNanos);
   }
 
   public static final RateMeterReading convertRate(
-      final RateMeterReading rateReadingInSamplesIntervals,
-      final long safeSamplesIntervalNanos,
-      final long safeUnitSizeNanos) {
-    return rateReadingInSamplesIntervals.setValue(
-        convertRate(rateReadingInSamplesIntervals.getDoubleValue(), safeSamplesIntervalNanos, safeUnitSizeNanos));
+      final RateMeterReading rateReadingInUnits,
+      final long safeUnitSizeNanos,
+      final long newSafeUnitSizeNanos) {
+    final RateMeterReading result;
+    if (safeUnitSizeNanos == newSafeUnitSizeNanos) {
+      result = rateReadingInUnits;
+    } else {
+      final double convertedRate = convertRate(rateReadingInUnits.getValueDouble(), safeUnitSizeNanos, newSafeUnitSizeNanos);
+      return rateReadingInUnits.setValue(convertedRate);
+    }
+    return result;
   }
 
   private ConversionsAndChecks() {

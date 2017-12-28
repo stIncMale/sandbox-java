@@ -132,7 +132,7 @@ public interface RateMeter {
    * @return Number of current ticks.
    */
   default long ticksCount() {
-    return ticksCount(new RateMeterReading()).getLongValue();
+    return ticksCount(new RateMeterReading()).getValueLong();
   }
 
   RateMeterReading ticksCount(RateMeterReading reading);
@@ -268,8 +268,8 @@ public interface RateMeter {
     checkNotNull(reading, "reading");
     final Duration samplesInterval = getSamplesInterval();
     return unit.equals(samplesInterval)
-            ? rate(reading)
-            : convertRate(rate(reading), samplesInterval.toNanos(), unit.toNanos());
+        ? rate(reading)
+        : convertRate(rate(reading), samplesInterval.toNanos(), unit.toNanos());
   }
 
   /**
@@ -281,9 +281,8 @@ public interface RateMeter {
    * @param tNanos An effective (imaginary) right boundary of the samples window.
    */
   default double rate(long tNanos) {
-    return rate(tNanos, new RateMeterReading()).getDoubleValue();
+    return rate(tNanos, new RateMeterReading()).getValueDouble();
   }
-
 
   /**
    * This method is equivalent to {@link #rate(long)}, but provides a complete measured data,
@@ -333,15 +332,15 @@ public interface RateMeter {
     checkUnit(unit, "unit");
     checkNotNull(reading, "reading");
     return unit.equals(samplesInterval)
-            ? rate(tNanos, reading)
-            : convertRate(rate(tNanos, reading), samplesIntervalNanos, unit.toNanos());
+        ? rate(tNanos, reading)
+        : convertRate(rate(tNanos, reading), samplesIntervalNanos, unit.toNanos());
   }
 
   /**
    * @return {@link RateMeterStats} which may be not {@linkplain Optional#isPresent() present}
    * if the {@link RateMeter} does not collect stats.
    */
-  Optional<? extends RateMeterStats> stats();
+  Optional<RateMeterStats> stats();//TODO parametrize, specify thread safety of stats
 }
 //TODO verify javadocs and other comments and messages
 //TODO check inheritance/final methods

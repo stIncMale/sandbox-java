@@ -40,8 +40,8 @@ public final class BatchingRateMeasuringExecutor implements RateMeasuringExecuto
   //        final long ticksTotalCount = rateMeter.ticksTotalCount();
   //        final long targetTicksTotalCount = (long) (targetTicksCountPerNano * passedNanos);
   //        final long ticksTotalCountDeviation = ticksTotalCount - targetTicksTotalCount;//VAKOTODO deviation must be calculated locally, not globally
-  //        if (ticksTotalCountDeviation < 0 && rateMeterReading.getLongValue() < targetRateInterval.getMax()) {//deficit and we still have a budget
-  //          final long affordableTicksCount = Math.min(-ticksTotalCountDeviation, targetRateInterval.getMax() - rateMeterReading.getLongValue());
+  //        if (ticksTotalCountDeviation < 0 && rateMeterReading.getValueLong() < targetRateInterval.getMax()) {//deficit and we still have a budget
+  //          final long affordableTicksCount = Math.min(-ticksTotalCountDeviation, targetRateInterval.getMax() - rateMeterReading.getValueLong());
   //          for (int i = 0; i < affordableTicksCount; i++) {
   //            executor.execute(task);
   //          }

@@ -63,6 +63,8 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
     return samplesHistory.lastKey();
   }
 
+  //TODO copy implementation from ticksCount(final RateMeterReading reading) and remove everything about
+  //TODO specify that these implementations are copies and why
   @Override
   public long ticksCount() {
     long result = 0;
@@ -208,7 +210,11 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
             result = count;
           } else {//the samples window has been moved too far, return average
-            getStats().ifPresent(ConcurrentRateMeterStats::accountFailedAccuracyEventForRate);
+            @Nullable
+            final ConcurrentRateMeterStats stats = getStats();
+            if (stats != null) {
+              stats.accountFailedAccuracyEventForRate();
+            }
             result = ConversionsAndChecks.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
           }
         }
@@ -231,7 +237,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
       reading.setTNanos(rightNanos);
       reading.setAccurate(false);
       final double value = ConversionsAndChecks.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
-      reading.setValue(Math.round(value), value, true);
+      reading.setValue(value);
       readingFilled = true;
     } else {//tNanos is within or ahead of the samples window
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
@@ -242,24 +248,25 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
       } else {
         final long count = count(effectiveLeftNanos, tNanos);
         if (sequential) {
-          final long value = count;
-          reading.setValue(value);
+          reading.setValue(count);
           readingFilled = true;
         } else {
           long newRightNanos = rightSamplesWindowBoundary();
           final long safeLeft = newRightNanos - getConfig().getHl() * samplesIntervalNanos;
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
-            final long value = count;
-            reading.setValue(value);
+            reading.setValue(count);
             readingFilled = true;
           } else {//the samples window has been moved too far, return average
             reading.setTNanos(newRightNanos);
             reading.setAccurate(false);
             final double value = ConversionsAndChecks.rateAverage(newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
-            reading.setValue(Math.round(value), value, true);
+            reading.setValue(value);
             readingFilled = true;
-            getStats().ifPresent(ConcurrentRateMeterStats::accountFailedAccuracyEventForRate);
-
+            @Nullable
+            final ConcurrentRateMeterStats stats = getStats();
+            if (stats != null) {
+              stats.accountFailedAccuracyEventForRate();
+            }
           }
         }
       }
@@ -280,8 +287,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
     final long samplesWindowShiftNanos = rightSamplesWindowBoundary - gcLastRightSamplesWindowBoundary;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     final double maxRatio = getConfig().getHl() + gcRatio;
-    final boolean result = maxRatio <= (double)samplesWindowShiftNanos / samplesIntervalNanos;
-    return result;
+    return maxRatio <= (double)samplesWindowShiftNanos / samplesIntervalNanos;
   }
 
   private final void gc(final long rightSamplesWindowBoundary) {

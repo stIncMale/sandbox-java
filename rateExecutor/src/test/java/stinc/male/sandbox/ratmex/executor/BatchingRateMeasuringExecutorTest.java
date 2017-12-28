@@ -31,6 +31,7 @@ import stinc.male.sandbox.ratmex.meter.LongTicksCounter;
 import stinc.male.sandbox.ratmex.meter.ParkWaitStrategy;
 import stinc.male.sandbox.ratmex.meter.RateMeter;
 import stinc.male.sandbox.ratmex.meter.RateMeterReading;
+import stinc.male.sandbox.ratmex.meter.RateMeterStats;
 import stinc.male.sandbox.ratmex.meter.RingBufferRateMeter;
 import stinc.male.sandbox.ratmex.meter.StampedLockStrategy;
 import static java.lang.Math.round;
@@ -164,8 +165,8 @@ public final class BatchingRateMeasuringExecutorTest {
         submitsCounter = 0;
         task = new RateMeterAwareRunnable(() -> {
           globalCompleteCounter.increment();
-//          ThreadLocalRandom.current()
-//              .nextGaussian();
+          //          ThreadLocalRandom.current()
+          //              .nextGaussian();
         }, completionRateMeter);
         submitterReading = new RateMeterReading();
         completionReading = new RateMeterReading();
@@ -197,19 +198,19 @@ public final class BatchingRateMeasuringExecutorTest {
         final double measuredAverageSubmits = submitterRateMeter.rateAverage();
         final double deltaAverage = measuredAverageSubmits - targetSubmitsMean;
         submitterRateMeter.rate(tNanos, submitterReading);
-        final long measuredSubmits = submitterReading.getLongValue();
+        final long measuredSubmits = submitterReading.getValueLong();
         final double ratio = (tNanos - prevTNanos) / (double)samplesIntervalNanos;
         final long result;
         if (measuredSubmits < targetSubmitsMean) {//as expected; the interval (prevTNanos; tNanos] is fresh and we are deciding submits for it
           if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
             result = round(ratio * targetSubmits.getMax());
-                        println("1 " + result +
-                            ", passedT(ms)=" + Duration.ofNanos(tNanos - startNanos)
-                            .toMillis() +
-                            ", deltaT(ms)=" + Duration.ofNanos(tNanos - prevTNanos)
-                            .toMillis() +
-                            ", measuredSubmits=" + measuredSubmits +
-                            ", ratio=" + ratio, 1);
+            println("1 " + result +
+                ", passedT(ms)=" + Duration.ofNanos(tNanos - startNanos)
+                .toMillis() +
+                ", deltaT(ms)=" + Duration.ofNanos(tNanos - prevTNanos)
+                .toMillis() +
+                ", measuredSubmits=" + measuredSubmits +
+                ", ratio=" + ratio, 1);
           } else {//too fast in average; submit as few as possible to satisfy the min
             result = round(ratio * targetSubmits.getMin());
             println("2 " + result, 1);
@@ -290,11 +291,13 @@ public final class BatchingRateMeasuringExecutorTest {
           ((double)submitDurationNanos.get() / (double)Duration.ofSeconds(1)
               .toNanos())), 2);
       println("targetRatePerSecond=" + format.format(targetRatePerSecond) +
-          ", targetSubmits=" + targetSubmits,2);
-      println("failedAccuracyEventsCountForTick=" + submitterRateMeter.stats().get()
-          .failedAccuracyEventsCountForTick() +
-          ", failedAccuracyEventsCountForRate=" + submitterRateMeter.stats().get()
-          .failedAccuracyEventsCountForRate(), 2);
+          ", targetSubmits=" + targetSubmits, 2);
+      println("failedAccuracyEventsCountForTick=" + submitterRateMeter.stats()
+          .map(RateMeterStats::failedAccuracyEventsCountForTick)
+          .orElse(0L) +
+          ", failedAccuracyEventsCountForRate=" + submitterRateMeter.stats()
+          .map(RateMeterStats::failedAccuracyEventsCountForRate)
+          .orElse(0L), 2);
       println("batchCache.size=" + batchCache.size(), 2);
     }
   }

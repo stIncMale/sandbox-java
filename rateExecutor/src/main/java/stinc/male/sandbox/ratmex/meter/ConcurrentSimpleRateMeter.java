@@ -198,7 +198,7 @@ public final class ConcurrentSimpleRateMeter implements RateMeter {
   }
 
   @Override
-  public final Optional<? extends RateMeterStats> stats() {
+  public final Optional<RateMeterStats> stats() {
     final long lockStamp = lockStrategy.sharedLock();
     try {
       return rm.stats();

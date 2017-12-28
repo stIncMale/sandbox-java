@@ -210,15 +210,15 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     rm.tick(1, 0);
     rm.tick(1, 5);
     assertDoubleEquals(1d + 1, rm.rate());
-    assertReading(rm.rate(), 5, true, rm.rate(r));
+    assertReading(rm.rate(), 5, true, false, rm.rate(r));
     assertDoubleEquals((1d + 1) / (30d / 10), rm.rate(ofNanos(10)));
-    assertReading(rm.rate(ofNanos(10)), 5, true, rm.rate(ofNanos(10), r));
+    assertReading(rm.rate(ofNanos(10)), 5, true, false, rm.rate(ofNanos(10), r));
     rm.tick(0, 10);
     rm.tick(2, 20);
     assertDoubleEquals(1 + 1 + 2, rm.rate());
     assertReading(rm.rate(), 20, true, rm.rate(r));
     assertDoubleEquals((1d + 1 + 2) / (30d / 10), rm.rate(ofNanos(10)));
-    assertReading(rm.rate(ofNanos(10)), 20, true, rm.rate(ofNanos(10), r));
+    assertReading(rm.rate(ofNanos(10)), 20, true, false, rm.rate(ofNanos(10), r));
     rm.tick(3, 30);
     assertDoubleEquals(1 + 2 + 3, rm.rate());
     assertReading(rm.rate(), 30, true, rm.rate(r));
@@ -228,14 +228,14 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     assertDoubleEquals(-2 - 1, rm.rate());
     assertReading(rm.rate(), 60, true, rm.rate(r));
     assertDoubleEquals((-2d - 1) / (30d / 10), rm.rate(ofNanos(10)));
-    assertReading(rm.rate(ofNanos(10)), 60, true, rm.rate(ofNanos(10), r));
+    assertReading(rm.rate(ofNanos(10)), 60, true, false, rm.rate(ofNanos(10), r));
     assertDoubleEquals(rm.ticksCount(), rm.rate());
     assertReading(rm.ticksCount(), 60, true, rm.rate(r));
     assertReading(rm.rate(), 60, true, rm.ticksCount(new RateMeterReading()));
     assertDoubleEquals(rm.rate(rm.rightSamplesWindowBoundary()), rm.rate());
     assertDoubleEquals(rm.rate(rm.rightSamplesWindowBoundary(), ofNanos(10)), rm.rate(ofNanos(10)));
-    assertReading(rm.rate(ofNanos(10)), 60, true, rm.rate(ofNanos(10), r));
-    assertReading(rm.rate(5), 60, false, rm.rate(5, r));
+    assertReading(rm.rate(ofNanos(10)), 60, true, false, rm.rate(ofNanos(10), r));
+    assertReading(rm.rate(5), 60, false, false, rm.rate(5, r));
   }
 
   @Test
@@ -247,24 +247,24 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     rm.tick(0, 1);
     rm.tick(2, 2);
     assertDoubleEquals((3d + 1 + 2), rm.rate(2));
-    assertReading(rm.rate(2), 2, true, rm.rate(2, r));
-    assertReading(rm.rateAverage(), 2, false, rm.rate(-2, r));
+    assertReading(rm.rate(2), 2, true, false, rm.rate(2, r));
+    assertReading(rm.rateAverage(), 2, false, true, rm.rate(-2, r));
     assertDoubleEquals((3d + 1 + 2) / (3d / 17), rm.rate(2, ofNanos(17)));
-    assertReading(rm.rate(2, ofNanos(17)), 2, true, rm.rate(2, ofNanos(17), r));
+    assertReading(rm.rate(2, ofNanos(17)), 2, true, false, rm.rate(2, ofNanos(17), r));
     rm.tick(3, 3);
     assertDoubleEquals((1 + 2 + 3), rm.rate(3));
-    assertReading(rm.rate(3), 3, true, rm.rate(3, r));
+    assertReading(rm.rate(3), 3, true, false, rm.rate(3, r));
     assertDoubleEquals((1d + 2 + 3) / (3d / 15), rm.rate(3, ofNanos(15)));
-    assertReading(rm.rate(3, ofNanos(15)), 3, true, rm.rate(3, ofNanos(15), r));
+    assertReading(rm.rate(3, ofNanos(15)), 3, true, false, rm.rate(3, ofNanos(15), r));
     rm.tick(-2, 5);
     rm.tick(1, 3);
     rm.tick(-1, 6);
     assertDoubleEquals((-2 - 1), rm.rate(7));
-    assertReading(rm.rate(7), 7, true, rm.rate(7, r));
+    assertReading(rm.rate(7), 7, true, false, rm.rate(7, r));
     assertDoubleEquals((-2d - 1) / (3d / 15), rm.rate(7, ofNanos(15)));
-    assertReading(rm.rate(7, ofNanos(15)), 7, true, rm.rate(7, ofNanos(15), r));
+    assertReading(rm.rate(7, ofNanos(15)), 7, true, false, rm.rate(7, ofNanos(15), r));
     assertDoubleEquals((2d + 3 + 1), rm.rate(4));
-    assertReading(rm.rate(4), 4, true, rm.rate(4, r));
+    assertReading(rm.rate(4), 4, true, false, rm.rate(4, r));
   }
 
   @Test
@@ -277,23 +277,23 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     rm.tick(0, 10);
     rm.tick(2, 20);
     assertDoubleEquals((1d + 3 + 1 + 2), rm.rate(20));
-    assertReading(rm.rate(20), 20, true, rm.rate(20, r));
+    assertReading(rm.rate(20), 20, true, false, rm.rate(20, r));
     assertReading(0, 50, true, rm.rate(50, r));
     assertDoubleEquals((1d + 3 + 1 + 2) / (30d / 17), rm.rate(20, ofNanos(17)));
-    assertReading(rm.rate(20, ofNanos(17)), 20, true, rm.rate(20, ofNanos(17), r));
+    assertReading(rm.rate(20, ofNanos(17)), 20, true, false, rm.rate(20, ofNanos(17), r));
     rm.tick(3, 30);
     assertDoubleEquals((1 + 2 + 3), rm.rate(30));
-    assertReading(rm.rate(30), 30, true, rm.rate(30, r));
+    assertReading(rm.rate(30), 30, true, false, rm.rate(30, r));
     assertDoubleEquals((1d + 2 + 3) / (30d / 15), rm.rate(30, ofNanos(15)));
-    assertReading(rm.rate(30, ofNanos(15)), 30, true, rm.rate(30, ofNanos(15), r));
+    assertReading(rm.rate(30, ofNanos(15)), 30, true, false, rm.rate(30, ofNanos(15), r));
     rm.tick(-2, 50);
     rm.tick(1, 30);
     rm.tick(-1, 60);
     assertDoubleEquals((-2 - 1), rm.rate(70));
-    assertReading(rm.rate(70), 70, true, rm.rate(70, r));
-    assertReading(rm.rateAverage(), 60, false, rm.rate(30, r));
+    assertReading(rm.rate(70), 70, true, false, rm.rate(70, r));
+    assertReading(rm.rateAverage(), 60, false, true, rm.rate(30, r));
     assertDoubleEquals((-2d - 1) / (30d / 15), rm.rate(70, ofNanos(15)));
-    assertReading(rm.rate(70, ofNanos(15)), 70, true, rm.rate(70, ofNanos(15), r));
+    assertReading(rm.rate(70, ofNanos(15)), 70, true, false, rm.rate(70, ofNanos(15), r));
   }
 
   @Test
@@ -348,7 +348,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
       final long expectedTNanos,
       final boolean accurate,
       final RateMeterReading reading) {
-    assertEquals(expectedValue, reading.getLongValue());
+    assertEquals(expectedValue, reading.getValueLong());
     assertEquals(expectedTNanos, reading.getTNanos());
     if (accurate) {
       assertTrue(reading.isAccurate());
@@ -361,8 +361,9 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
       final double expectedValue,
       final long expectedTNanos,
       final boolean accurate,
+      final boolean rounded,
       final RateMeterReading reading) {
-    assertDoubleEquals(expectedValue, reading.getDoubleValue());
+    assertDoubleEquals(expectedValue, reading.getValueDouble());
     assertEquals(expectedTNanos, reading.getTNanos());
     if (accurate) {
       assertTrue(reading.isAccurate());

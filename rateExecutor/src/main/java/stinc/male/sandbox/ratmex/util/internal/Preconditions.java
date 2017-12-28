@@ -2,6 +2,7 @@ package stinc.male.sandbox.ratmex.util.internal;
 
 import java.util.Locale;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 public final class Preconditions {
   private static final String format(final String format, final Object... args) {
@@ -9,7 +10,7 @@ public final class Preconditions {
   }
 
   public static final void checkNotNull(
-      final Object argument,
+      @Nullable final Object argument,
       final String safeParamName) throws NullPointerException {
     if (argument == null) {
       throw new NullPointerException(format("The argument %s must not be null", safeParamName));

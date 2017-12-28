@@ -730,36 +730,32 @@ public class RateMeterPerformanceTest {
 
     @TearDown(Level.Trial)
     public final void tearDown() {
-      assertEquals(
-          0,
-          concurrentNavigableMapRateMeter.stats()
-              .failedAccuracyEventsCountForTick(),
-          ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-      assertEquals(
-          0,
-          concurrentNavigableMapRateMeter.stats()
-              .failedAccuracyEventsCountForRate(),
-          ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-      assertEquals(
-          0,
-          concurrentRingBufferRateMeter.stats()
-              .failedAccuracyEventsCountForTick(),
-          ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-      assertEquals(
-          0,
-          concurrentRingBufferRateMeter.stats()
-              .failedAccuracyEventsCountForRate(),
-          ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-      assertEquals(
-          0,
-          concurrentSimpleRateMeter.stats()
-              .failedAccuracyEventsCountForTick(),
-          ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-      assertEquals(
-          0,
-          concurrentSimpleRateMeter.stats()
-              .failedAccuracyEventsCountForRate(),
-          ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
+      concurrentNavigableMapRateMeter.stats().ifPresent(stats -> {
+        assertEquals(
+            0,
+            stats.failedAccuracyEventsCountForTick(),
+            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
+        assertEquals(
+            0,
+            stats.failedAccuracyEventsCountForRate(),
+            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
+        assertEquals(
+            0,
+            stats.failedAccuracyEventsCountForTick(),
+            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
+        assertEquals(
+            0,
+            stats.failedAccuracyEventsCountForRate(),
+            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
+        assertEquals(
+            0,
+            stats.failedAccuracyEventsCountForTick(),
+            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
+        assertEquals(
+            0,
+            stats.failedAccuracyEventsCountForRate(),
+            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
+      });
     }
   }
 
