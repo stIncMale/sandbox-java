@@ -29,7 +29,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
   private final StampedLock ticksCountStampedLock;
   @Nullable
   private final WaitStrategy completedSamplesWindowShiftStepsWaitStrategy;
-  private final long maxTicksCountAttempts;
+  private final int maxTicksCountAttempts;
 
   /**
    * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
@@ -97,31 +97,35 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     return result;
   }
 
+  /*The implementation of this method is an exact copy of ticksCount(RateMeterReading) except for lines related to RateMeterReading.
+    This is bad, but I don't see any other way to implement both methods in a garbage-free way.*/
   @Override
   public long ticksCount() {
-    long result = 0;
+    long value = 0;
+    boolean readingDone = false;
     if (sequential) {
       final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
-          i < samplesHistory.length() / getConfig().getHl();
-          idx = nextSamplesWindowIdx(idx), i++) {
-        result += samplesHistory.get(idx);
+           i < samplesHistory.length() / getConfig().getHl();
+           idx = nextSamplesWindowIdx(idx), i++) {
+        value += samplesHistory.get(idx);
       }
+      readingDone = true;
     } else {
       assert atomicSamplesWindowShiftSteps != null;
       assert ticksCountStampedLock != null;
       long ticksCountReadLockStamp = 0;
       try {
         long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
-        for (long ri = 0; ri < maxTicksCountAttempts || ticksCountReadLockStamp != 0; ri++) {
-          result = 0;
+        for (int ri = 0; ri < maxTicksCountAttempts || ticksCountReadLockStamp != 0; ri++) {
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
           final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
           for (int idx = leftSamplesWindowIdx, i = 0;
-              i < samplesHistory.length() / getConfig().getHl();
-              idx = nextSamplesWindowIdx(idx), i++) {
-            result += samplesHistory.get(idx);
+               i < samplesHistory.length() / getConfig().getHl();
+               idx = nextSamplesWindowIdx(idx), i++) {
+            value += samplesHistory.get(idx);
           }
+          readingDone = true;
           final long newSamplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
           if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {
             //the samples window may has been moved while we were counting, but result is still correct
@@ -129,7 +133,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
           } else {//the samples window has been moved too far
             samplesWindowShiftSteps = newSamplesWindowShiftSteps;
             if (ticksCountReadLockStamp == 0 &&
-                ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
+                    ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
               ticksCountReadLockStamp = ticksCountStampedLock.readLock();
             }
           }
@@ -140,30 +144,33 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
         }
       }
     }
-    return result;
+    assert readingDone;
+    return value;
   }
 
   @Override
   public RateMeterReading ticksCount(final RateMeterReading reading) {
     checkNotNull(reading, "reading");
     reading.setAccurate(true);
-    long value = 0;
-    long samplesWindowShiftSteps;
+    boolean readingDone = false;
     if (sequential) {
-      samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+      long value = 0;
+      final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
           i < samplesHistory.length() / getConfig().getHl();
           idx = nextSamplesWindowIdx(idx), i++) {
         value += samplesHistory.get(idx);
       }
+      reading.setValue(value);
+      readingDone = true;
     } else {
       assert atomicSamplesWindowShiftSteps != null;
       assert ticksCountStampedLock != null;
-      samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
       long ticksCountReadLockStamp = 0;
       try {
+        long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
         for (int ri = 0; ri < maxTicksCountAttempts || ticksCountReadLockStamp != 0; ri++) {
-          value = 0;
+          long value = 0;
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
           final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
           for (int idx = leftSamplesWindowIdx, i = 0;
@@ -171,6 +178,8 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
               idx = nextSamplesWindowIdx(idx), i++) {
             value += samplesHistory.get(idx);
           }
+          reading.setValue(value);
+          readingDone = true;
           final long newSamplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
           if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {
             //the samples window may has been moved while we were counting, but result is still correct
@@ -189,8 +198,8 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
         }
       }
     }
-    reading.setTNanos(rightSamplesWindowBoundary(samplesWindowShiftSteps))
-        .setValue(value);
+    assert readingDone;
+    reading.setTNanos(rightSamplesWindowBoundary(samplesWindowShiftSteps));
     return reading;
   }
 
@@ -298,10 +307,12 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     return ConversionsAndChecks.rateAverage(effectiveRightNanos, getSamplesIntervalNanos(), getStartNanos(), ticksTotalCount());
   }
 
+  /*The implementation of this method is an exact copy of rate(long, RateMeterReading) except for lines related to RateMeterReading.
+    This is bad, but I don't see any other way to implement both methods in a garbage-free way.*/
   @Override
   public double rate(final long tNanos) {
     checkArgument(tNanos, "tNanos");
-    final double result;
+    final double value;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     final long samplesWindowShiftSteps;
     if (sequential) {
@@ -313,41 +324,39 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
     final long leftNanos = rightNanos - samplesIntervalNanos;
     if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
-      result = ConversionsAndChecks.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
+      value = ConversionsAndChecks.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
     } else {//tNanos is within or ahead of the samples window
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
       if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {
         //tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
-        result = 0;
+        value = 0;
       } else {
         final long effectiveRightNanos = NanosComparator.compare(tNanos, rightNanos) <= 0
-            ? tNanos//tNanos is within the samples window
-            : rightNanos;//tNanos is ahead of samples window
+                ? tNanos//tNanos is within the samples window
+                : rightNanos;//tNanos is ahead of samples window
         final long count = count(effectiveLeftNanos, effectiveRightNanos);
         if (sequential) {
-          result = count;
+          value = count;
         } else {
           final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
           long newSamplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
           if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samplesHistory.length()) {
             //the samples window may has been moved while we were counting, but count is still correct
-            result = count;
+            value = count;
           } else {//the samples window has been moved too far, return average
+            final long newRightNanos = rightSamplesWindowBoundary(newSamplesWindowShiftSteps);
+            value = ConversionsAndChecks.rateAverage(
+                    newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
             @Nullable
             final ConcurrentRateMeterStats stats = getStats();
             if (stats != null) {
               stats.accountFailedAccuracyEventForRate();
             }
-            result = ConversionsAndChecks.rateAverage(
-                rightSamplesWindowBoundary(newSamplesWindowShiftSteps),
-                samplesIntervalNanos,
-                getStartNanos(),
-                ticksTotalCount());//this is the same as rateAverage()
           }
         }
       }
     }
-    return result;
+    return value;
   }
 
   @Override
@@ -356,7 +365,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     checkNotNull(reading, "reading");
     reading.setTNanos(tNanos);
     reading.setAccurate(true);
-    final boolean valueSet;
+    final boolean readingDone;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     final long samplesWindowShiftSteps;
     if (sequential) {
@@ -372,13 +381,13 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
       reading.setAccurate(false);
       final double value = ConversionsAndChecks.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
       reading.setValue(value);
-      valueSet = true;
+      readingDone = true;
     } else {//tNanos is within or ahead of the samples window
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
       if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {
         //tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
         reading.setValue(0);
-        valueSet = true;
+        readingDone = true;
       } else {
         final long effectiveRightNanos = NanosComparator.compare(tNanos, rightNanos) <= 0
             ? tNanos//tNanos is within the samples window
@@ -386,14 +395,14 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
         final long count = count(effectiveLeftNanos, effectiveRightNanos);
         if (sequential) {
           reading.setValue(count);
-          valueSet = true;
+          readingDone = true;
         } else {
           final long tNanosSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
           long newSamplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
           if (newSamplesWindowShiftSteps - tNanosSamplesWindowShiftSteps <= samplesHistory.length()) {
             //the samples window may has been moved while we were counting, but count is still correct
             reading.setValue(count);
-            valueSet = true;
+            readingDone = true;
           } else {//the samples window has been moved too far, return average
             final long newRightNanos = rightSamplesWindowBoundary(newSamplesWindowShiftSteps);
             reading.setTNanos(newRightNanos);
@@ -401,7 +410,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
             final double value = ConversionsAndChecks.rateAverage(
                 newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
             reading.setValue(value);
-            valueSet = true;
+            readingDone = true;
             @Nullable
             final ConcurrentRateMeterStats stats = getStats();
             if (stats != null) {
@@ -411,7 +420,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
         }
       }
     }
-    assert valueSet;
+    assert readingDone;
     return reading;
   }
 
