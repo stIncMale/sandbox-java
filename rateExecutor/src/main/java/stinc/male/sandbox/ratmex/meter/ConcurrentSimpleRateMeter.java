@@ -6,7 +6,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
 
 @ThreadSafe
-public final class ConcurrentSimpleRateMeter implements RateMeter {
+public final class ConcurrentSimpleRateMeter implements RateMeter {//TODO move to performance tests (a separate project)
   private final RateMeter rm;
   private final LockStrategy lockStrategy;
 

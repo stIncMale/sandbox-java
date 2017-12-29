@@ -103,8 +103,9 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
   public long ticksCount() {
     long value = 0;
     boolean readingDone = false;
+    long samplesWindowShiftSteps;
     if (sequential) {
-      final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+      samplesWindowShiftSteps = this.samplesWindowShiftSteps;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
            i < samplesHistory.length() / getConfig().getHl();
            idx = nextSamplesWindowIdx(idx), i++) {
@@ -116,7 +117,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
       assert ticksCountStampedLock != null;
       long ticksCountReadLockStamp = 0;
       try {
-        long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
+        samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
         for (int ri = 0; ri < maxTicksCountAttempts || ticksCountReadLockStamp != 0; ri++) {
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
           final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
@@ -153,9 +154,10 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     checkNotNull(reading, "reading");
     reading.setAccurate(true);
     boolean readingDone = false;
+    long samplesWindowShiftSteps;
     if (sequential) {
       long value = 0;
-      final long samplesWindowShiftSteps = this.samplesWindowShiftSteps;
+      samplesWindowShiftSteps = this.samplesWindowShiftSteps;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
           i < samplesHistory.length() / getConfig().getHl();
           idx = nextSamplesWindowIdx(idx), i++) {
@@ -168,7 +170,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
       assert ticksCountStampedLock != null;
       long ticksCountReadLockStamp = 0;
       try {
-        long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
+        samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
         for (int ri = 0; ri < maxTicksCountAttempts || ticksCountReadLockStamp != 0; ri++) {
           long value = 0;
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);

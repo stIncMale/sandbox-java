@@ -25,7 +25,8 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
             <source>9</source>
-            <target>9</target><!-- TODO add javac -release option-->
+            <target>9</target>
+            <release>9</release>
             <encoding>${sandbox.charset}</encoding>
             <debug>true</debug>
             <debuglevel>lines,vars,source</debuglevel>

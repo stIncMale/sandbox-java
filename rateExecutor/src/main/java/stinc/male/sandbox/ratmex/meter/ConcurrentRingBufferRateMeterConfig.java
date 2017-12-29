@@ -47,7 +47,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   }
 
   /**
-   * Specifies if {@link ConcurrentRingBufferRateMeter} must guarantee absence of race condition in the {@link RateMeter#tick(long, long)} method.
+   * Specifies if {@link ConcurrentRingBufferRateMeter} must guarantee absence of race conditions in the {@link RateMeter#tick(long, long)} method.
    * @return {@code true} by default.
    * @see RateMeterStats#failedAccuracyEventsCountForTick()
    */

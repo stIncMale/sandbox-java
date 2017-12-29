@@ -8,6 +8,7 @@ import stinc.male.sandbox.ratmex.meter.RateMeter;
 /**
  * RatMeX.
  */
+//TODO add a test that monitors garbage output to performance tests
 @ThreadSafe
 public interface RateMeasuringExecutor extends AutoCloseable {
   /**
