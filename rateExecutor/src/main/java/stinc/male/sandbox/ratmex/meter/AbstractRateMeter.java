@@ -11,6 +11,11 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.convertRate;
 
+/**
+ * A generic implementation of a {@linkplain Configurable configurable} {@link RateMeter}.
+ *
+ * @param <C> A type of a configuration.
+ */
 abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter, Configurable<C> {
   private final TicksCounter ticksTotal;
   private final long startNanos;
@@ -67,25 +72,13 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter
   }
 
   @Override
-  public double rateAverage(final Duration unit) {
-    checkArgument(unit, "unit");
-    return convertRate(rateAverage(), samplesIntervalNanos, unit.toNanos());
-  }
-
-  @Override
-  public double rateAverage(final long tNanos, final Duration unit) {
+  public final double rateAverage(final long tNanos, final Duration unit) {
     checkArguments(tNanos, "tNanos", unit, "unit");
     return convertRate(rateAverage(tNanos), samplesIntervalNanos, unit.toNanos());
   }
 
   @Override
-  public double rate(final Duration unit) {
-    checkArgument(unit, "unit");
-    return convertRate(rate(), samplesIntervalNanos, unit.toNanos());
-  }
-
-  @Override
-  public double rate(final long tNanos, final Duration unit) {
+  public final double rate(final long tNanos, final Duration unit) {
     checkArguments(tNanos, "tNanos", unit, "unit");
     return convertRate(rate(tNanos), samplesIntervalNanos, unit.toNanos());
   }
@@ -105,25 +98,58 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter
     return stats;
   }
 
+  /**
+   * @return A counter that must be used to register and calculate total ticks count.
+   * {@link #ticksTotalCount()} returns {@link #getTicksTotalCounter()}{@code .}{@link TicksCounter#get() get()}.
+   */
   protected final TicksCounter getTicksTotalCounter() {
     return ticksTotal;
   }
 
   /**
    * @return {@link #getSamplesInterval()} in nanoseconds.
+   * Should be used instead of {@link #getSamplesInterval()}{@code .}{@link Duration#toNanos() toNanos()} for better performance.
    */
   protected final long getSamplesIntervalNanos() {
     return samplesIntervalNanos;
   }
 
+  /**
+   * This method should be used to check {@code tNanos} argument in methods such as {@link #rate(long)}, etc.
+   *
+   * @param tNanos A checked argument.
+   * @param safeParamName A parameter name that will be used as is without any checks.
+   *
+   * @throws IllegalArgumentException If the argument is invalid.
+   */
   protected final void checkArgument(final long tNanos, final String safeParamName) throws IllegalArgumentException {
     checkTNanos(tNanos, startNanos, maxTNanos, safeParamName);
   }
 
-  protected final void checkArgument(final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
-    checkUnit(unit, safeUnitParamName);
+  /**
+   * This method should be used to check {@code unit} argument in methods such as {@link #rate(Duration)}, etc.
+   *
+   * @param unit A checked argument.
+   * @param safeParamName A parameter name that will be used as is without any checks.
+   *
+   * @throws IllegalArgumentException If the argument is invalid.
+   */
+  protected final void checkArgument(final Duration unit, final String safeParamName) throws IllegalArgumentException {
+    checkUnit(unit, safeParamName);
   }
 
+  /**
+   * This method should be used to check both {@code tNanos} and {@code unit} arguments in methods such as {@link #rate(long, Duration)}, etc.
+   * The method sequentially invokes methods
+   * {@link #checkArgument(long, String)}, {@link #checkArgument(Duration, String)}.
+   *
+   * @param tNanos A checked argument.
+   * @param safeTNanosParamName A {@code tNanos} parameter name that will be used as is without any checks.
+   * @param unit A checked argument.
+   * @param safeUnitParamName A {@code unit} parameter name that will be used as is without any checks.
+   *
+   * @throws IllegalArgumentException If either argument is invalid.
+   */
   protected final void checkArguments(
       final long tNanos, final String safeTNanosParamName,
       final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {

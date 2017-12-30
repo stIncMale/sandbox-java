@@ -204,13 +204,7 @@ public interface RateMeter {
    *
    * @return Average rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
-  default double rateAverage(final long tNanos, final Duration unit) {
-    final long startNanos = getStartNanos();
-    final long samplesIntervalNanos = getSamplesInterval().toNanos();
-    checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos, 3), "tNanos");
-    checkUnit(unit, "unit");
-    return convertRate(rateAverage(tNanos), getSamplesInterval().toNanos(), unit.toNanos());
-  }
+  double rateAverage(final long tNanos, final Duration unit);
 
   /**
    * Calculates current rate of ticks.
@@ -305,13 +299,7 @@ public interface RateMeter {
    *
    * @return Current rate of ticks measured in {@code unit}<sup>-1</sup>.
    */
-  default double rate(final long tNanos, final Duration unit) {
-    final long startNanos = getStartNanos();
-    final long samplesIntervalNanos = getSamplesInterval().toNanos();
-    checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos, 3), "tNanos");
-    checkUnit(unit, "unit");
-    return convertRate(rate(tNanos), samplesIntervalNanos, unit.toNanos());
-  }
+  double rate(final long tNanos, final Duration unit);
 
   /**
    * This method is equivalent to {@link #rate(long, Duration)}, but provides a complete measured data,

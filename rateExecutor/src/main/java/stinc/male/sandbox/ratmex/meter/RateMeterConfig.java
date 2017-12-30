@@ -91,7 +91,7 @@ public class RateMeterConfig {
    * (historyLength + 1) * {@linkplain RateMeter#getSamplesInterval() samplesInterval}].
    * <p>
    * Note that the specification of {@link RateMeter#rate(long)} implies that any {@link RateMeter}
-   * must maintain samples history for at least 2 samples intervals.
+   * must maintain samples history for at least 2{@linkplain RateMeter#getSamplesInterval() samplesInterval}.
    *
    * @return 3 by default.
    */

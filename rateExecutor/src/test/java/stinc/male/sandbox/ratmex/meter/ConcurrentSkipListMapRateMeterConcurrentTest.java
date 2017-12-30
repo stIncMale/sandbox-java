@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Tag;
 import stinc.male.sandbox.ratmex.meter.RateMeterConfig.Builder;
 import stinc.male.sandbox.ratmex.TestTag;
 
-@Disabled
+//@Disabled
 @Tag(TestTag.CONCURRENCY)
 public final class ConcurrentSkipListMapRateMeterConcurrentTest extends AbstractRateMeterConcurrencyTest<Builder, RateMeterConfig> {
   public ConcurrentSkipListMapRateMeterConcurrentTest() {
