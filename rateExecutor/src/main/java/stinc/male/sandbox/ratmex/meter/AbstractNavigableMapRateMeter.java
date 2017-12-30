@@ -12,32 +12,32 @@ import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 /**
+ * This implementation uses {@link NavigableMap} to store and access a samples history.
+ *
  * @param <C> A type of the {@linkplain #getConfig() configuration}.
  */
 public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends AbstractRateMeter<C> {
   private final boolean sequential;
   private final NavigableMap<Long, TicksCounter> samplesHistory;
   private final long timeSensitivityNanos;
-  private final AtomicBoolean cleanInProgress;
-  private volatile long cleanLastRightSamplesWindowBoundary;
-  /**
-   * (0; 1].
-   * The bigger, the less frequently clean happens, but the older elements are maintained in the samples history.
-   */
-  private final double cleanRatio = 0.3;
   @Nullable
-  private final StampedLock ticksCountRwLock;
+  private final AtomicBoolean atomicCleanInProgress;//we don't need analogous flag for a sequential implementation
+  private volatile long volatileCleanLastRightSamplesWindowBoundary;//lastRightSamplesWindowBoundary for a concurrent implementation
+  private long cleanLastRightSamplesWindowBoundary;//lastRightSamplesWindowBoundary for a sequential implementation
+  @Nullable
+  private final StampedLock ticksCountRwLock;//we don't need analogous lock for a sequential implementation
   private final int maxTicksCountAttempts;
 
   /**
-   * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
-   * @param samplesInterval Size of the samples window.
-   * @param config Additional configuration parameters.
-   * @param samplesHistorySupplier Specifies a supplier to use to create an object that will be
-   * used to store samples history.
-   * The {@link NavigableMap} provided by this supplier must use {@link NanosComparator}
-   * as {@link NavigableMap#comparator() comparator}.
-   * @param sequential
+   * @param startNanos A {@linkplain #getStartNanos() starting point} that is used to calculate elapsed time in nanoseconds (tNanos).
+   * @param samplesInterval A size of the {@linkplain #getSamplesInterval() samples window}.
+   * Must not be null, see {@link RateMeter} for valid values.
+   * @param config An additional {@linkplain #getConfig() configuration}. Must not be null.
+   * @param samplesHistorySupplier A supplier providing an object that will be used to store and access the samples history.
+   * The {@link NavigableMap} provided by this supplier must use {@link NanosComparator} as {@link NavigableMap#comparator() comparator},
+   * and must be thread-safe if {@code sequential} argument is false.
+   * @param sequential Specifies whether the {@link RateMeter} must be thread-safe (will be used concurrently, so the value is false),
+   * or not (will be used sequentially, so the value is true).
    */
   public AbstractNavigableMapRateMeter(
       final long startNanos,
@@ -54,27 +54,29 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
         startNanos,
         config.getTicksCounterSupplier()
             .apply(0L));
-    cleanInProgress = new AtomicBoolean();
+    atomicCleanInProgress = sequential ? null : new AtomicBoolean();
+    volatileCleanLastRightSamplesWindowBoundary = getStartNanos();
     cleanLastRightSamplesWindowBoundary = getStartNanos();
     timeSensitivityNanos = config.getTimeSensitivity()
         .toNanos();
-    Preconditions.checkArgument(timeSensitivityNanos <= getSamplesIntervalNanos(), "config",
+    Preconditions.checkArgument(
+        timeSensitivityNanos <= getSamplesIntervalNanos(), "config",
         () -> String.format("getTimeSensitivityNanos()=%s must be not greater than getSamplesIntervalNanos()=%s",
             timeSensitivityNanos, getSamplesIntervalNanos()));
-    this.sequential = sequential;
     ticksCountRwLock = sequential ? null : new StampedLock();
+    this.sequential = sequential;
     maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
   }
 
   @Override
-  public long rightSamplesWindowBoundary() {
+  public final long rightSamplesWindowBoundary() {
     return samplesHistory.lastKey();
   }
 
   /*The implementation of this method is an exact copy of ticksCount(RateMeterReading) except for lines related to RateMeterReading.
     This is bad, but I don't see any other way to implement both methods in a garbage-free way.*/
   @Override
-  public long ticksCount() {
+  public final long ticksCount() {
     long value = 0;
     boolean readingDone = false;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
@@ -84,6 +86,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
       value = count(leftNanos, rightNanos);
       readingDone = true;
     } else {
+      assert ticksCountRwLock != null;
       long ticksCountReadLockStamp = 0;
       try {
         for (int ri = 0; ri < maxTicksCountAttempts; ri++) {
@@ -91,13 +94,17 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
           value = count(leftNanos, rightNanos);
           readingDone = true;
           final long newRightNanos = rightSamplesWindowBoundary();
-          if (NanosComparator.compare(newRightNanos - getConfig().getHistoryLength() * samplesIntervalNanos, leftNanos) <=
-              0) {//the samples window may has been moved while we were counting, but value is still correct
+          if (NanosComparator.compare(newRightNanos - getConfig().getHistoryLength() * samplesIntervalNanos, leftNanos) <= 0) {
+            //the samples window may has been moved while we were counting, but value is still correct
             break;
           } else {//the samples window has been moved too far
             rightNanos = newRightNanos;
-            if (ticksCountReadLockStamp == 0 &&
-                ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
+            /*We acquire the read lock to prevent concurrently running tick methods from moving the samples window too far.
+              However since tick method acquires the write lock not always, but only if sees the read lock acquired,
+              there is a race condition which still may lead to the samples window being moved,
+              though the likelihood of such situation is now much less.*/
+            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2 - 1) {
+              //we have spent half of the read attempts, let us fall over to lock approach
               ticksCountReadLockStamp = ticksCountRwLock.readLock();
             }
           }
@@ -113,7 +120,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
   }
 
   @Override
-  public RateMeterReading ticksCount(final RateMeterReading reading) {
+  public final RateMeterReading ticksCount(final RateMeterReading reading) {
     checkNotNull(reading, "reading");
     reading.setAccurate(true);
     boolean readingDone = false;
@@ -124,6 +131,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
       reading.setValue(count(leftNanos, rightNanos));
       readingDone = true;
     } else {
+      assert ticksCountRwLock != null;
       long ticksCountReadLockStamp = 0;
       try {
         for (int ri = 0; ri < maxTicksCountAttempts; ri++) {
@@ -131,14 +139,21 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
           reading.setValue(count(leftNanos, rightNanos));
           readingDone = true;
           final long newRightNanos = rightSamplesWindowBoundary();
-          if (NanosComparator.compare(newRightNanos - getConfig().getHistoryLength() * samplesIntervalNanos, leftNanos) <=
-              0) {//the samples window may has been moved while we were counting, but value is still correct
+          if (NanosComparator.compare(newRightNanos - getConfig().getHistoryLength() * samplesIntervalNanos, leftNanos) <= 0) {
+            //the samples window may has been moved while we were counting, but value is still correct
             break;
           } else {//the samples window has been moved too far
             rightNanos = newRightNanos;
-            if (ticksCountReadLockStamp == 0 &&
-                ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
+            /*We acquire the read lock to prevent concurrently running tick methods from moving the samples window too far.
+              However since tick method acquires the write lock not always, but only if sees the read lock acquired,
+              there is a race condition which still may lead to the samples window being moved,
+              though the likelihood of such situation is now much less.*/
+            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2 - 1) {
+              //we have spent half of the read attempts, let us fall over to lock approach
               ticksCountReadLockStamp = ticksCountRwLock.readLock();
+            }
+            if (ri == maxTicksCountAttempts - 1) {//this was the last iteration, and we have failed
+              reading.setAccurate(false);
             }
           }
         }
@@ -154,21 +169,33 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
   }
 
   @Override
-  public void tick(final long count, final long tNanos) {
+  public final void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();
       final long leftHistoryNanos = rightNanos - getConfig().getHistoryLength() * getSamplesIntervalNanos();
       if (NanosComparator.compare(leftHistoryNanos, tNanos) < 0) {//tNanos is within the samples history
-        @Nullable final TicksCounter existingSample;
-        long ticksCountWriteLockStamp = (!sequential && ticksCountRwLock.isReadLocked()) ? ticksCountRwLock.writeLock() : 0;
+        @Nullable
+        final TicksCounter existingSample;
+        final long ticksCountWriteLockStamp;
+        if (sequential) {
+          ticksCountWriteLockStamp = 0;
+        } else {
+          assert ticksCountRwLock != null;
+          /*We acquire the write lock only when see the read lock acquired by tickCount method,
+            which acquires the read lock to prevent concurrently running tick methods from moving the samples window too far.
+            There is a race condition which still may lead to the samples window being moved,
+            though the likelihood of such situation is now much less, and tickCount method expresses failed reads via RateMeterReading*/
+          ticksCountWriteLockStamp = ticksCountRwLock.isReadLocked() ? ticksCountRwLock.writeLock() : 0;
+        }
         try {
           if (timeSensitivityNanos == 1) {
             final TicksCounter newSample = getConfig().getTicksCounterSupplier()
                 .apply(count);
             existingSample = samplesHistory.putIfAbsent(tNanos, newSample);
           } else {
-            @Nullable final Entry<Long, TicksCounter> existingEntry = samplesHistory.floorEntry(tNanos);
+            @Nullable
+            final Entry<Long, TicksCounter> existingEntry = samplesHistory.floorEntry(tNanos);
             if (existingEntry != null && (tNanos - existingEntry.getKey()) <= timeSensitivityNanos) {
               existingSample = existingEntry.getValue();
             } else {
@@ -194,7 +221,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
   }
 
   @Override
-  public double rateAverage(final long tNanos) {
+  public final double rateAverage(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     long rightNanos = rightSamplesWindowBoundary();
     final long effectiveRightNanos;
@@ -209,22 +236,22 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
   /*The implementation of this method is an exact copy of rate(long, RateMeterReading) except for lines related to RateMeterReading.
     This is bad, but I don't see any other way to implement both methods in a garbage-free way.*/
   @Override
-  public double rate(final long tNanos) {
+  public final double rate(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final double value;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     final long rightNanos = rightSamplesWindowBoundary();
     final long leftNanos = rightNanos - samplesIntervalNanos;
     if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
-      value = ConversionsAndChecks.rateAverage(
+      value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
           rightNanos,
           samplesIntervalNanos,
           getStartNanos(),
-          ticksTotalCount());//this is the same as rateAverage()
+          ticksTotalCount());
     } else {//tNanos is within or ahead of the samples window
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
-      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <=
-          0) {//tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
+      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {
+        //tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
         value = 0;
       } else {
         final long count = count(effectiveLeftNanos, tNanos);
@@ -233,16 +260,17 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
         } else {
           long newRightNanos = rightSamplesWindowBoundary();
           final long safeLeft = newRightNanos - getConfig().getHistoryLength() * samplesIntervalNanos;
-          if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <=
-              0) {//the samples window may has been moved while we were counting, but count is still correct
+          if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {
+            //the samples window may has been moved while we were counting, but count is still correct
             value = count;
           } else {//the samples window has been moved too far, return average
-            value = ConversionsAndChecks.rateAverage(
+            value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
                 newRightNanos,
                 samplesIntervalNanos,
                 getStartNanos(),
-                ticksTotalCount());//this is the same as rateAverage()
-            @Nullable final ConcurrentRateMeterStats stats = getStats();
+                ticksTotalCount());
+            @Nullable
+            final ConcurrentRateMeterStats stats = getStats();
             if (stats != null) {
               stats.accountFailedAccuracyEventForRate();
             }
@@ -254,7 +282,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
   }
 
   @Override
-  public RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
+  public final RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     checkArgument(tNanos, "tNanos");
     checkNotNull(reading, "reading");
     reading.setTNanos(tNanos);
@@ -266,17 +294,17 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
     if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
       reading.setTNanos(rightNanos);
       reading.setAccurate(false);
-      final double value = ConversionsAndChecks.rateAverage(
+      final double value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
           rightNanos,
           samplesIntervalNanos,
           getStartNanos(),
-          ticksTotalCount());//this is the same as rateAverage()
+          ticksTotalCount());
       reading.setValue(value);
       readingDone = true;
     } else {//tNanos is within or ahead of the samples window
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
-      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <=
-          0) {//tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
+      if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {
+        //tNanos is way too ahead of the samples window and there are no samples for the requested tNanos
         reading.setValue(0);
         readingDone = true;
       } else {
@@ -287,21 +315,22 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
         } else {
           long newRightNanos = rightSamplesWindowBoundary();
           final long safeLeft = newRightNanos - getConfig().getHistoryLength() * samplesIntervalNanos;
-          if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <=
-              0) {//the samples window may has been moved while we were counting, but count is still correct
+          if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {
+            //the samples window may has been moved while we were counting, but count is still correct
             reading.setValue(count);
             readingDone = true;
           } else {//the samples window has been moved too far, return average
             reading.setTNanos(newRightNanos);
             reading.setAccurate(false);
-            final double value = ConversionsAndChecks.rateAverage(
+            final double value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
                 newRightNanos,
                 samplesIntervalNanos,
                 getStartNanos(),
-                ticksTotalCount());//this is the same as rateAverage()
+                ticksTotalCount());
             reading.setValue(value);
             readingDone = true;
-            @Nullable final ConcurrentRateMeterStats stats = getStats();
+            @Nullable
+            final ConcurrentRateMeterStats stats = getStats();
             if (stats != null) {
               stats.accountFailedAccuracyEventForRate();
             }
@@ -322,7 +351,12 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
   }
 
   private final boolean cleanRequired(final long rightSamplesWindowBoundary) {
-    final long samplesWindowShiftNanos = rightSamplesWindowBoundary - cleanLastRightSamplesWindowBoundary;
+    final long samplesWindowShiftNanos;
+    if (sequential) {
+      samplesWindowShiftNanos = rightSamplesWindowBoundary - cleanLastRightSamplesWindowBoundary;
+    } else {
+      samplesWindowShiftNanos = rightSamplesWindowBoundary - volatileCleanLastRightSamplesWindowBoundary;
+    }
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     //cleanRatio belongs to (0; 1], the bigger, the less frequently clean happens, but the older elements are maintained in the samples history
     final double cleanRatio = 0.3;
@@ -331,17 +365,25 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
   }
 
   private final void clean(final long rightSamplesWindowBoundary) {
-    if (cleanInProgress.compareAndSet(false, true)) {
+    assert sequential || atomicCleanInProgress != null;
+    if (sequential || atomicCleanInProgress.compareAndSet(false, true)) {
       try {
-        cleanLastRightSamplesWindowBoundary = rightSamplesWindowBoundary;
+        if (sequential) {
+          cleanLastRightSamplesWindowBoundary = rightSamplesWindowBoundary;
+        } else {
+          volatileCleanLastRightSamplesWindowBoundary = rightSamplesWindowBoundary;
+        }
         final long leftNanos = rightSamplesWindowBoundary - getConfig().getHistoryLength() * getSamplesIntervalNanos();
-        @Nullable final Long firstNanos = samplesHistory.firstKey();
+        @Nullable
+        final Long firstNanos = samplesHistory.firstKey();
         if (firstNanos != null && NanosComparator.compare(firstNanos.longValue(), leftNanos) < 0) {
           samplesHistory.subMap(firstNanos, true, leftNanos, false)//do not delete sample at leftNanos, because we still need it
               .clear();
         }
       } finally {
-        cleanInProgress.set(false);
+        if (!sequential) {
+          atomicCleanInProgress.set(false);
+        }
       }
     }
   }
