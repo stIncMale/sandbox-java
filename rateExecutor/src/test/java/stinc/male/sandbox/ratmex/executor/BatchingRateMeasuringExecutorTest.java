@@ -135,7 +135,7 @@ public final class BatchingRateMeasuringExecutorTest {
         RingBufferRateMeter.defaultConfig()
             .toBuilder()
             .setTicksCounterSupplier(LongTicksCounter::new)
-            .setHl(2)
+            .setHistoryLength(2)
             .setTimeSensitivity(timeSensitivity)
             .setCollectStats(false)
             .setMaxTicksCountAttempts(1)
@@ -146,7 +146,7 @@ public final class BatchingRateMeasuringExecutorTest {
         .setLockStrategySupplier(StampedLockStrategy::new)
         .setWaitStrategySupplier(ParkWaitStrategy::instance);
     concurrentRmCfgBuilder.setTicksCounterSupplier(LongAdderTicksCounter::new)
-        .setHl(3)
+        .setHistoryLength(3)
         .setTimeSensitivity(timeSensitivity)
         .setCollectStats(true)
         .setMaxTicksCountAttempts(5);

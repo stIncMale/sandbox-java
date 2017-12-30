@@ -661,17 +661,17 @@ public class RateMeterPerformanceTest {
       navigableMapRateMeter = new NavigableMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSupplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
-              .setHl(2)
+              .setHistoryLength(2)
               .build());
       concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSupplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
-              .setHl(3)
+              .setHistoryLength(3)
               .build());
       ringBufferRateMeter = new RingBufferRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSupplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
-              .setHl(2)
+              .setHistoryLength(2)
               .build());
       final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
           = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSupplier.get()
@@ -680,14 +680,14 @@ public class RateMeterPerformanceTest {
           .setWaitStrategySupplier(waitStrategySupplier)
           .setLockStrategySupplier(lockStrategySupplier)
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
-          .setHl(20);
+          .setHistoryLength(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
       concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter(
           new RingBufferRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSupplier.get()
                   .setTicksCounterSupplier(LongTicksCounter::new)
-                  .setHl(2)
+                  .setHistoryLength(2)
                   .build()),
           lockStrategySupplier.get());
     }
@@ -707,7 +707,7 @@ public class RateMeterPerformanceTest {
       concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSupplier.get()
               .setTicksCounterSupplier(LongAdderTicksCounter::new)
-              .setHl(3)
+              .setHistoryLength(3)
               .build());
       final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
           = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSupplier.get()
@@ -716,14 +716,14 @@ public class RateMeterPerformanceTest {
           .setWaitStrategySupplier(waitStrategySupplier)
           .setLockStrategySupplier(lockStrategySupplier)
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
-          .setHl(20);
+          .setHistoryLength(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
       concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter(
           new RingBufferRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSupplier.get()
                   .setTicksCounterSupplier(LongTicksCounter::new)
-                  .setHl(2)
+                  .setHistoryLength(2)
                   .build()),
           lockStrategySupplier.get());
     }

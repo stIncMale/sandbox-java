@@ -43,8 +43,8 @@ public final class ConversionsAndChecks {
     checkArgument(!unit.isNegative(), safeParamName, "Must not be negative");
   }
 
-  public static final long maxTNanos(final long startNanos, final long safeSamplesIntervalNanos, final long safeHl) {
-    return startNanos - safeHl * safeSamplesIntervalNanos + Long.MAX_VALUE;
+  public static final long maxTNanos(final long startNanos, final long safeSamplesIntervalNanos, final long safeHistoryLength) {
+    return startNanos - safeHistoryLength * safeSamplesIntervalNanos + Long.MAX_VALUE;
   }
 
   public static final double rateAverage(

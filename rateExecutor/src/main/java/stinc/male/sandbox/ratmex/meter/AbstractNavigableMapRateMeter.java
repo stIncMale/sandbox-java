@@ -87,7 +87,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
           value = count(leftNanos, rightNanos);
           readingDone = true;
           final long newRightNanos = rightSamplesWindowBoundary();
-          if (NanosComparator.compare(newRightNanos - getConfig().getHl() * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but value is still correct
+          if (NanosComparator.compare(newRightNanos - getConfig().getHistoryLength() * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but value is still correct
             break;
           } else {//the samples window has been moved too far
             rightNanos = newRightNanos;
@@ -125,7 +125,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
           reading.setValue(count(leftNanos, rightNanos));
           readingDone = true;
           final long newRightNanos = rightSamplesWindowBoundary();
-          if (NanosComparator.compare(newRightNanos - getConfig().getHl() * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but value is still correct
+          if (NanosComparator.compare(newRightNanos - getConfig().getHistoryLength() * samplesIntervalNanos, leftNanos) <= 0) {//the samples window may has been moved while we were counting, but value is still correct
             break;
           } else {//the samples window has been moved too far
             rightNanos = newRightNanos;
@@ -150,7 +150,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();
-      final long leftHistoryNanos = rightNanos - getConfig().getHl() * getSamplesIntervalNanos();
+      final long leftHistoryNanos = rightNanos - getConfig().getHistoryLength() * getSamplesIntervalNanos();
       if (NanosComparator.compare(leftHistoryNanos, tNanos) < 0) {//tNanos is within the samples history
         @Nullable
         final TicksCounter existingSample;
@@ -219,7 +219,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
           value = count;
         } else {
           long newRightNanos = rightSamplesWindowBoundary();
-          final long safeLeft = newRightNanos - getConfig().getHl() * samplesIntervalNanos;
+          final long safeLeft = newRightNanos - getConfig().getHistoryLength() * samplesIntervalNanos;
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
             value = count;
           } else {//the samples window has been moved too far, return average
@@ -264,7 +264,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
           readingDone = true;
         } else {
           long newRightNanos = rightSamplesWindowBoundary();
-          final long safeLeft = newRightNanos - getConfig().getHl() * samplesIntervalNanos;
+          final long safeLeft = newRightNanos - getConfig().getHistoryLength() * samplesIntervalNanos;
           if (NanosComparator.compare(safeLeft, effectiveLeftNanos) <= 0) {//the samples window may has been moved while we were counting, but count is still correct
             reading.setValue(count);
             readingDone = true;
@@ -300,7 +300,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     //cleanRatio belongs to (0; 1], the bigger, the less frequently clean happens, but the older elements are maintained in the samples history
     final double cleanRatio = 0.3;
-    final double maxRatio = getConfig().getHl() + cleanRatio;
+    final double maxRatio = getConfig().getHistoryLength() + cleanRatio;
     return maxRatio <= (double)samplesWindowShiftNanos / samplesIntervalNanos;
   }
 
@@ -308,7 +308,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
     if (cleanInProgress.compareAndSet(false, true)) {
       try {
         cleanLastRightSamplesWindowBoundary = rightSamplesWindowBoundary;
-        final long leftNanos = rightSamplesWindowBoundary - getConfig().getHl() * getSamplesIntervalNanos();
+        final long leftNanos = rightSamplesWindowBoundary - getConfig().getHistoryLength() * getSamplesIntervalNanos();
         @Nullable
         final Long firstNanos = samplesHistory.firstKey();
         if (firstNanos != null && NanosComparator.compare(firstNanos.longValue(), leftNanos) < 0) {

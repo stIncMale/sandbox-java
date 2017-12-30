@@ -17,19 +17,19 @@ public class RateMeterConfig {
   private final Duration timeSensitivity;
   private final boolean collectStats;
   private final int maxTicksCountAttempts;
-  private final int hl;
+  private final int historyLength;
 
   protected RateMeterConfig(
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
       final boolean collectStats,
       final int maxTicksCountAttempts,
-      final int hl) {
+      final int historyLength) {
     this.ticksCounterSupplier = ticksCounterSupplier;
     this.timeSensitivity = timeSensitivity;
     this.collectStats = collectStats;
     this.maxTicksCountAttempts = maxTicksCountAttempts;
-    this.hl = hl;
+    this.historyLength = historyLength;
   }
 
   public static Builder newBuilder() {
@@ -85,15 +85,18 @@ public class RateMeterConfig {
   }
 
   /**
-   * Specifies the length of samples history measured in {@linkplain RateMeter#getSamplesInterval() samples interval units}.
+   * Specifies the length of samples history measured in {@linkplain RateMeter#getSamplesInterval() samplesInterval} units.
+   * Actual samples history duration maintained by {@link RateMeter} must be within
+   * [historyLength * {@linkplain RateMeter#getSamplesInterval() samplesInterval};
+   * (historyLength + 1) * {@linkplain RateMeter#getSamplesInterval() samplesInterval}].
+   * <p>
    * Note that the specification of {@link RateMeter#rate(long)} implies that any {@link RateMeter}
    * must maintain samples history for at least 2 samples intervals.
-   * Actual samples history length maintained by {@link RateMeter} must be within [HL; HL + 1].
    *
    * @return 3 by default.
    */
-  public final int getHl() {
-    return hl;
+  public final int getHistoryLength() {
+    return historyLength;
   }
 
   @Override
@@ -103,7 +106,7 @@ public class RateMeterConfig {
         + ", timeSensitivity=" + timeSensitivity
         + ", collectStats=" + collectStats
         + ", maxTicksCountAttempts=" + maxTicksCountAttempts
-        + ", hl=" + hl
+        + ", historyLength=" + historyLength
         + '}';
   }
 
@@ -113,14 +116,14 @@ public class RateMeterConfig {
     protected Duration timeSensitivity;
     protected boolean collectStats;
     protected int maxTicksCountAttempts;
-    protected int hl;
+    protected int historyLength;
 
     protected Builder() {
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = Duration.ofNanos(200);
       collectStats = true;
       maxTicksCountAttempts = 5;
-      hl = 3;
+      historyLength = 3;
     }
 
     protected Builder(final RateMeterConfig config) {
@@ -128,7 +131,7 @@ public class RateMeterConfig {
       timeSensitivity = config.getTimeSensitivity();
       collectStats = config.isCollectStats();
       maxTicksCountAttempts = config.getMaxTicksCountAttempts();
-      hl = config.getHl();
+      historyLength = config.getHistoryLength();
     }
 
     /**
@@ -175,13 +178,13 @@ public class RateMeterConfig {
     }
 
     /**
-     * @param hl Must be greater than or equal to 2.
+     * @param historyLength Must be greater than or equal to 2.
      *
-     * @see RateMeterConfig#getHl()
+     * @see RateMeterConfig#getHistoryLength()
      */
-    public final Builder setHl(final int hl) {//TODO rename to setHistoryLength
-      checkArgument(hl >= 2, "hl", "Must be greater than or equal to 2");
-      this.hl = hl;
+    public final Builder setHistoryLength(final int historyLength) {
+      checkArgument(historyLength >= 2, "historyLength", "Must be greater than or equal to 2");
+      this.historyLength = historyLength;
       return this;
     }
 
@@ -191,7 +194,7 @@ public class RateMeterConfig {
           timeSensitivity,
           collectStats,
           maxTicksCountAttempts,
-          hl);
+          historyLength);
     }
   }
 }

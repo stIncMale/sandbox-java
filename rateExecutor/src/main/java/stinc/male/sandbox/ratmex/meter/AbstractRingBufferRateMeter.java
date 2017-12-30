@@ -14,7 +14,7 @@ import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull
  */
 public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMeterConfig, T extends LongArray> extends AbstractRateMeter<C> {
   private final boolean sequential;
-  private final T samplesHistory;//length is multiple of HL
+  private final T samplesHistory;//the length of this array is multiple of the historyLength
   /*Same length as samples history;
     required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample.*/
   @Nullable
@@ -59,7 +59,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
             samplesIntervalNanos,
             timeSensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
-    samplesHistory = samplesHistorySupplier.apply(config.getHl() * samplesIntervalArrayLength);
+    samplesHistory = samplesHistorySupplier.apply(config.getHistoryLength() * samplesIntervalArrayLength);
     if (sequential) {
       ticksCountStampedLock = null;
       ticksCountLocks = null;
@@ -107,7 +107,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     if (sequential) {
       samplesWindowShiftSteps = this.samplesWindowShiftSteps;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
-           i < samplesHistory.length() / getConfig().getHl();
+           i < samplesHistory.length() / getConfig().getHistoryLength();
            idx = nextSamplesWindowIdx(idx), i++) {
         value += samplesHistory.get(idx);
       }
@@ -122,13 +122,13 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
           final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
           for (int idx = leftSamplesWindowIdx, i = 0;
-               i < samplesHistory.length() / getConfig().getHl();
+               i < samplesHistory.length() / getConfig().getHistoryLength();
                idx = nextSamplesWindowIdx(idx), i++) {
             value += samplesHistory.get(idx);
           }
           readingDone = true;
           final long newSamplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
-          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {
+          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHistoryLength()) {
             //the samples window may has been moved while we were counting, but result is still correct
             break;
           } else {//the samples window has been moved too far
@@ -159,7 +159,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
       long value = 0;
       samplesWindowShiftSteps = this.samplesWindowShiftSteps;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
-          i < samplesHistory.length() / getConfig().getHl();
+          i < samplesHistory.length() / getConfig().getHistoryLength();
           idx = nextSamplesWindowIdx(idx), i++) {
         value += samplesHistory.get(idx);
       }
@@ -176,14 +176,14 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
           final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
           for (int idx = leftSamplesWindowIdx, i = 0;
-              i < samplesHistory.length() / getConfig().getHl();
+              i < samplesHistory.length() / getConfig().getHistoryLength();
               idx = nextSamplesWindowIdx(idx), i++) {
             value += samplesHistory.get(idx);
           }
           reading.setValue(value);
           readingDone = true;
           final long newSamplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
-          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) {
+          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHistoryLength()) {
             //the samples window may has been moved while we were counting, but result is still correct
             break;
           } else {//the samples window has been moved too far
@@ -533,7 +533,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
 
   private final int leftSamplesWindowIdx(final long samplesWindowShiftSteps) {
     //the result can not be greater than samples.length, which is int, so it is a safe cast to int
-    return (int)((samplesWindowShiftSteps + samplesHistory.length() - samplesHistory.length() / getConfig().getHl()) % samplesHistory.length());
+    return (int)((samplesWindowShiftSteps + samplesHistory.length() - samplesHistory.length() / getConfig().getHistoryLength()) % samplesHistory.length());
   }
 
   private final int rightSamplesWindowIdx(final long samplesWindowShiftSteps) {

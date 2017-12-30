@@ -18,7 +18,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
       final Duration timeSensitivity,
       final boolean collectStats,
       final int maxTicksCountAttempts,
-      final int hl,
+      final int historyLength,
       final boolean strictTick,
       final Supplier<? extends WaitStrategy> waitStrategySupplier,
       final Supplier<? extends LockStrategy> lockStrategySupplier) {
@@ -27,7 +27,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
         timeSensitivity,
         collectStats,
         maxTicksCountAttempts,
-        hl);
+        historyLength);
     this.strictTick = strictTick;
     this.waitStrategySupplier = waitStrategySupplier;
     this.lockStrategySupplier = lockStrategySupplier;
@@ -78,7 +78,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
         + ", timeSensitivity=" + getTimeSensitivity()
         + ", collectStats=" + isCollectStats()
         + ", maxTicksCountAttempts=" + getMaxTicksCountAttempts()
-        + ", hl=" + getHl()
+        + ", historyLength=" + getHistoryLength()
         + ", strictTick=" + strictTick
         + ", waitStrategySupplier=" + waitStrategySupplier
         + ", lockStrategySupplier=" + lockStrategySupplier
@@ -143,7 +143,7 @@ public class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
           timeSensitivity,
           collectStats,
           maxTicksCountAttempts,
-          hl,
+          historyLength,
           strictTick,
           waitStrategySupplier,
           lockStrategySupplier);

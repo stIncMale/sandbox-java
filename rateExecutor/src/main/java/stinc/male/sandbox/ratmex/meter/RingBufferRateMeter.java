@@ -10,7 +10,7 @@ public class RingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentR
   static {
     final ConcurrentRingBufferRateMeterConfig.Builder defaultConfigBuilder = ConcurrentRingBufferRateMeterConfig.newBuilder();
     defaultConfigBuilder.setTicksCounterSupplier(LongTicksCounter::new)
-        .setHl(2);
+        .setHistoryLength(2);
     defaultConfigInstance = defaultConfigBuilder.build();
   }
 
