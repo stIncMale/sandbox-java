@@ -4,8 +4,10 @@ import java.time.Duration;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import stinc.male.sandbox.ratmex.Configurable;
-import stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.util.internal.Preconditions;
+import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.checkTNanos;
+import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.checkUnit;
+import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.maxTNanos;
 import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.convertRate;
 
@@ -37,7 +39,7 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter
             "Must be less than (Long.MAX_VALUE - 1)nanos = %snanos, but actual value is %s",
             Long.MAX_VALUE - 1,
             samplesIntervalNanos));
-    maxTNanos = ConversionsAndChecks.maxTNanos(startNanos, samplesIntervalNanos, config.getHistoryLength() + 1);
+    maxTNanos = maxTNanos(startNanos, samplesIntervalNanos, config.getHistoryLength() + 1);
     this.config = config;
     ticksTotal = config.getTicksCounterSupplier()
         .apply(0L);
@@ -115,18 +117,18 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter
   }
 
   protected final void checkArgument(final long tNanos, final String safeParamName) throws IllegalArgumentException {
-    ConversionsAndChecks.checkTNanos(tNanos, startNanos, maxTNanos, safeParamName);
+    checkTNanos(tNanos, startNanos, maxTNanos, safeParamName);
   }
 
   protected final void checkArgument(final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
-    ConversionsAndChecks.checkUnit(unit, safeUnitParamName);
+    checkUnit(unit, safeUnitParamName);
   }
 
   protected final void checkArguments(
       final long tNanos, final String safeTNanosParamName,
       final Duration unit, final String safeUnitParamName) throws IllegalArgumentException {
-    ConversionsAndChecks.checkTNanos(tNanos, startNanos, maxTNanos, safeTNanosParamName);
-    ConversionsAndChecks.checkUnit(unit, safeUnitParamName);
+    checkTNanos(tNanos, startNanos, maxTNanos, safeTNanosParamName);
+    checkUnit(unit, safeUnitParamName);
   }
 
   @Override
