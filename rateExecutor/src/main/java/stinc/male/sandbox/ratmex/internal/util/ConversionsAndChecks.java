@@ -1,11 +1,11 @@
-package stinc.male.sandbox.ratmex.util.internal;
+package stinc.male.sandbox.ratmex.internal.util;
 
 import java.time.Duration;
 import javax.annotation.Nullable;
 import stinc.male.sandbox.ratmex.meter.NanosComparator;
 import stinc.male.sandbox.ratmex.meter.RateMeterReading;
-import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkArgument;
-import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 public final class ConversionsAndChecks {
   /**

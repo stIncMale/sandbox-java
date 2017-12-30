@@ -7,9 +7,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks;
-import stinc.male.sandbox.ratmex.util.internal.Preconditions;
-import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
+import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
+import stinc.male.sandbox.ratmex.internal.util.Preconditions;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 /**
  * @param <T>

@@ -3,7 +3,7 @@ package stinc.male.sandbox.ratmex.meter;
 import java.time.Duration;
 import java.util.Optional;
 import javax.annotation.concurrent.ThreadSafe;
-import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 @ThreadSafe
 public final class ConcurrentSimpleRateMeter implements RateMeter {//TODO move to performance tests (a separate project)

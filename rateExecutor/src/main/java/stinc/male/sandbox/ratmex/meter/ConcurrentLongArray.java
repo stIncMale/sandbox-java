@@ -1,7 +1,7 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.util.concurrent.atomic.AtomicLongArray;
-import stinc.male.sandbox.ratmex.util.internal.Preconditions;
+import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 
 final class ConcurrentLongArray implements LongArray {
   final AtomicLongArray array;

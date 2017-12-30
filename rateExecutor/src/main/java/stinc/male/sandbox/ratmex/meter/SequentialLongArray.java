@@ -1,6 +1,6 @@
 package stinc.male.sandbox.ratmex.meter;
 
-import stinc.male.sandbox.ratmex.util.internal.Preconditions;
+import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 
 final class SequentialLongArray implements LongArray {
   final long[] array;

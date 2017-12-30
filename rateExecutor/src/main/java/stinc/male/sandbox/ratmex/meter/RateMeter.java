@@ -2,11 +2,11 @@ package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
 import java.util.Optional;
-import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
-import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.checkTNanos;
-import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.checkUnit;
-import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.convertRate;
-import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.maxTNanos;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.checkTNanos;
+import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.checkUnit;
+import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.convertRate;
+import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTNanos;
 
 /**
  * A utility that measures rate of {@linkplain #tick(long, long) ticks}.

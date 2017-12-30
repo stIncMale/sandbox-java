@@ -4,12 +4,12 @@ import java.time.Duration;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import stinc.male.sandbox.ratmex.Configurable;
-import stinc.male.sandbox.ratmex.util.internal.Preconditions;
-import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.checkTNanos;
-import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.checkUnit;
-import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.maxTNanos;
-import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
-import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.convertRate;
+import stinc.male.sandbox.ratmex.internal.util.Preconditions;
+import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.checkTNanos;
+import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.checkUnit;
+import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTNanos;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.convertRate;
 
 abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter, Configurable<C> {
   private final TicksCounter ticksTotal;

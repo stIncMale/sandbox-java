@@ -3,9 +3,9 @@ package stinc.male.sandbox.ratmex.executor;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import javax.annotation.concurrent.Immutable;
-import stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks;
-import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.checkUnit;
-import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkArgument;
+import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
+import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.checkUnit;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 
 /**
  * A representation of a rate.

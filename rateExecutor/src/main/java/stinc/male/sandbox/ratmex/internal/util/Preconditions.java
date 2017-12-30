@@ -1,4 +1,4 @@
-package stinc.male.sandbox.ratmex.util.internal;
+package stinc.male.sandbox.ratmex.internal.util;
 
 import java.util.Locale;
 import java.util.function.Supplier;

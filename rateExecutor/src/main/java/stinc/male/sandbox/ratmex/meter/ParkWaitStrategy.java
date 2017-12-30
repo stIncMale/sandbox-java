@@ -3,7 +3,7 @@ package stinc.male.sandbox.ratmex.meter;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import javax.annotation.concurrent.ThreadSafe;
-import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkArgument;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 
 @ThreadSafe
 public final class ParkWaitStrategy implements WaitStrategy {

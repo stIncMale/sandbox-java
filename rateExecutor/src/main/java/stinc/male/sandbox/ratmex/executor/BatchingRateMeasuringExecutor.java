@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import stinc.male.sandbox.ratmex.meter.RateMeter;
-import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 @ThreadSafe
 public final class BatchingRateMeasuringExecutor implements RateMeasuringExecutor {
