@@ -27,9 +27,10 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter
   private final C config;
 
   /**
-   * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
-   * @param samplesInterval Size of the samples window.
-   * @param config Additional configuration parameters.
+   * @param startNanos A {@linkplain #getStartNanos() starting point} that is used to calculate elapsed time in nanoseconds (tNanos).
+   * @param samplesInterval A size of the {@linkplain #getSamplesInterval() samples window}.
+   * Must not be null, see {@link RateMeter} for valid values.
+   * @param config An additional {@linkplain #getConfig() configuration}. Must not be null.
    */
   AbstractRateMeter(final long startNanos, final Duration samplesInterval, final C config) {
     checkNotNull(samplesInterval, "samplesInterval");
