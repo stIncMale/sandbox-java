@@ -340,7 +340,7 @@ public interface RateMeter {
    * @return {@link RateMeterStats} which may be not {@linkplain Optional#isPresent() present}
    * if the {@link RateMeter} does not collect stats.
    */
-  Optional<RateMeterStats> stats();//TODO parametrize, specify thread safety of stats; do not create stats for every ratemeter
+  Optional<RateMeterStats> stats();//TODO parametrize, specify thread safety of stats; do not create stats for every rate meter
 }
 //TODO verify javadocs and other comments and messages
 //TODO check inheritance/final methods

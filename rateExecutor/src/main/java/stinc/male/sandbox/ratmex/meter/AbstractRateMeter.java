@@ -3,12 +3,13 @@ package stinc.male.sandbox.ratmex.meter;
 import java.time.Duration;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import stinc.male.sandbox.ratmex.Configurable;
 import stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.util.internal.Preconditions;
 import static stinc.male.sandbox.ratmex.util.internal.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratmex.util.internal.ConversionsAndChecks.convertRate;
 
-abstract class AbstractRateMeter<C extends RateMeterConfig> implements ConfigurableRateMeter<C> {
+abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter, Configurable<C> {
   private final TicksCounter ticksTotal;
   private final long startNanos;
   private final Duration samplesInterval;
@@ -32,10 +33,14 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements Configura
     this.samplesInterval = samplesInterval;
     samplesIntervalNanos = samplesInterval.toNanos();
     Preconditions.checkArgument(samplesIntervalNanos <= Long.MAX_VALUE / (config.getHistoryLength() + 1) - 1, "samplesInterval",
-        () -> String.format("Must be less than (Long.MAX_VALUE - 1)nanos = %snanos, but actual value is %s", Long.MAX_VALUE - 1, samplesIntervalNanos));
+        () -> String.format(
+            "Must be less than (Long.MAX_VALUE - 1)nanos = %snanos, but actual value is %s",
+            Long.MAX_VALUE - 1,
+            samplesIntervalNanos));
     maxTNanos = ConversionsAndChecks.maxTNanos(startNanos, samplesIntervalNanos, config.getHistoryLength() + 1);
     this.config = config;
-    ticksTotal = config.getTicksCounterSupplier().apply(0L);
+    ticksTotal = config.getTicksCounterSupplier()
+        .apply(0L);
     stats = config.isCollectStats() ? new ConcurrentRateMeterStats() : null;
   }
 
