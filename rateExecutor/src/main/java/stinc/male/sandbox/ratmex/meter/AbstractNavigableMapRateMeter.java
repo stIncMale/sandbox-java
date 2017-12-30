@@ -18,11 +18,15 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
   private final boolean sequential;
   private final T samplesHistory;
   private final long timeSensitivityNanos;
-  private final AtomicBoolean gcInProgress;
-  private volatile long gcLastRightSamplesWindowBoundary;
+  private final AtomicBoolean cleanInProgress;
+  private volatile long cleanLastRightSamplesWindowBoundary;
+  /**
+   * (0; 1].
+   * The bigger, the less frequently clean happens, but the older elements are maintained in the samples history.
+   */
+  private final double cleanRatio = 0.3;
   @Nullable
   private final StampedLock ticksCountRwLock;
-  private final double gcRatio = 0.3;//(0; 1] the bigger, the less frequently GC happens, but the older elements are maintained in the samples history.
   private final int maxTicksCountAttempts;
 
   /**
@@ -47,8 +51,8 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
     Preconditions.checkArgument(samplesHistory.comparator() instanceof NanosComparator, "samplesSupplier",
         () -> "The comparator used by samples history map must be of type " + NanosComparator.class.getSimpleName());
     samplesHistory.put(startNanos, config.getTicksCounterSupplier().apply(0L));
-    gcInProgress = new AtomicBoolean();
-    gcLastRightSamplesWindowBoundary = getStartNanos();
+    cleanInProgress = new AtomicBoolean();
+    cleanLastRightSamplesWindowBoundary = getStartNanos();
     timeSensitivityNanos = config.getTimeSensitivity().toNanos();
     Preconditions.checkArgument(timeSensitivityNanos <= getSamplesIntervalNanos(), "config",
         () -> String.format("getTimeSensitivityNanos()=%s must be not greater than getSamplesIntervalNanos()=%s",
@@ -175,8 +179,8 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
         }
       }
       getTicksTotalCounter().add(count);
-      if (gcRequired(rightNanos)) {
-        gc(rightNanos);
+      if (cleanRequired(rightNanos)) {
+        clean(rightNanos);
       }
     }
   }
@@ -291,17 +295,19 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
         .sum();
   }
 
-  private final boolean gcRequired(final long rightSamplesWindowBoundary) {
-    final long samplesWindowShiftNanos = rightSamplesWindowBoundary - gcLastRightSamplesWindowBoundary;
+  private final boolean cleanRequired(final long rightSamplesWindowBoundary) {
+    final long samplesWindowShiftNanos = rightSamplesWindowBoundary - cleanLastRightSamplesWindowBoundary;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
-    final double maxRatio = getConfig().getHl() + gcRatio;
+    //cleanRatio belongs to (0; 1], the bigger, the less frequently clean happens, but the older elements are maintained in the samples history
+    final double cleanRatio = 0.3;
+    final double maxRatio = getConfig().getHl() + cleanRatio;
     return maxRatio <= (double)samplesWindowShiftNanos / samplesIntervalNanos;
   }
 
-  private final void gc(final long rightSamplesWindowBoundary) {
-    if (gcInProgress.compareAndSet(false, true)) {
+  private final void clean(final long rightSamplesWindowBoundary) {
+    if (cleanInProgress.compareAndSet(false, true)) {
       try {
-        gcLastRightSamplesWindowBoundary = rightSamplesWindowBoundary;
+        cleanLastRightSamplesWindowBoundary = rightSamplesWindowBoundary;
         final long leftNanos = rightSamplesWindowBoundary - getConfig().getHl() * getSamplesIntervalNanos();
         @Nullable
         final Long firstNanos = samplesHistory.firstKey();
@@ -310,7 +316,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig, T
               .clear();
         }
       } finally {
-        gcInProgress.set(false);
+        cleanInProgress.set(false);
       }
     }
   }
