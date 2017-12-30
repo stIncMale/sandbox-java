@@ -3,7 +3,7 @@ package stinc.male.sandbox.ratmex;
 /**
  * Any object which can be configured and which exposes its configuration.
  *
- * @param <C> A type of the configuration.
+ * @param <C> A type of the {@linkplain #getConfig() configuration}.
  */
 public interface Configurable<C> {
   /**

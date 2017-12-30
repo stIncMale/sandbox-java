@@ -37,7 +37,7 @@ import stinc.male.sandbox.ratmex.meter.StampedLockStrategy;
 import static java.lang.Math.round;
 import static java.time.Duration.of;
 
-//@Disabled
+@Disabled
 public final class BatchingRateMeasuringExecutorTest {
   public BatchingRateMeasuringExecutorTest() {
   }

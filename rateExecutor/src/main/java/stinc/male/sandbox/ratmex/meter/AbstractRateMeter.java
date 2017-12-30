@@ -14,7 +14,7 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.conve
 /**
  * A generic implementation of a {@linkplain Configurable configurable} {@link RateMeter}.
  *
- * @param <C> A type of a configuration.
+ * @param <C> A type of the {@linkplain #getConfig() configuration}.
  */
 abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter, Configurable<C> {
   private final TicksCounter ticksTotal;
