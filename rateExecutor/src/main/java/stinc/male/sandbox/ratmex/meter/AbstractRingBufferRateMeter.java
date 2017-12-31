@@ -150,7 +150,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
   }
 
   @Override
-  public RateMeterReading ticksCount(final RateMeterReading reading) {
+  public RateMeterReading ticksCount(final RateMeterReading reading) {//TODO document all cases when setAccurate(false)
     checkNotNull(reading, "reading");
     reading.setAccurate(true);
     boolean readingDone = false;
@@ -192,6 +192,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
                 ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
               ticksCountReadLockStamp = ticksCountStampedLock.readLock();
             }
+            //TODO same problem as with AbstractNavigableMapRateMeter, same changes are required
           }
         }
       } finally {

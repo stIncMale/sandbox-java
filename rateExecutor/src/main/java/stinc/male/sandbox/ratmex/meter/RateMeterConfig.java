@@ -71,14 +71,15 @@ public class RateMeterConfig {
   }
 
   /**
-   * Specifies the maximum number of attempts to calculate the number of current ticks
-   * (see {@link RateMeter#ticksCount()} for example).
-   * Some implementations may allow a race condition while performing such a calculation for performance reasons
-   * (such a race may be caused by allowing to move the samples window while counting current ticks).
-   * Note that this is just a hint, so an implementation may choose to do more attempts,
-   * but the number of attempts must be finite.
+   * Specifies the desired maximum number of attempts to calculate the number of ticks (see {@link RateMeter#ticksCount()} for example).
+   * Note that this is just a hint, so an implementation may choose to do more attempts, but the number of attempts must be finite.
+   * <p>
+   * <b>The reasoning behind this hint</b><br>
+   * Implementations may allow a race condition (for performance reasons) while counting ticks.
+   * When running out of the number of attempts such implementations may choose to fall over to an approach that excludes the race
+   * and allows to eventually count the ticks.
    *
-   * @return 5 by default.
+   * @return 6 by default.
    */
   public final int getMaxTicksCountAttempts() {
     return maxTicksCountAttempts;
@@ -122,7 +123,7 @@ public class RateMeterConfig {
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = Duration.ofNanos(200);
       collectStats = true;
-      maxTicksCountAttempts = 5;
+      maxTicksCountAttempts = 6;
       historyLength = 3;
     }
 

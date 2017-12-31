@@ -103,7 +103,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
               However since tick method acquires the write lock not always, but only if sees the read lock acquired,
               there is a race condition which still may lead to the samples window being moved,
               though the likelihood of such situation is now much less.*/
-            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2 - 1) {
+            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2) {
               //we have spent half of the read attempts, let us fall over to lock approach
               ticksCountReadLockStamp = ticksCountRwLock.readLock();
             }
@@ -120,7 +120,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
   }
 
   @Override
-  public final RateMeterReading ticksCount(final RateMeterReading reading) {
+  public final RateMeterReading ticksCount(final RateMeterReading reading) {//TODO document all cases when setAccurate(false)
     checkNotNull(reading, "reading");
     reading.setAccurate(true);
     boolean readingDone = false;
@@ -148,10 +148,11 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
               However since tick method acquires the write lock not always, but only if sees the read lock acquired,
               there is a race condition which still may lead to the samples window being moved,
               though the likelihood of such situation is now much less.*/
-            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2 - 1) {
+            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2) {
               //we have spent half of the read attempts, let us fall over to lock approach
               ticksCountReadLockStamp = ticksCountRwLock.readLock();
             }
+            //TODO try for as many iterations as it takes to read (if the number of tick threads is limited, then the number of iterations is too)
             if (ri == maxTicksCountAttempts - 1) {//this was the last iteration, and we have failed
               reading.setAccurate(false);
             }
