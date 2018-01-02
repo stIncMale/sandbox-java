@@ -5,5 +5,5 @@ import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 public interface WaitStrategy {//TODO use Thread.onSpinWait()
-  void await(BooleanSupplier condition);
+  void await(BooleanSupplier condition);//TODO add backoff (change the signature)
 }
