@@ -340,4 +340,3 @@ public interface RateMeter<S> {
    */
   Optional<S> stats();
 }
-//TODO verify javadocs and other comments and messages

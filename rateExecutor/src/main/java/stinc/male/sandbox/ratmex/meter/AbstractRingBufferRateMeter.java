@@ -1,7 +1,6 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
@@ -10,14 +9,12 @@ import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
-abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMeterConfig>
-    extends AbstractRateMeter<ConcurrentRingBufferRateMeterStats, C> {//TODO use configurable stats provided by the implementation
+abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRingBufferRateMeterConfig>
+    extends AbstractRateMeter<S, C> {
   private final boolean sequential;
   private final LongArray samplesHistory;//the length of this array is multiple of the historyLength
   private final long samplesWindowStepNanos;//essentially timeSensitivityNanos
   private final int maxTicksCountAttempts;
-  @Nullable
-  private final DefaultConcurrentRingBufferRateMeterStats stats;
   @Nullable
   private final StampedLock ticksCountLock;//we don't need an analogous field for a sequential implementation
   /*Same length as samples history;
@@ -69,7 +66,6 @@ abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMet
     maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
     this.sequential = sequential;
     if (sequential) {
-      stats = null;
       ticksCountLock = null;
       ticksCountLocks = null;
       atomicSamplesWindowShiftSteps = null;
@@ -77,7 +73,6 @@ abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMet
       atomicCompletedSamplesWindowShiftSteps = null;
       completedSamplesWindowShiftStepsWaitStrategy = null;
     } else {
-      stats = config.isCollectStats() ? new DefaultConcurrentRingBufferRateMeterStats() : null;
       ticksCountLock = new StampedLock();
       if (config.isStrictTick()) {
         ticksCountLocks = new LockStrategy[samplesHistory.length()];
@@ -453,10 +448,14 @@ abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMet
     return reading;
   }
 
-  @Override
-  public final Optional<ConcurrentRingBufferRateMeterStats> stats() {
-    assert stats != null || !getConfig().isCollectStats();
-    return Optional.ofNullable(stats);
+  /**
+   * This method is called by {@link #tick(long, long)} not more than once per invocation of {@link #tick(long, long)}
+   * when it fails to correctly register ticks.
+   * Such a failure can only happen if this object is not thread-safe
+   * (see {@link #AbstractRingBufferRateMeter(long, Duration, ConcurrentRingBufferRateMeterConfig, Function, boolean)})
+   * and {@link ConcurrentRingBufferRateMeterConfig#isStrictTick()} is false.
+   */
+  protected void registerFailedAccuracyEventForTick() {
   }
 
   private final long lockTicksCount(final int idx) {
@@ -498,9 +497,7 @@ abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMet
         final long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
         if (targetSamplesWindowShiftSteps < samplesWindowShiftSteps - samplesHistory.length()) {
           //we could have registered (but it is not necessary) ticks at an incorrect instant because samples window had been moved too far
-          if (stats != null) {
-            stats.registerFailedAccuracyEventForTick();
-          }
+          registerFailedAccuracyEventForTick();
         }
       } else {
         final long stamp = sharedLockTicksCount(targetIdx);

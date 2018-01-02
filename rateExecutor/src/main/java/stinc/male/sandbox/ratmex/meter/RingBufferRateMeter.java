@@ -1,6 +1,7 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
+import java.util.Optional;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -17,7 +18,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * it can have a substantial negative effect on performance.
  */
 @NotThreadSafe
-public final class RingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentRingBufferRateMeterConfig> {
+public final class RingBufferRateMeter extends AbstractRingBufferRateMeter<Void, ConcurrentRingBufferRateMeterConfig> {
   private static final ConcurrentRingBufferRateMeterConfig defaultConfig;
 
   static {
@@ -53,6 +54,14 @@ public final class RingBufferRateMeter extends AbstractRingBufferRateMeter<Concu
    * with {@link #defaultConfig()} as the third argument.
    */
   public RingBufferRateMeter(final long startNanos, final Duration samplesInterval) {
-    super(startNanos, samplesInterval, defaultConfig, SequentialLongArray::new, false);
+    this(startNanos, samplesInterval, defaultConfig);
+  }
+
+  /**
+   * @return An {@linkplain Optional#empty() empty} {@link Optional}.
+   */
+  @Override
+  public final Optional<Void> stats() {
+    return Optional.empty();
   }
 }

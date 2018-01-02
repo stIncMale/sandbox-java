@@ -1,6 +1,8 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
+import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -17,7 +19,8 @@ import javax.annotation.concurrent.ThreadSafe;
  * it can have a substantial negative effect on performance.
  */
 @ThreadSafe
-public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentRingBufferRateMeterConfig> {
+public final class ConcurrentRingBufferRateMeter
+    extends AbstractRingBufferRateMeter<ConcurrentRingBufferRateMeterStats, ConcurrentRingBufferRateMeterConfig> {
   private static final ConcurrentRingBufferRateMeterConfig defaultConfig;
 
   static {
@@ -27,6 +30,9 @@ public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateM
     defaultConfigBuilder.setLockStrategySupplier(StampedLockStrategy::new);
     defaultConfig = defaultConfigBuilder.build();
   }
+
+  @Nullable
+  private final DefaultConcurrentRingBufferRateMeterStats stats;
 
   /**
    * @return A default configuration.
@@ -43,6 +49,7 @@ public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateM
    */
   public ConcurrentRingBufferRateMeter(final long startNanos, final Duration samplesInterval, final ConcurrentRingBufferRateMeterConfig config) {
     super(startNanos, samplesInterval, config, ConcurrentLongArray::new, false);
+    stats = config.isCollectStats() ? new DefaultConcurrentRingBufferRateMeterStats() : null;
   }
 
   /**
@@ -50,6 +57,21 @@ public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateM
    * with {@link #defaultConfig()} as the third argument.
    */
   public ConcurrentRingBufferRateMeter(final long startNanos, final Duration samplesInterval) {
-    super(startNanos, samplesInterval, defaultConfig, ConcurrentLongArray::new, false);
+    this(startNanos, samplesInterval, defaultConfig);
+  }
+
+  /**
+   * @return An {@linkplain Optional#empty() empty} {@link Optional}.
+   */
+  @Override
+  public final Optional<ConcurrentRingBufferRateMeterStats> stats() {
+    return Optional.ofNullable(stats);
+  }
+
+  @Override
+  protected final void registerFailedAccuracyEventForTick() {
+    if (stats != null) {
+      stats.registerFailedAccuracyEventForTick();
+    }
   }
 }
