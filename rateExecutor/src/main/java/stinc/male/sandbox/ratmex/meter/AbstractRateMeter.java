@@ -29,7 +29,7 @@ public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements
    * Must not be null, see {@link RateMeter} for valid values.
    * @param config An additional {@linkplain #getConfig() configuration}. Must not be null.
    */
-  AbstractRateMeter(final long startNanos, final Duration samplesInterval, final C config) {
+  protected AbstractRateMeter(final long startNanos, final Duration samplesInterval, final C config) {
     checkNotNull(samplesInterval, "samplesInterval");
     Preconditions.checkArgument(!samplesInterval.isZero(), "samplesInterval", "Must not be zero");
     Preconditions.checkArgument(!samplesInterval.isNegative(), "samplesInterval", "Must be positive");
@@ -94,8 +94,9 @@ public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements
   }
 
   /**
+   * Should be used instead of {@link #getSamplesInterval()}{@code .}{@link Duration#toNanos() toNanos()} to avoid unnecessary calculations.
+   *
    * @return {@link #getSamplesInterval()} in nanoseconds.
-   * Should be used instead of {@link #getSamplesInterval()}{@code .}{@link Duration#toNanos() toNanos()} for better performance.
    */
   protected final long getSamplesIntervalNanos() {
     return samplesIntervalNanos;

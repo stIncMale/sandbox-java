@@ -8,26 +8,24 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgumen
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 /**
- * The {@code @}{@link Immutable} here only guarantees that the {@code get...} methods
- * always behave as methods of immutable class.
+ * A configuration that can be used to create {@link AbstractRateMeter}.
+ *
+ * The {@code @}{@link Immutable} for this class only guarantees that {@code get...} methods always behave as methods of an immutable class.
  */
 @Immutable
 public class RateMeterConfig {
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   private final Duration timeSensitivity;
-  private final boolean collectStats;
   private final int maxTicksCountAttempts;
   private final int historyLength;
 
   protected RateMeterConfig(
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       final Duration timeSensitivity,
-      final boolean collectStats,
       final int maxTicksCountAttempts,
       final int historyLength) {
     this.ticksCounterSupplier = ticksCounterSupplier;
     this.timeSensitivity = timeSensitivity;
-    this.collectStats = collectStats;
     this.maxTicksCountAttempts = maxTicksCountAttempts;
     this.historyLength = historyLength;
   }
@@ -58,16 +56,6 @@ public class RateMeterConfig {
    */
   public final Duration getTimeSensitivity() {//todo return null by default and use 1/20 of samplesInterval
     return timeSensitivity;
-  }
-
-  /**
-   * This configuration parameter specifies if
-   * {@link AbstractRateMeter} must collect {@link ConcurrentRingBufferRateMeterStats stats}.
-   *
-   * @return {@code true} by default.
-   */
-  public final boolean isCollectStats() {//TODO move to ConcurrentRingBufferRateMeterConfig
-    return collectStats;
   }
 
   /**
@@ -105,7 +93,6 @@ public class RateMeterConfig {
     return getClass().getSimpleName()
         + "{ticksCounterSupplier=" + ticksCounterSupplier
         + ", timeSensitivity=" + timeSensitivity
-        + ", collectStats=" + collectStats
         + ", maxTicksCountAttempts=" + maxTicksCountAttempts
         + ", historyLength=" + historyLength
         + '}';
@@ -115,14 +102,12 @@ public class RateMeterConfig {
   public static class Builder {
     protected Function<Long, ? extends TicksCounter> ticksCounterSupplier;
     protected Duration timeSensitivity;
-    protected boolean collectStats;
     protected int maxTicksCountAttempts;
     protected int historyLength;
 
     protected Builder() {
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = Duration.ofNanos(200);
-      collectStats = true;
       maxTicksCountAttempts = 6;
       historyLength = 3;
     }
@@ -130,7 +115,6 @@ public class RateMeterConfig {
     protected Builder(final RateMeterConfig config) {
       ticksCounterSupplier = config.getTicksCounterSupplier();
       timeSensitivity = config.getTimeSensitivity();
-      collectStats = config.isCollectStats();
       maxTicksCountAttempts = config.getMaxTicksCountAttempts();
       historyLength = config.getHistoryLength();
     }
@@ -160,14 +144,6 @@ public class RateMeterConfig {
     }
 
     /**
-     * @see RateMeterConfig#isCollectStats()
-     */
-    public final Builder setCollectStats(final boolean collectStats) {
-      this.collectStats = collectStats;
-      return this;
-    }
-
-    /**
      * @param maxTicksCountAttempts Must be positive.
      *
      * @see RateMeterConfig#getMaxTicksCountAttempts()
@@ -193,7 +169,6 @@ public class RateMeterConfig {
       return new RateMeterConfig(
           ticksCounterSupplier,
           timeSensitivity,
-          collectStats,
           maxTicksCountAttempts,
           historyLength);
     }

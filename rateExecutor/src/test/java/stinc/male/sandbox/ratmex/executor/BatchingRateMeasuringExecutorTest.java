@@ -135,7 +135,6 @@ public final class BatchingRateMeasuringExecutorTest {
             .setTicksCounterSupplier(LongTicksCounter::new)
             .setHistoryLength(2)
             .setTimeSensitivity(timeSensitivity)
-            .setCollectStats(false)
             .setMaxTicksCountAttempts(1)
             .build());
     final ConcurrentRingBufferRateMeterConfig.Builder concurrentRmCfgBuilder = ConcurrentRingBufferRateMeter.defaultConfig()
@@ -143,10 +142,10 @@ public final class BatchingRateMeasuringExecutorTest {
         .setStrictTick(false)
         .setLockStrategySupplier(StampedLockStrategy::new)
         .setWaitStrategySupplier(ParkWaitStrategy::instance);
-    concurrentRmCfgBuilder.setTicksCounterSupplier(LongAdderTicksCounter::new)
+    concurrentRmCfgBuilder.setCollectStats(true)
+        .setTicksCounterSupplier(LongAdderTicksCounter::new)
         .setHistoryLength(3)
         .setTimeSensitivity(timeSensitivity)
-        .setCollectStats(true)
         .setMaxTicksCountAttempts(5);
     final RateMeter<ConcurrentRingBufferRateMeterStats> completionRateMeter =
         new ConcurrentRingBufferRateMeter(startNanos, samplesInterval, concurrentRmCfgBuilder.build());

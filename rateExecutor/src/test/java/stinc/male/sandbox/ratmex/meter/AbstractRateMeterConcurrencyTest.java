@@ -95,14 +95,6 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
             throw new RuntimeException(e);
           }
         });
-    if (rm instanceof ConcurrentRingBufferRateMeter) {
-      assertEquals(0,
-          rm.stats()
-              .map(stats -> (ConcurrentRingBufferRateMeterStats)stats)
-              .get()
-              .failedAccuracyEventsCountForTick(),
-          String.format("Iteration#%s, %s", iterationIdx, tp));
-    }
     assertEquals(tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary(), String.format("Iteration#%s, %s", iterationIdx, tp));
     assertEquals(tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
     assertEquals(tickGenerator.totalCount(), rm.ticksTotalCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
