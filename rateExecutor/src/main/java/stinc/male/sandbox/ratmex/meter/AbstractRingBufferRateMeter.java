@@ -1,6 +1,7 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
@@ -24,16 +25,19 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
  *
  * @param <C> A type of the {@linkplain #getConfig() configuration}.
  */
-public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMeterConfig> extends AbstractRateMeter<C> {
+abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMeterConfig>
+    extends AbstractRateMeter<ConcurrentRingBufferRateMeterStats, C> {
   private final boolean sequential;
   private final LongArray samplesHistory;//the length of this array is multiple of the historyLength
   private final long samplesWindowStepNanos;//essentially timeSensitivityNanos
   private final int maxTicksCountAttempts;
-  /*Same length as samples history;
-    required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample.
-    A smaller number of locks can be used in the future via a technique similar to lock striping.*/
+  @Nullable
+  private final DefaultConcurrentRingBufferRateMeterStats stats;
   @Nullable
   private final StampedLock ticksCountLock;//we don't need an analogous field for a sequential implementation
+  /*Same length as samples history;
+    required to overcome a problem which arises when we move the samples window too far while we are registering a new sample.
+    A smaller number of locks can be used in the future via a technique similar to lock striping.*/
   @Nullable
   private final LockStrategy[] ticksCountLocks;//we don't need an analogous field for a sequential implementation
   @Nullable
@@ -77,8 +81,10 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
             samplesIntervalNanos, timeSensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samplesHistory = samplesHistorySupplier.apply(config.getHistoryLength() * samplesIntervalArrayLength);
+    maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
     this.sequential = sequential;
     if (sequential) {
+      stats = null;
       ticksCountLock = null;
       ticksCountLocks = null;
       atomicSamplesWindowShiftSteps = null;
@@ -86,6 +92,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
       atomicCompletedSamplesWindowShiftSteps = null;
       completedSamplesWindowShiftStepsWaitStrategy = null;
     } else {
+      stats = config.isCollectStats() ? new DefaultConcurrentRingBufferRateMeterStats() : null;
       ticksCountLock = new StampedLock();
       if (config.isStrictTick()) {
         ticksCountLocks = new LockStrategy[samplesHistory.length()];
@@ -102,7 +109,6 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
       completedSamplesWindowShiftStepsWaitStrategy = config.getWaitStrategySupplier()
           .get();
     }
-    maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
   }
 
   @Override
@@ -387,11 +393,6 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
             final long newRightNanos = rightSamplesWindowBoundary(newSamplesWindowShiftSteps);
             value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
                 newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
-            @Nullable
-            final ConcurrentRateMeterStats stats = getStats();
-            if (stats != null) {
-              stats.accountFailedAccuracyEventForRate();
-            }
           }
         }
       }
@@ -459,17 +460,18 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
                 newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
             reading.setValue(value);
             readingDone = true;
-            @Nullable
-            final ConcurrentRateMeterStats stats = getStats();
-            if (stats != null) {
-              stats.accountFailedAccuracyEventForRate();
-            }
           }
         }
       }
     }
     assert readingDone;
     return reading;
+  }
+
+  @Override
+  public final Optional<ConcurrentRingBufferRateMeterStats> stats() {
+    assert stats != null || !getConfig().isCollectStats();
+    return Optional.ofNullable(stats);
   }
 
   private final long lockTicksCount(final int idx) {
@@ -501,20 +503,18 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     }
   }
 
-  private final void tickAccumulateSample(final int targetIdx, final long delta, final long targetSamplesWindowShiftSteps) {
+  private final void tickAccumulateSample(final int targetIdx, final long count, final long targetSamplesWindowShiftSteps) {
     if (sequential) {
-      samplesHistory.add(targetIdx, delta);
+      samplesHistory.add(targetIdx, count);
     } else {
       assert atomicSamplesWindowShiftSteps != null;
       if (ticksCountLocks == null) {//not strict mode, no locking
-        samplesHistory.add(targetIdx, delta);
+        samplesHistory.add(targetIdx, count);
         final long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
         if (targetSamplesWindowShiftSteps < samplesWindowShiftSteps - samplesHistory.length()) {
-          //we could have accounted (but it is not necessary) the sample at the incorrect instant because samples window had been moved too far
-          @Nullable
-          final ConcurrentRateMeterStats stats = getStats();
+          //we could have registered (but it is not necessary) ticks at an incorrect instant because samples window had been moved too far
           if (stats != null) {
-            stats.accountFailedAccuracyEventForTick();
+            stats.registerFailedAccuracyEventForTick();
           }
         }
       } else {
@@ -523,7 +523,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
           final long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
           if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {
             //double check that tNanos is still within the samples history
-            samplesHistory.add(targetIdx, delta);
+            samplesHistory.add(targetIdx, count);
           }
         } finally {
           unlockSharedTicksCount(targetIdx, stamp);

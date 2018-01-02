@@ -6,11 +6,11 @@ import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 @ThreadSafe
-public final class ConcurrentSimpleRateMeter implements RateMeter {//TODO move to performance tests (a separate project)
-  private final RateMeter rm;
+public final class ConcurrentSimpleRateMeter<S> implements RateMeter<S> {//TODO move to performance tests (a separate project)
+  private final RateMeter<S> rm;
   private final LockStrategy lockStrategy;
 
-  public ConcurrentSimpleRateMeter(final RateMeter rm, final LockStrategy lockStrategy) {
+  public ConcurrentSimpleRateMeter(final RateMeter<S> rm, final LockStrategy lockStrategy) {
     checkNotNull(rm, "rm");
     checkNotNull(lockStrategy, "lockStrategy");
     this.rm = rm;
@@ -198,7 +198,7 @@ public final class ConcurrentSimpleRateMeter implements RateMeter {//TODO move t
   }
 
   @Override
-  public final Optional<RateMeterStats> stats() {
+  public final Optional<S> stats() {
     final long lockStamp = lockStrategy.sharedLock();
     try {
       return rm.stats();

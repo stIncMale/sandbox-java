@@ -62,7 +62,7 @@ public class RateMeterConfig {
 
   /**
    * This configuration parameter specifies if
-   * {@link AbstractRateMeter} must collect {@link RateMeterStats stats}.
+   * {@link AbstractRateMeter} must collect {@link ConcurrentRingBufferRateMeterStats stats}.
    *
    * @return {@code true} by default.
    */

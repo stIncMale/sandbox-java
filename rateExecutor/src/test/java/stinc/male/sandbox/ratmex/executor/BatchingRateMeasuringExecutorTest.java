@@ -30,7 +30,7 @@ import stinc.male.sandbox.ratmex.meter.LongTicksCounter;
 import stinc.male.sandbox.ratmex.meter.ParkWaitStrategy;
 import stinc.male.sandbox.ratmex.meter.RateMeter;
 import stinc.male.sandbox.ratmex.meter.RateMeterReading;
-import stinc.male.sandbox.ratmex.meter.RateMeterStats;
+import stinc.male.sandbox.ratmex.meter.ConcurrentRingBufferRateMeterStats;
 import stinc.male.sandbox.ratmex.meter.RingBufferRateMeter;
 import stinc.male.sandbox.ratmex.meter.StampedLockStrategy;
 import static java.lang.Math.round;
@@ -64,7 +64,7 @@ public final class BatchingRateMeasuringExecutorTest {
       final Runnable task,
       final long tasksCount,
       final long batchesCount,
-      final RateMeter rateMeter,
+      final RateMeter<?> rateMeter,
       final long tNanos) {
     final long batchSize = tasksCount / batchesCount;
     if (batchSize > 1) {
@@ -127,7 +127,7 @@ public final class BatchingRateMeasuringExecutorTest {
     final Rate targetSubmits = Rate.withRelativeDeviation(targetRatePerSecond, 0.05, Duration.ofSeconds(1));
     println("targetSubmits=" + targetSubmits + ", targetSubmits.avg=" + ((targetSubmits.getMin() + targetSubmits.getMax()) / 2), 1);
     final long startNanos = System.nanoTime();
-    final RateMeter submitterRateMeter = new RingBufferRateMeter(
+    final RateMeter<?> submitterRateMeter = new RingBufferRateMeter(
         startNanos,
         samplesInterval,
         RingBufferRateMeter.defaultConfig()
@@ -148,7 +148,8 @@ public final class BatchingRateMeasuringExecutorTest {
         .setTimeSensitivity(timeSensitivity)
         .setCollectStats(true)
         .setMaxTicksCountAttempts(5);
-    final RateMeter completionRateMeter = new ConcurrentRingBufferRateMeter(startNanos, samplesInterval, concurrentRmCfgBuilder.build());
+    final RateMeter<ConcurrentRingBufferRateMeterStats> completionRateMeter =
+        new ConcurrentRingBufferRateMeter(startNanos, samplesInterval, concurrentRmCfgBuilder.build());
     final LongAdder globalCompleteCounter = new LongAdder();
     final Supplier<Runnable> submitterSupplier = () -> new Runnable() {
       private long submitsCounter;
@@ -290,12 +291,12 @@ public final class BatchingRateMeasuringExecutorTest {
               .toNanos())), 2);
       println("targetRatePerSecond=" + format.format(targetRatePerSecond) +
           ", targetSubmits=" + targetSubmits, 2);
-      println("failedAccuracyEventsCountForTick=" + submitterRateMeter.stats()
-          .map(RateMeterStats::failedAccuracyEventsCountForTick)
-          .orElse(0L) +
-          ", failedAccuracyEventsCountForRate=" + submitterRateMeter.stats()
-          .map(RateMeterStats::failedAccuracyEventsCountForRate)
-          .orElse(0L), 2);
+      //      println("failedAccuracyEventsCountForTick=" + submitterRateMeter.stats()
+      //          .map(ConcurrentRingBufferRateMeterStats::failedAccuracyEventsCountForTick)
+      //          .orElse(0L) +
+      //          ", failedAccuracyEventsCountForRate=" + submitterRateMeter.stats()
+      //          .map(ConcurrentRingBufferRateMeterStats::failedAccuracyEventsCountForRate)
+      //          .orElse(0L), 2);
       println("batchCache.size=" + batchCache.size(), 2);
     }
   }
@@ -312,7 +313,8 @@ public final class BatchingRateMeasuringExecutorTest {
     @Nullable
     @Override
     public final Thread newThread(final Runnable r) {
-      @Nullable final Thread result;
+      @Nullable
+      final Thread result;
       final int currentCount = counter.get();
       if (currentCount < max && counter.compareAndSet(currentCount, currentCount + 1)) {//omit CAS when possible (similar to DCL idiom)
         result = new Thread(r);
@@ -338,9 +340,9 @@ public final class BatchingRateMeasuringExecutorTest {
 
   private static final class RateMeterAwareRunnable implements Runnable {
     private final Runnable r;
-    private final RateMeter rateMeter;
+    private final RateMeter<?> rateMeter;
 
-    private RateMeterAwareRunnable(final Runnable r, final RateMeter rateMeter) {
+    private RateMeterAwareRunnable(final Runnable r, final RateMeter<?> rateMeter) {
       this.r = r;
       this.rateMeter = rateMeter;
     }

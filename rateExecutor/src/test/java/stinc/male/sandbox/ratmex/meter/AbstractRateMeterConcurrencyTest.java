@@ -67,11 +67,12 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
   private final void doTest(final int iterationIdx, final TestParams tp, final ExecutorService ex) {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     final long startNanos = rnd.nextLong();
-    @SuppressWarnings("unchecked") final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
+    @SuppressWarnings("unchecked")
+    final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
         .get()
         .setTimeSensitivity(ofNanos(1))
         .build();
-    final RateMeter rm = getRateMeterCreator().create(
+    final RateMeter<?> rm = getRateMeterCreator().create(
         startNanos,
         tp.samplesInterval,
         rateMeterConfig);
@@ -94,17 +95,22 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
             throw new RuntimeException(e);
           }
         });
-    assertEquals(0,
-        rm.stats()
-            .get()
-            .failedAccuracyEventsCountForTick(),
-        String.format("Iteration#%s, %s", iterationIdx, tp));
+    if (rm instanceof ConcurrentRingBufferRateMeter) {
+      assertEquals(0,
+          rm.stats()
+              .map(stats -> (ConcurrentRingBufferRateMeterStats)stats)
+              .get()
+              .failedAccuracyEventsCountForTick(),
+          String.format("Iteration#%s, %s", iterationIdx, tp));
+    }
     assertEquals(tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary(), String.format("Iteration#%s, %s", iterationIdx, tp));
     assertEquals(tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
     assertEquals(tickGenerator.totalCount(), rm.ticksTotalCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
     final RateMeterReading reading = new RateMeterReading();
-    assertEquals(rm.ticksCount(reading).getTNanos(), rm.rightSamplesWindowBoundary(), String.format("Iteration#%s, %s", iterationIdx, tp));
-    assertEquals(rm.ticksCount(reading).getValueLong(), rm.ticksCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
+    assertEquals(rm.ticksCount(reading)
+        .getTNanos(), rm.rightSamplesWindowBoundary(), String.format("Iteration#%s, %s", iterationIdx, tp));
+    assertEquals(rm.ticksCount(reading)
+        .getValueLong(), rm.ticksCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
   }
 
   private static final class TestParams {
@@ -173,7 +179,7 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
     }
 
     final Future<?> generate(
-        final RateMeter rm,
+        final RateMeter<?> rm,
         boolean orderTicksByTime,
         int tickToRateRatio,
         final ExecutorService ex,
@@ -195,16 +201,17 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
         shuffledSamples.forEach(sample -> {
           rm.tick(sample.getValue(), sample.getKey());
           if (tickToRateRatio > 0 && i % tickToRateRatio == 0) {
-            final int randomInt = ThreadLocalRandom.current().nextInt(6);
+            final int randomInt = ThreadLocalRandom.current()
+                .nextInt(6);
             if (randomInt == 0) {
               rm.ticksCount();
             } else if (randomInt == 1) {
               rm.ticksCount(new RateMeterReading());
-            } else if (randomInt == 2)  {
+            } else if (randomInt == 2) {
               rm.rate();
-            } else if (randomInt == 3)  {
+            } else if (randomInt == 3) {
               rm.rate(new RateMeterReading());
-            } else if (randomInt == 4)  {
+            } else if (randomInt == 4) {
               rm.rate(rm.rightSamplesWindowBoundary());
             } else {
               rm.rate(rm.rightSamplesWindowBoundary(), new RateMeterReading());

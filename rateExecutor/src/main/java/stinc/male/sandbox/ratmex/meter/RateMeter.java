@@ -65,8 +65,8 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * <b>Implementation notes</b><br>
  * The obvious difficulty in concurrent implementation of this interface is the fact that samples window
  * may be moved by a thread running {@link #tick(long, long)} method, while some other thread
- * tries to count ticks (e.g. {@link #ticksCount()}) or to account new samples.
- * And because it is impossible to always store all the accounted samples,
+ * tries to count ticks (e.g. {@link #ticksCount()}) or to register new samples.
+ * And because it is impossible to always store all the registered samples,
  * some samples history may be lost while it is still needed, causing some results to be inaccurate.
  * <p>
  * There may be a bunch of challenges like the one mentioned above. Different implementations may
@@ -80,8 +80,10 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * <p>
  * Implementations may not internally use nanosecond {@linkplain #getTimeSensitivity time sensitivity} (resolution, accuracy, granularity). In
  * fact, there is no sense in using resolution better than the resolution of the timer that is used by a user of {@link RateMeter}.
+ *
+ * @param <S> A type that represents {@linkplain #stats() statistics}.
  */
-public interface RateMeter {
+public interface RateMeter<S> {
   /**
    * @return A starting point that is used to calculate elapsed nanoseconds.
    *
@@ -333,10 +335,9 @@ public interface RateMeter {
   }
 
   /**
-   * @return {@link RateMeterStats} which may be not {@linkplain Optional#isPresent() present}
+   * @return Stats which may be not {@linkplain Optional#isPresent() present}
    * if the {@link RateMeter} does not collect stats.
    */
-  Optional<RateMeterStats> stats();//TODO parametrize, specify thread safety of stats; do not create stats for every rate meter
+  Optional<S> stats();
 }
 //TODO verify javadocs and other comments and messages
-//TODO check inheritance/final methods

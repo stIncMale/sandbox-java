@@ -24,6 +24,6 @@ abstract class AbstractRateMeterTest<B extends Builder, C extends RateMeterConfi
   }
 
   protected interface RateMeterCreator<C> {
-    RateMeter create(long startNanos, Duration samplesInterval, C config);
+    RateMeter<?> create(long startNanos, Duration samplesInterval, C config);
   }
 }

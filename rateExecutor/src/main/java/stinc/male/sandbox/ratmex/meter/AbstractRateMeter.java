@@ -1,8 +1,6 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
-import java.util.Optional;
-import javax.annotation.Nullable;
 import stinc.male.sandbox.ratmex.Configurable;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.checkTNanos;
@@ -15,15 +13,14 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.conve
  * A generic implementation of a {@linkplain Configurable configurable} {@link RateMeter}.
  *
  * @param <C> A type of the {@linkplain #getConfig() configuration}.
+ * @param <S> A type that represents {@linkplain #stats() statistics}.
  */
-abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter, Configurable<C> {
+public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements RateMeter<S>, Configurable<C> {
   private final TicksCounter ticksTotal;
   private final long startNanos;
   private final Duration samplesInterval;
   private final long samplesIntervalNanos;
   private final long maxTNanos;
-  @Nullable
-  private final ConcurrentRateMeterStats stats;
   private final C config;
 
   /**
@@ -49,7 +46,6 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter
     this.config = config;
     ticksTotal = config.getTicksCounterSupplier()
         .apply(0L);
-    stats = config.isCollectStats() ? new ConcurrentRateMeterStats() : null;
   }
 
   @Override
@@ -85,18 +81,8 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter
   }
 
   @Override
-  public final Optional<RateMeterStats> stats() {
-    return Optional.ofNullable(stats);
-  }
-
-  @Override
   public final C getConfig() {
     return config;
-  }
-
-  @Nullable
-  protected final ConcurrentRateMeterStats getStats() {
-    return stats;
   }
 
   /**
@@ -164,7 +150,6 @@ abstract class AbstractRateMeter<C extends RateMeterConfig> implements RateMeter
         + "{startNanos=" + startNanos
         + ", samplesIntervalNanos=" + samplesIntervalNanos
         + ", config=" + config
-        + ", stats=" + stats
         + '}';
   }
 }

@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -26,7 +25,6 @@ import stinc.male.sandbox.ratmex.TestTag;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
-//@Disabled
 @Tag(TestTag.PERFORMANCE)
 public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.of(1, ChronoUnit.MILLIS);
@@ -613,18 +611,18 @@ public class RateMeterPerformanceTest {
     rate(state.concurrentSimpleRateMeter, bh);
   }
 
-  private static final void tick(final RateMeter rm) {
+  private static final void tick(final RateMeter<?> rm) {
     rm.tick(1, nanoTime());
   }
 
-  private static final void rate(final RateMeter rm, final Blackhole bh) {
+  private static final void rate(final RateMeter<?> rm, final Blackhole bh) {
     bh.consume(rm.rate());
     //    bh.consume(rm.rate(new RateMeterReading()));
     //    bh.consume(rm.rate(samplesInterval));
     //    bh.consume(rm.rate(rm.rightSamplesWindowBoundary()));
   }
 
-  private static final void tickAndRate(final RateMeter rm, final Blackhole bh, final int counter, final int tickToRateRatio) {
+  private static final void tickAndRate(final RateMeter<?> rm, final Blackhole bh, final int counter, final int tickToRateRatio) {
     if (counter % (tickToRateRatio + 1) == 0) {
       rate(rm, bh);
     } else {
@@ -632,7 +630,7 @@ public class RateMeterPerformanceTest {
     }
   }
 
-  private static final void rateAndTick(final RateMeter rm, final Blackhole bh, final int counter, final int rateToTickRatio) {
+  private static final void rateAndTick(final RateMeter<?> rm, final Blackhole bh, final int counter, final int rateToTickRatio) {
     if (counter % (rateToTickRatio + 1) == 0) {
       rm.tick(1, nanoTime());
     } else {
@@ -650,7 +648,7 @@ public class RateMeterPerformanceTest {
     ConcurrentNavigableMapRateMeter concurrentNavigableMapRateMeter;
     RingBufferRateMeter ringBufferRateMeter;
     ConcurrentRingBufferRateMeter concurrentRingBufferRateMeter;
-    ConcurrentSimpleRateMeter concurrentSimpleRateMeter;
+    ConcurrentSimpleRateMeter<?> concurrentSimpleRateMeter;
 
     public RateMeterContainer_ThreadScope() {
     }
@@ -682,7 +680,7 @@ public class RateMeterPerformanceTest {
           .setHistoryLength(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
-      concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter(
+      concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter<>(
           new RingBufferRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSupplier.get()
                   .setTicksCounterSupplier(LongTicksCounter::new)
@@ -696,7 +694,7 @@ public class RateMeterPerformanceTest {
   public static class RateMeterContainer_GroupScope {
     ConcurrentNavigableMapRateMeter concurrentNavigableMapRateMeter;
     ConcurrentRingBufferRateMeter concurrentRingBufferRateMeter;
-    ConcurrentSimpleRateMeter concurrentSimpleRateMeter;
+    ConcurrentSimpleRateMeter<?> concurrentSimpleRateMeter;
 
     public RateMeterContainer_GroupScope() {
     }
@@ -718,7 +716,7 @@ public class RateMeterPerformanceTest {
           .setHistoryLength(20);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
-      concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter(
+      concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter<>(
           new RingBufferRateMeter(nanoTime(), samplesInterval,
               rateMeterConfigBuilderSupplier.get()
                   .setTicksCounterSupplier(LongTicksCounter::new)
@@ -729,32 +727,10 @@ public class RateMeterPerformanceTest {
 
     @TearDown(Level.Trial)
     public final void tearDown() {
-      concurrentNavigableMapRateMeter.stats().ifPresent(stats -> {
-        assertEquals(
-            0,
-            stats.failedAccuracyEventsCountForTick(),
-            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-        assertEquals(
-            0,
-            stats.failedAccuracyEventsCountForRate(),
-            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-        assertEquals(
-            0,
-            stats.failedAccuracyEventsCountForTick(),
-            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-        assertEquals(
-            0,
-            stats.failedAccuracyEventsCountForRate(),
-            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-        assertEquals(
-            0,
-            stats.failedAccuracyEventsCountForTick(),
-            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-        assertEquals(
-            0,
-            stats.failedAccuracyEventsCountForRate(),
-            ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
-      });
+      concurrentRingBufferRateMeter.stats()
+          .ifPresent(stats -> {
+            assertEquals(0, stats.failedAccuracyEventsCountForTick(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL);
+          });
     }
   }
 

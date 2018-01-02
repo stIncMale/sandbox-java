@@ -45,7 +45,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
 
   @Test
   public final void rightSamplesWindowBoundary2() {
-    final RateMeter rm = newRateMeter(0, ofNanos(10));
+    final RateMeter<?> rm = newRateMeter(0, ofNanos(10));
     final long rightmost = 123;
     rm.tick(1, rightmost);
     assertEquals(rightmost, rm.rightSamplesWindowBoundary());
@@ -53,7 +53,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
 
   @Test
   public final void rightSamplesWindowBoundary3() {
-    final RateMeter rm = newRateMeter(0, ofNanos(10), ofNanos(7));
+    final RateMeter<?> rm = newRateMeter(0, ofNanos(10), ofNanos(7));
     final long rightmost = 123;
     rm.tick(1, rightmost);
     assertEquals(rightmost, rm.rightSamplesWindowBoundary(), 7);
@@ -68,7 +68,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
   @Test
   public final void ticksCount2() {
     final RateMeterReading r = new RateMeterReading();
-    final RateMeter rm = newRateMeter(-5, ofNanos(50));
+    final RateMeter<?> rm = newRateMeter(-5, ofNanos(50));
     rm.tick(1, 7);
     rm.tick(4, 10);
     rm.tick(2, 20);
@@ -93,7 +93,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
 
   @Test
   public final void ticksTotalCount2() {
-    final RateMeter rm = newRateMeter(Long.MAX_VALUE, ofNanos(50));
+    final RateMeter<?> rm = newRateMeter(Long.MAX_VALUE, ofNanos(50));
     rm.tick(1, Long.MIN_VALUE);
     assertEquals(1, rm.ticksTotalCount());
     assertEquals(rm.ticksCount(), rm.ticksTotalCount());
@@ -151,7 +151,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
 
   @Test
   public final void rateAverage3() {
-    final RateMeter rm = newRateMeter(0, ofNanos(50));
+    final RateMeter<?> rm = newRateMeter(0, ofNanos(50));
     rm.tick(1, 7);
     rm.tick(1, 10);
     rm.tick(2, 20);
@@ -172,7 +172,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
 
   @Test
   public final void rateAverage4() {
-    final RateMeter rm = newRateMeter(0, ofNanos(50));
+    final RateMeter<?> rm = newRateMeter(0, ofNanos(50));
     rm.tick(4, 0);
     rm.tick(1, 3);
     rm.tick(0, 10);
@@ -206,7 +206,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
   @Test
   public final void rate3() {
     final RateMeterReading r = new RateMeterReading();
-    final RateMeter rm = newRateMeter(-1, ofNanos(30));
+    final RateMeter<?> rm = newRateMeter(-1, ofNanos(30));
     rm.tick(1, 0);
     rm.tick(1, 5);
     assertDoubleEquals(1d + 1, rm.rate());
@@ -241,7 +241,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
   @Test
   public final void rate4() {
     final RateMeterReading r = new RateMeterReading();
-    final RateMeter rm = newRateMeter(-2, ofNanos(3));
+    final RateMeter<?> rm = newRateMeter(-2, ofNanos(3));
     rm.tick(3, 0);
     rm.tick(1, 1);
     rm.tick(0, 1);
@@ -270,7 +270,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
   @Test
   public final void rate5() {
     final RateMeterReading r = new RateMeterReading();
-    final RateMeter rm = newRateMeter(-2, ofNanos(30));
+    final RateMeter<?> rm = newRateMeter(-2, ofNanos(30));
     rm.tick(1, -1);
     rm.tick(3, 0);
     rm.tick(1, 10);
@@ -298,11 +298,11 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
 
   @Test
   public final void rateBug() {
-    final RateMeter rm1 = newRateMeter(0, ofNanos(6), ofNanos(3));
+    final RateMeter<?> rm1 = newRateMeter(0, ofNanos(6), ofNanos(3));
     rm1.tick(1, 1);
     rm1.tick(6, 4);
     assertEquals(6, rm1.rate(7));
-    final RateMeter rm2 = newRateMeter(0, ofNanos(1000), ofNanos(500));
+    final RateMeter<?> rm2 = newRateMeter(0, ofNanos(1000), ofNanos(500));
     rm2.tick(1, 44);
     rm2.tick(6, 549);
     assertEquals(6, rm2.rate(1046));
@@ -312,7 +312,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     causing method ConcurrentRingBufferRateMeter.rate (more precisely AbstractRingBufferRateMeter.count) to hang in some cases.*/
   @Test
   public final void rateHangingBug1() {
-    final RateMeter rm = newRateMeter(0, ofNanos(4), ofNanos(2));
+    final RateMeter<?> rm = newRateMeter(0, ofNanos(4), ofNanos(2));
     rm.rate(2);
   }
 
@@ -320,15 +320,15 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     causing method ConcurrentRingBufferRateMeter.rate (more precisely AbstractRingBufferRateMeter.count) to hang in some cases.*/
   @Test
   public final void rateHangingBug2() {
-    final RateMeter rm = newRateMeter(0, ofNanos(4), ofNanos(2));
+    final RateMeter<?> rm = newRateMeter(0, ofNanos(4), ofNanos(2));
     rm.rate(3);
   }
 
-  private final RateMeter newRateMeter(final long startNanos, final Duration samplesInterval) {
+  private final RateMeter<?> newRateMeter(final long startNanos, final Duration samplesInterval) {
     return newRateMeter(startNanos, samplesInterval, ofNanos(1));
   }
 
-  private final RateMeter newRateMeter(final long startNanos, final Duration samplesInterval, final Duration timeSensitivity) {
+  private final RateMeter<?> newRateMeter(final long startNanos, final Duration samplesInterval, final Duration timeSensitivity) {
     @SuppressWarnings("unchecked") final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
         .get()
         .setTimeSensitivity(timeSensitivity)

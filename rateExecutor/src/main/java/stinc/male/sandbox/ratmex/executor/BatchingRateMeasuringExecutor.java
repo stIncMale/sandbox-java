@@ -65,7 +65,7 @@ public final class BatchingRateMeasuringExecutor implements RateMeasuringExecuto
   //  }
 
   @Override
-  public final Future<?> submit(final Runnable task, final RateMeter rateMeter, final Rate rate, final Duration delay) {
+  public final Future<?> submit(final Runnable task, final RateMeter<?> rateMeter, final Rate rate, final Duration delay) {
     return null;
   }
 

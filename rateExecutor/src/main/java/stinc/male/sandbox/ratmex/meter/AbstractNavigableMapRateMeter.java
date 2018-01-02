@@ -3,6 +3,7 @@ package stinc.male.sandbox.ratmex.meter;
 import java.time.Duration;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.StampedLock;
@@ -28,7 +29,7 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
  *
  * @param <C> A type of the {@linkplain #getConfig() configuration}.
  */
-public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends AbstractRateMeter<C> {
+abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends AbstractRateMeter<Void, C> {
   private final boolean sequential;
   private final NavigableMap<Long, TicksCounter> samplesHistory;
   private final long timeSensitivityNanos;
@@ -279,15 +280,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
             value = count;
           } else {//the samples window has been moved too far, return average
             value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
-                newRightNanos,
-                samplesIntervalNanos,
-                getStartNanos(),
-                ticksTotalCount());
-            @Nullable
-            final ConcurrentRateMeterStats stats = getStats();
-            if (stats != null) {
-              stats.accountFailedAccuracyEventForRate();
-            }
+                newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
           }
         }
       }
@@ -341,23 +334,23 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
             reading.setTNanos(newRightNanos);
             reading.setAccurate(false);
             final double value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
-                newRightNanos,
-                samplesIntervalNanos,
-                getStartNanos(),
-                ticksTotalCount());
+                newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
             reading.setValue(value);
             readingDone = true;
-            @Nullable
-            final ConcurrentRateMeterStats stats = getStats();
-            if (stats != null) {
-              stats.accountFailedAccuracyEventForRate();
-            }
           }
         }
       }
     }
     assert readingDone;
     return reading;
+  }
+
+  /**
+   * @return An {@linkplain Optional#empty() empty} {@link Optional}.
+   */
+  @Override
+  public final Optional<Void> stats() {
+    return Optional.empty();
   }
 
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {

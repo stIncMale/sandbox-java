@@ -19,7 +19,7 @@ public interface RateMeasuringExecutor extends AutoCloseable {
    * @param rate
    * @return
    */
-  Future<?> submit(Runnable task, RateMeter rateMeter, Rate rate, Duration delay);
+  Future<?> submit(Runnable task, RateMeter<?> rateMeter, Rate rate, Duration delay);
 
   void shutdown(boolean shutdownWorker);
 
