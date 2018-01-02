@@ -135,6 +135,14 @@ public interface RateMeter {
     return ticksCount(new RateMeterReading()).getValueLong();
   }
 
+  /**
+   * This method is equivalent to {@link #ticksCount()}, but provides a complete measured data,
+   * while {@link #ticksCount()} returns only the current ticks count.
+   *
+   * @param reading A {@link RateMeterReading} to be filled with a measured data.
+   *
+   * @return {@code reading} filled with the measured data.
+   */
   RateMeterReading ticksCount(RateMeterReading reading);
 
   /**

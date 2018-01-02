@@ -89,7 +89,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
       assert ticksCountRwLock != null;
       long ticksCountReadLockStamp = 0;
       try {
-        for (int ri = 0; ri < maxTicksCountAttempts; ri++) {
+        for (int ri = 0; ri < Integer.MAX_VALUE; ri++) {//if the number of tick threads is finite (should be true), then this loop successfully stops
           final long leftNanos = rightNanos - samplesIntervalNanos;
           value = count(leftNanos, rightNanos);
           readingDone = true;
@@ -119,8 +119,12 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
     return value;
   }
 
+  /**
+   * @return {@inheritDoc}
+   * The reading is always {@linkplain RateMeterReading#isAccurate() accurate}.
+   */
   @Override
-  public final RateMeterReading ticksCount(final RateMeterReading reading) {//TODO document all cases when setAccurate(false)
+  public final RateMeterReading ticksCount(final RateMeterReading reading) {
     checkNotNull(reading, "reading");
     reading.setAccurate(true);
     boolean readingDone = false;
@@ -134,7 +138,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
       assert ticksCountRwLock != null;
       long ticksCountReadLockStamp = 0;
       try {
-        for (int ri = 0; ri < maxTicksCountAttempts; ri++) {
+        for (int ri = 0; ri < Integer.MAX_VALUE; ri++) {//if the number of tick threads is finite (should be true), then this loop successfully stops
           final long leftNanos = rightNanos - samplesIntervalNanos;
           reading.setValue(count(leftNanos, rightNanos));
           readingDone = true;
@@ -151,10 +155,6 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
             if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2) {
               //we have spent half of the read attempts, let us fall over to lock approach
               ticksCountReadLockStamp = ticksCountRwLock.readLock();
-            }
-            //TODO try for as many iterations as it takes to read (if the number of tick threads is limited, then the number of iterations is too)
-            if (ri == maxTicksCountAttempts - 1) {//this was the last iteration, and we have failed
-              reading.setAccurate(false);
             }
           }
         }
@@ -175,7 +175,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
     if (count != 0) {
       final long rightNanos = rightSamplesWindowBoundary();
       final long leftHistoryNanos = rightNanos - getConfig().getHistoryLength() * getSamplesIntervalNanos();
-      if (NanosComparator.compare(leftHistoryNanos, tNanos) < 0) {//tNanos is within the samples history
+      if (NanosComparator.compare(leftHistoryNanos, tNanos) < 0) {//tNanos is ahead of or within the samples history
         @Nullable
         final TicksCounter existingSample;
         final long ticksCountWriteLockStamp;
@@ -198,6 +198,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
             @Nullable
             final Entry<Long, TicksCounter> existingEntry = samplesHistory.floorEntry(tNanos);
             if (existingEntry != null && (tNanos - existingEntry.getKey()) <= timeSensitivityNanos) {
+              assert tNanos - existingEntry.getKey() >= 0;
               existingSample = existingEntry.getValue();
             } else {
               final TicksCounter newSample = getConfig().getTicksCounterSupplier()
@@ -282,6 +283,10 @@ public abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> e
     return value;
   }
 
+  /**
+   * @return {@inheritDoc}
+   * The reading is not {@linkplain RateMeterReading#isAccurate() accurate} in cases when the method returns {@link #rateAverage()}.
+   */
   @Override
   public final RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     checkArgument(tNanos, "tNanos");

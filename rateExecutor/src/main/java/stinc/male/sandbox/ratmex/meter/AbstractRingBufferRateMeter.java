@@ -218,7 +218,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
         assert atomicSamplesWindowShiftSteps != null;
         samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
       }
-      if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {//tNanos is within the samples history
+      if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {//tNanos is ahead of or within the samples history
         if (sequential) {
           final int targetIdx = rightSamplesWindowIdx(targetSamplesWindowShiftSteps);
           if (samplesWindowShiftSteps < targetSamplesWindowShiftSteps) {//we need to move the samples window
@@ -498,7 +498,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {
     final long fromInclusiveNanos = fromExclusiveNanos + samplesWindowStepNanos;//fix for AbstractRateMeterUnitTest.rateBug
     long result = 0;
-    if (fromInclusiveNanos <= toInclusiveNanos) {//fix for AbstractRateMeterUnitTest.rateHanging2
+    if (fromInclusiveNanos <= toInclusiveNanos) {//TODO use nanoscomparator//fix for AbstractRateMeterUnitTest.rateHanging2
       final long fromInclusiveSamplesWindowShiftSteps = samplesWindowShiftSteps(fromInclusiveNanos);
       if (!sequential) {
         assert completedSamplesWindowShiftStepsWaitStrategy != null;
