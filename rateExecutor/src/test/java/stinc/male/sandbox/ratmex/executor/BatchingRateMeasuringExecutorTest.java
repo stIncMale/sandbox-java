@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stinc.male.sandbox.ratmex.meter.ConcurrentRingBufferRateMeter;
 import stinc.male.sandbox.ratmex.meter.ConcurrentRingBufferRateMeterConfig;
@@ -37,7 +36,6 @@ import stinc.male.sandbox.ratmex.meter.StampedLockStrategy;
 import static java.lang.Math.round;
 import static java.time.Duration.of;
 
-@Disabled
 public final class BatchingRateMeasuringExecutorTest {
   public BatchingRateMeasuringExecutorTest() {
   }

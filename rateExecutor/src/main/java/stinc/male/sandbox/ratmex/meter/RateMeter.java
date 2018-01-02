@@ -102,8 +102,7 @@ public interface RateMeter {
    * at an instant that differs from the specified one not more than by the time sensitivity, which may be observed via
    * {@link #rightSamplesWindowBoundary()}.
    * <p>
-   * This method, just as {@link RateMeterReading#isAccurate()} and {@link #stats()},
-   * can be considered as an important implementation detail leaked through {@link RateMeter}'s
+   * This method can be considered as an important implementation detail leaked through {@link RateMeter}'s
    * <a href="https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/">leaky abstraction</a>.
    * <p>
    * <b>Implementation considerations</b><br>
@@ -277,7 +276,8 @@ public interface RateMeter {
   /**
    * Calculates rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * as if {@code tNanos} were the right boundary of the samples window,
-   * if {@code tNanos} is greater than {@link #rightSamplesWindowBoundary()} - {@link #getSamplesInterval()},
+   * if {@code tNanos} is ahead of or within the samples history
+   * (i.e. greater than or equal to {@link #rightSamplesWindowBoundary()} - {@link #getSamplesInterval()}),
    * otherwise returns {@link #rateAverage()}.
    *
    * @param tNanos An effective (imaginary) right boundary of the samples window.

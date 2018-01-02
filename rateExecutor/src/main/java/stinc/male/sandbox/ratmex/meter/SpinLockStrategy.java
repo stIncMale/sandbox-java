@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
-public final class SpinLockStrategy implements LockStrategy {
+public final class SpinLockStrategy implements LockStrategy {//TODO use Thread.onSpinWait()
   private final AtomicBoolean atomicBoolean;
   private final WaitStrategy waitStrategy;
 

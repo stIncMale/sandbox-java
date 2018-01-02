@@ -4,7 +4,7 @@ import java.time.Duration;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
-public class RingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentRingBufferRateMeterConfig, SequentialLongArray> {
+public class RingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentRingBufferRateMeterConfig> {
   private static final ConcurrentRingBufferRateMeterConfig defaultConfigInstance;
 
   static {

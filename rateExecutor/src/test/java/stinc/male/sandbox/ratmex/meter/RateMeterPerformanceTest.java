@@ -26,13 +26,13 @@ import stinc.male.sandbox.ratmex.TestTag;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
-@Disabled
+//@Disabled
 @Tag(TestTag.PERFORMANCE)
 public class RateMeterPerformanceTest {
   private static final Duration samplesInterval = Duration.of(1, ChronoUnit.MILLIS);
   private static final Duration timeSensitivity = Duration.of(50, ChronoUnit.MICROS);
   private static final boolean SERVER = true;
-  private static final boolean QUICK = false;
+  private static final boolean QUICK = true;
   //JUnit5 Assertions.assertEquals(double, double, double) requires positive delta, hence we have to use Double.MIN_VALUE
   private static final double ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL = 0d + Double.MIN_VALUE;
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {

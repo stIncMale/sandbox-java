@@ -10,37 +10,55 @@ import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 /**
- * @param <T>
+ * This implementation uses a ring buffer to store and access a samples history.
+ * <p>
+ * <i>Advantages</i><br>
+ * Unlike {@link AbstractNavigableMapRateMeter}, this implementation does not produces garbage.
+ * <p>
+ * <i>Disadvantages</i><br>
+ * Unlike {@link AbstractNavigableMapRateMeter}, this implementation can not tolerate a large ratio of
+ * {@link RateMeter#getSamplesInterval()} and {@link RateMeter#getTimeSensitivity()}.
+ * The reason for this is that a ring buffer requires all objects representing samples to always exist,
+ * and if the number of such objects (which is the same as the aforementioned ratio) is large,
+ * it can have a substantial negative effect on performance.
+ *
+ * @param <C> A type of the {@linkplain #getConfig() configuration}.
  */
-public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMeterConfig, T extends LongArray> extends AbstractRateMeter<C> {
+public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMeterConfig> extends AbstractRateMeter<C> {
   private final boolean sequential;
-  private final T samplesHistory;//the length of this array is multiple of the historyLength
-  /*Same length as samples history;
-    required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample.*/
-  @Nullable
-  private final LockStrategy[] ticksCountLocks;
-  private final long samplesWindowStepNanos;
-  private long samplesWindowShiftSteps;
-  @Nullable
-  private final AtomicLong atomicSamplesWindowShiftSteps;
-  @Nullable
-  private final AtomicLong atomicCompletedSamplesWindowShiftSteps;
-  @Nullable
-  private final StampedLock ticksCountStampedLock;
-  @Nullable
-  private final WaitStrategy completedSamplesWindowShiftStepsWaitStrategy;
+  private final LongArray samplesHistory;//the length of this array is multiple of the historyLength
+  private final long samplesWindowStepNanos;//essentially timeSensitivityNanos
   private final int maxTicksCountAttempts;
+  /*Same length as samples history;
+    required to overcome problem which arises when the samples window was moved too far while we were accounting a new sample.
+    A smaller number of locks can be used in the future via a technique similar to lock striping.*/
+  @Nullable
+  private final StampedLock ticksCountLock;//we don't need an analogous field for a sequential implementation
+  @Nullable
+  private final LockStrategy[] ticksCountLocks;//we don't need an analogous field for a sequential implementation
+  @Nullable
+  private final AtomicLong atomicSamplesWindowShiftSteps;//samplesWindowShiftSteps for a concurrent implementation
+  private long samplesWindowShiftSteps;//for a sequential implementation
+  @Nullable
+  private final AtomicLong atomicCompletedSamplesWindowShiftSteps;//we don't need an analogous field for a sequential implementation
+  @Nullable
+  private final WaitStrategy completedSamplesWindowShiftStepsWaitStrategy;//we don't need an analogous field for a sequential implementation
 
   /**
-   * @param startNanos Starting point that is used to calculate elapsed nanoseconds.
-   * @param samplesInterval Size of the samples window.
-   * @param config Additional configuration parameters.
+   * @param startNanos A {@linkplain #getStartNanos() starting point} that is used to calculate elapsed time in nanoseconds (tNanos).
+   * @param samplesInterval A size of the {@linkplain #getSamplesInterval() samples window}.
+   * Must not be null, see {@link RateMeter} for valid values.
+   * @param config An additional {@linkplain #getConfig() configuration}. Must not be null.
+   * @param samplesHistorySupplier A supplier providing an object that will be used to store and access the samples history.
+   * The {@link LongArray} provided by this supplier must be thread-safe if {@code sequential} argument is false.
+   * @param sequential Specifies whether the {@link RateMeter} must be thread-safe (will be used concurrently, so the value is false),
+   * or not (will be used sequentially, so the value is true).
    */
   AbstractRingBufferRateMeter(
       final long startNanos,
       final Duration samplesInterval,
       final C config,
-      final Function<Integer, ? extends T> samplesHistorySupplier,
+      final Function<Integer, ? extends LongArray> samplesHistorySupplier,
       final boolean sequential) {
     super(startNanos, samplesInterval, config);
     checkNotNull(samplesHistorySupplier, "samplesHistorySupplier");
@@ -56,18 +74,19 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
         "samplesInterval", () -> String.format(
             "The specified getSamplesInterval()=%sns and getTimeSensitivity()=%sns " +
                 "can not be used together because samplesInterval can not be divided evenly by timeSensitivity",
-            samplesIntervalNanos,
-            timeSensitivityNanos));
+            samplesIntervalNanos, timeSensitivityNanos));
     samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
     samplesHistory = samplesHistorySupplier.apply(config.getHistoryLength() * samplesIntervalArrayLength);
+    this.sequential = sequential;
     if (sequential) {
-      ticksCountStampedLock = null;
+      ticksCountLock = null;
       ticksCountLocks = null;
+      atomicSamplesWindowShiftSteps = null;
+      samplesWindowShiftSteps = 0;
+      atomicCompletedSamplesWindowShiftSteps = null;
       completedSamplesWindowShiftStepsWaitStrategy = null;
     } else {
-      ticksCountStampedLock = new StampedLock();
-      completedSamplesWindowShiftStepsWaitStrategy = config.getWaitStrategySupplier()
-          .get();
+      ticksCountLock = new StampedLock();
       if (config.isStrictTick()) {
         ticksCountLocks = new LockStrategy[samplesHistory.length()];
         for (int idx = 0; idx < ticksCountLocks.length; idx++) {
@@ -77,16 +96,17 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
       } else {
         ticksCountLocks = null;
       }
+      atomicSamplesWindowShiftSteps = new AtomicLong();
+      samplesWindowShiftSteps = 0;
+      atomicCompletedSamplesWindowShiftSteps = new AtomicLong();
+      completedSamplesWindowShiftStepsWaitStrategy = config.getWaitStrategySupplier()
+          .get();
     }
-    atomicSamplesWindowShiftSteps = sequential ? null : new AtomicLong();
-    samplesWindowShiftSteps = 0;
-    atomicCompletedSamplesWindowShiftSteps = sequential ? null : new AtomicLong();
-    this.sequential = sequential;
     maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
   }
 
   @Override
-  public long rightSamplesWindowBoundary() {
+  public final long rightSamplesWindowBoundary() {
     final long result;
     if (sequential) {
       result = rightSamplesWindowBoundary(samplesWindowShiftSteps);
@@ -100,48 +120,53 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
   /*The implementation of this method is an exact copy of ticksCount(RateMeterReading) except for lines related to RateMeterReading.
     This is bad, but I don't see any other way to implement both methods in a garbage-free way.*/
   @Override
-  public long ticksCount() {
+  public final long ticksCount() {
     long value = 0;
     boolean readingDone = false;
     long samplesWindowShiftSteps;
     if (sequential) {
       samplesWindowShiftSteps = this.samplesWindowShiftSteps;
       for (int idx = leftSamplesWindowIdx(samplesWindowShiftSteps), i = 0;
-           i < samplesHistory.length() / getConfig().getHistoryLength();
-           idx = nextSamplesWindowIdx(idx), i++) {
+          i < samplesHistory.length() / getConfig().getHistoryLength();
+          idx = nextSamplesWindowIdx(idx), i++) {
         value += samplesHistory.get(idx);
       }
       readingDone = true;
     } else {
       assert atomicSamplesWindowShiftSteps != null;
-      assert ticksCountStampedLock != null;
+      assert ticksCountLock != null;
       long ticksCountReadLockStamp = 0;
       try {
         samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
-        for (int ri = 0; ri < maxTicksCountAttempts || ticksCountReadLockStamp != 0; ri++) {
+        for (int ri = 0; ri < Integer.MAX_VALUE; ri++) {//if the number of tick threads is finite (should be true), then this loop successfully stops
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
           final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
           for (int idx = leftSamplesWindowIdx, i = 0;
-               i < samplesHistory.length() / getConfig().getHistoryLength();
-               idx = nextSamplesWindowIdx(idx), i++) {
+              i < samplesHistory.length() / getConfig().getHistoryLength();
+              idx = nextSamplesWindowIdx(idx), i++) {
             value += samplesHistory.get(idx);
           }
           readingDone = true;
           final long newSamplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
-          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHistoryLength()) {
+          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <=
+              samplesHistory.length() - samplesHistory.length() / getConfig().getHistoryLength()) {
             //the samples window may has been moved while we were counting, but result is still correct
             break;
           } else {//the samples window has been moved too far
             samplesWindowShiftSteps = newSamplesWindowShiftSteps;
-            if (ticksCountReadLockStamp == 0 &&
-                    ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
-              ticksCountReadLockStamp = ticksCountStampedLock.readLock();
+            /*We acquire the read lock to prevent concurrently running tick methods from moving the samples window too far.
+              However since tick method acquires the write lock not always, but only if sees the read lock acquired,
+              there is a race condition which still may lead to the samples window being moved,
+              though the likelihood of such situation is now much less.*/
+            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2) {
+              //we have spent half of the read attempts, let us fall over to lock approach
+              ticksCountReadLockStamp = ticksCountLock.readLock();
             }
           }
         }
       } finally {
         if (ticksCountReadLockStamp != 0) {
-          ticksCountStampedLock.unlockRead(ticksCountReadLockStamp);
+          ticksCountLock.unlockRead(ticksCountReadLockStamp);
         }
       }
     }
@@ -149,8 +174,12 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     return value;
   }
 
+  /**
+   * @return {@inheritDoc}
+   * The reading is always {@linkplain RateMeterReading#isAccurate() accurate}.
+   */
   @Override
-  public RateMeterReading ticksCount(final RateMeterReading reading) {//TODO document all cases when setAccurate(false)
+  public final RateMeterReading ticksCount(final RateMeterReading reading) {
     checkNotNull(reading, "reading");
     reading.setAccurate(true);
     boolean readingDone = false;
@@ -167,11 +196,11 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
       readingDone = true;
     } else {
       assert atomicSamplesWindowShiftSteps != null;
-      assert ticksCountStampedLock != null;
+      assert ticksCountLock != null;
       long ticksCountReadLockStamp = 0;
       try {
         samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
-        for (int ri = 0; ri < maxTicksCountAttempts || ticksCountReadLockStamp != 0; ri++) {
+        for (int ri = 0; ri < Integer.MAX_VALUE; ri++) {//if the number of tick threads is finite (should be true), then this loop successfully stops
           long value = 0;
           waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);
           final int leftSamplesWindowIdx = leftSamplesWindowIdx(samplesWindowShiftSteps);
@@ -183,21 +212,25 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
           reading.setValue(value);
           readingDone = true;
           final long newSamplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
-          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <= samplesHistory.length() - samplesHistory.length() / getConfig().getHistoryLength()) {
+          if (newSamplesWindowShiftSteps - samplesWindowShiftSteps <=
+              samplesHistory.length() - samplesHistory.length() / getConfig().getHistoryLength()) {
             //the samples window may has been moved while we were counting, but result is still correct
             break;
           } else {//the samples window has been moved too far
             samplesWindowShiftSteps = newSamplesWindowShiftSteps;
-            if (ticksCountReadLockStamp == 0 &&
-                ri >= maxTicksCountAttempts / 2 - 1) {//we have spent half of the read attempts, let us fall over to lock approach
-              ticksCountReadLockStamp = ticksCountStampedLock.readLock();
+            /*We acquire the read lock to prevent concurrently running tick methods from moving the samples window too far.
+              However since tick method acquires the write lock not always, but only if sees the read lock acquired,
+              there is a race condition which still may lead to the samples window being moved,
+              though the likelihood of such situation is now much less.*/
+            if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2) {
+              //we have spent half of the read attempts, let us fall over to lock approach
+              ticksCountReadLockStamp = ticksCountLock.readLock();
             }
-            //TODO same problem as with AbstractNavigableMapRateMeter, same changes are required
           }
         }
       } finally {
         if (ticksCountReadLockStamp != 0) {
-          ticksCountStampedLock.unlockRead(ticksCountReadLockStamp);
+          ticksCountLock.unlockRead(ticksCountReadLockStamp);
         }
       }
     }
@@ -207,7 +240,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
   }
 
   @Override
-  public void tick(final long count, final long tNanos) {
+  public final void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
       final long targetSamplesWindowShiftSteps = samplesWindowShiftSteps(tNanos);
@@ -233,13 +266,13 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
             samplesHistory.add(targetIdx, count);
           }
         } else {
-          assert ticksCountStampedLock != null;
+          assert ticksCountLock != null;
           assert atomicCompletedSamplesWindowShiftSteps != null;
           boolean moved = false;
           long ticksCountWriteLockStamp = 0;
           while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps) {//move the samples window if we need to
             if (ticksCountWriteLockStamp == 0) {
-              ticksCountWriteLockStamp = ticksCountStampedLock.isReadLocked() ? ticksCountStampedLock.writeLock() : 0;
+              ticksCountWriteLockStamp = ticksCountLock.isReadLocked() ? ticksCountLock.writeLock() : 0;
             }
             moved = atomicSamplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps);
             if (moved) {
@@ -281,7 +314,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
             }
           } finally {
             if (ticksCountWriteLockStamp != 0) {
-              ticksCountStampedLock.unlockWrite(ticksCountWriteLockStamp);
+              ticksCountLock.unlockWrite(ticksCountWriteLockStamp);
             }
           }
         }
@@ -291,7 +324,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
   }
 
   @Override
-  public double rateAverage(final long tNanos) {
+  public final double rateAverage(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final long samplesWindowShiftSteps;
     if (sequential) {
@@ -313,7 +346,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
   /*The implementation of this method is an exact copy of rate(long, RateMeterReading) except for lines related to RateMeterReading.
     This is bad, but I don't see any other way to implement both methods in a garbage-free way.*/
   @Override
-  public double rate(final long tNanos) {
+  public final double rate(final long tNanos) {
     checkArgument(tNanos, "tNanos");
     final double value;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
@@ -327,7 +360,11 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     final long rightNanos = rightSamplesWindowBoundary(samplesWindowShiftSteps);
     final long leftNanos = rightNanos - samplesIntervalNanos;
     if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
-      value = ConversionsAndChecks.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
+      value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
+          rightNanos,
+          samplesIntervalNanos,
+          getStartNanos(),
+          ticksTotalCount());
     } else {//tNanos is within or ahead of the samples window
       final long effectiveLeftNanos = tNanos - samplesIntervalNanos;
       if (NanosComparator.compare(rightNanos, effectiveLeftNanos) <= 0) {
@@ -335,8 +372,8 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
         value = 0;
       } else {
         final long effectiveRightNanos = NanosComparator.compare(tNanos, rightNanos) <= 0
-                ? tNanos//tNanos is within the samples window
-                : rightNanos;//tNanos is ahead of samples window
+            ? tNanos//tNanos is within the samples window
+            : rightNanos;//tNanos is ahead of samples window
         final long count = count(effectiveLeftNanos, effectiveRightNanos);
         if (sequential) {
           value = count;
@@ -348,8 +385,8 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
             value = count;
           } else {//the samples window has been moved too far, return average
             final long newRightNanos = rightSamplesWindowBoundary(newSamplesWindowShiftSteps);
-            value = ConversionsAndChecks.rateAverage(
-                    newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
+            value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
+                newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
             @Nullable
             final ConcurrentRateMeterStats stats = getStats();
             if (stats != null) {
@@ -362,8 +399,12 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     return value;
   }
 
+  /**
+   * @return {@inheritDoc}
+   * The reading is not {@linkplain RateMeterReading#isAccurate() accurate} in cases when the method returns {@link #rateAverage()}.
+   */
   @Override
-  public RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
+  public final RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     checkArgument(tNanos, "tNanos");
     checkNotNull(reading, "reading");
     reading.setTNanos(tNanos);
@@ -382,7 +423,11 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     if (NanosComparator.compare(tNanos, leftNanos) <= 0) {//tNanos is behind the samples window, so return average over all samples
       reading.setTNanos(rightNanos);
       reading.setAccurate(false);
-      final double value = ConversionsAndChecks.rateAverage(rightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
+      final double value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
+          rightNanos,
+          samplesIntervalNanos,
+          getStartNanos(),
+          ticksTotalCount());
       reading.setValue(value);
       readingDone = true;
     } else {//tNanos is within or ahead of the samples window
@@ -410,8 +455,8 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
             final long newRightNanos = rightSamplesWindowBoundary(newSamplesWindowShiftSteps);
             reading.setTNanos(newRightNanos);
             reading.setAccurate(false);
-            final double value = ConversionsAndChecks.rateAverage(
-                newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());//this is the same as rateAverage()
+            final double value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
+                newRightNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
             reading.setValue(value);
             readingDone = true;
             @Nullable
@@ -498,7 +543,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
   private final long count(final long fromExclusiveNanos, final long toInclusiveNanos) {
     final long fromInclusiveNanos = fromExclusiveNanos + samplesWindowStepNanos;//fix for AbstractRateMeterUnitTest.rateBug
     long result = 0;
-    if (fromInclusiveNanos <= toInclusiveNanos) {//TODO use nanoscomparator//fix for AbstractRateMeterUnitTest.rateHanging2
+    if (NanosComparator.compare(fromInclusiveNanos, toInclusiveNanos) <= 0) {//fix for AbstractRateMeterUnitTest.rateHanging2
       final long fromInclusiveSamplesWindowShiftSteps = samplesWindowShiftSteps(fromInclusiveNanos);
       if (!sequential) {
         assert completedSamplesWindowShiftStepsWaitStrategy != null;
@@ -517,7 +562,7 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
     return result;
   }
 
-  private long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
+  private final long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
     return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
   }
 
@@ -534,7 +579,8 @@ public abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBuffer
 
   private final int leftSamplesWindowIdx(final long samplesWindowShiftSteps) {
     //the result can not be greater than samples.length, which is int, so it is a safe cast to int
-    return (int)((samplesWindowShiftSteps + samplesHistory.length() - samplesHistory.length() / getConfig().getHistoryLength()) % samplesHistory.length());
+    return (int)((samplesWindowShiftSteps + samplesHistory.length() - samplesHistory.length() / getConfig().getHistoryLength()) %
+        samplesHistory.length());
   }
 
   private final int rightSamplesWindowIdx(final long samplesWindowShiftSteps) {
