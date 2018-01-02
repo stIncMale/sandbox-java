@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
@@ -13,22 +12,6 @@ import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
-/**
- * This implementation uses {@link NavigableMap} to store and access a samples history.
- * There is {@linkplain ConcurrentSkipListMap at least one} concurrent implementation of this interface,
- * and it allows a fairly simple implementation of {@link RateMeter}.
- * <p>
- * <i>Advantages</i><br>
- * Unlike {@link AbstractRingBufferRateMeter}, this implementation tolerates a large ratio of
- * {@link RateMeter#getSamplesInterval()} and {@link RateMeter#getTimeSensitivity()}.
- * The reason for this is that it only creates objects representing samples when it is necessary,
- * hence potentially reducing the number of samples that must be added up to count the {@linkplain #ticksCount() current ticks}.
- * <p>
- * <i>Disadvantages</i><br>
- * Unlike {@link AbstractRingBufferRateMeter}, this implementation produces garbage.
- *
- * @param <C> A type of the {@linkplain #getConfig() configuration}.
- */
 abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends AbstractRateMeter<Void, C> {
   private final boolean sequential;
   private final NavigableMap<Long, TicksCounter> samplesHistory;

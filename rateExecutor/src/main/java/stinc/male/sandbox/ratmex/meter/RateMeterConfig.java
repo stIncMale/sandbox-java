@@ -66,7 +66,7 @@ public class RateMeterConfig {
    *
    * @return {@code true} by default.
    */
-  public final boolean isCollectStats() {
+  public final boolean isCollectStats() {//TODO move to ConcurrentRingBufferRateMeterConfig
     return collectStats;
   }
 

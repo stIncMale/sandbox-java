@@ -10,23 +10,8 @@ import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
-/**
- * This implementation uses a ring buffer to store and access a samples history.
- * <p>
- * <i>Advantages</i><br>
- * Unlike {@link AbstractNavigableMapRateMeter}, this implementation does not produces garbage.
- * <p>
- * <i>Disadvantages</i><br>
- * Unlike {@link AbstractNavigableMapRateMeter}, this implementation can not tolerate a large ratio of
- * {@link RateMeter#getSamplesInterval()} and {@link RateMeter#getTimeSensitivity()}.
- * The reason for this is that a ring buffer requires all objects representing samples to always exist,
- * and if the number of such objects (which is the same as the aforementioned ratio) is large,
- * it can have a substantial negative effect on performance.
- *
- * @param <C> A type of the {@linkplain #getConfig() configuration}.
- */
 abstract class AbstractRingBufferRateMeter<C extends ConcurrentRingBufferRateMeterConfig>
-    extends AbstractRateMeter<ConcurrentRingBufferRateMeterStats, C> {
+    extends AbstractRateMeter<ConcurrentRingBufferRateMeterStats, C> {//TODO use configurable stats provided by the implementation
   private final boolean sequential;
   private final LongArray samplesHistory;//the length of this array is multiple of the historyLength
   private final long samplesWindowStepNanos;//essentially timeSensitivityNanos
