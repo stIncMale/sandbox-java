@@ -20,7 +20,7 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import stinc.male.sandbox.ratmex.meter.RateMeterConfig.Builder;
+import stinc.male.sandbox.ratmex.meter.ConcurrentRateMeterConfig.Builder;
 import stinc.male.sandbox.ratmex.TestTag;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
@@ -57,8 +57,11 @@ public class RateMeterPerformanceTest {
   };
   private static final Supplier<WaitStrategy> waitStrategySupplier = YieldWaitStrategy::instance;
   private static final Supplier<LockStrategy> lockStrategySupplier = () -> new SpinLockStrategy(waitStrategySupplier.get());
-  private static final Supplier<Builder> rateMeterConfigBuilderSupplier = () -> RateMeterConfig.newBuilder()
-      .setTimeSensitivity(timeSensitivity);
+  private static final Supplier<Builder> rateMeterConfigBuilderSupplier = () -> {
+    final ConcurrentRateMeterConfig.Builder result = ConcurrentRateMeterConfig.newBuilder();
+    result.setTimeSensitivity(timeSensitivity);
+    return result;
+  };
 
   public RateMeterPerformanceTest() {
   }
@@ -659,18 +662,15 @@ public class RateMeterPerformanceTest {
               .setTicksCounterSupplier(LongTicksCounter::new)
               .setHistoryLength(2)
               .build());
-      concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval,
-          rateMeterConfigBuilderSupplier.get()
-              .setTicksCounterSupplier(LongAdderTicksCounter::new)
-              .setHistoryLength(3)
-              .build());
+      concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval, rateMeterConfigBuilderSupplier.get()
+          .build());
       ringBufferRateMeter = new RingBufferRateMeter(nanoTime(), samplesInterval,
           rateMeterConfigBuilderSupplier.get()
               .setTicksCounterSupplier(LongTicksCounter::new)
               .setHistoryLength(2)
               .build());
-      final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
-          = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSupplier.get()
+      final ConcurrentRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
+          = ConcurrentRateMeterConfig.newBuilder(rateMeterConfigBuilderSupplier.get()
           .build());
       concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
           .setWaitStrategySupplier(waitStrategySupplier)
@@ -700,13 +700,10 @@ public class RateMeterPerformanceTest {
 
     @Setup(Level.Trial)
     public final void setup() {
-      concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval,
-          rateMeterConfigBuilderSupplier.get()
-              .setTicksCounterSupplier(LongAdderTicksCounter::new)
-              .setHistoryLength(3)
-              .build());
-      final ConcurrentRingBufferRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
-          = ConcurrentRingBufferRateMeterConfig.newBuilder(rateMeterConfigBuilderSupplier.get()
+      concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval, rateMeterConfigBuilderSupplier.get()
+          .build());
+      final ConcurrentRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
+          = ConcurrentRateMeterConfig.newBuilder(rateMeterConfigBuilderSupplier.get()
           .build());
       concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
           .setCollectStats(true)

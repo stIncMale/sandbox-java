@@ -5,7 +5,8 @@ import stinc.male.sandbox.ratmex.meter.RateMeterConfig.Builder;
 public final class NavigableMapRateMeterTest extends AbstractRateMeterUnitTest<Builder, RateMeterConfig> {
   public NavigableMapRateMeterTest() {
     super(
-        RateMeterConfig.Builder::new,
+        () -> NavigableMapRateMeter.defaultConfig()
+            .toBuilder(),
         NavigableMapRateMeter::new);
   }
 }

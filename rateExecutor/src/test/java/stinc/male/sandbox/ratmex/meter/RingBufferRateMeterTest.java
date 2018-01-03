@@ -5,7 +5,8 @@ import stinc.male.sandbox.ratmex.meter.RateMeterConfig.Builder;
 public final class RingBufferRateMeterTest extends AbstractRateMeterUnitTest<Builder, RateMeterConfig> {
   public RingBufferRateMeterTest() {
     super(
-        RateMeterConfig.Builder::new,
+        () -> RingBufferRateMeter.defaultConfig()
+            .toBuilder(),
         RingBufferRateMeter::new);
   }
 }

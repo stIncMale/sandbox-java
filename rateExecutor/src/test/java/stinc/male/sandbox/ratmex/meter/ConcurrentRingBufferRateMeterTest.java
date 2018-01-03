@@ -1,11 +1,12 @@
 package stinc.male.sandbox.ratmex.meter;
 
-import stinc.male.sandbox.ratmex.meter.ConcurrentRingBufferRateMeterConfig.Builder;
+import stinc.male.sandbox.ratmex.meter.ConcurrentRateMeterConfig.Builder;
 
-public final class ConcurrentRingBufferRateMeterTest extends AbstractRateMeterUnitTest<Builder, ConcurrentRingBufferRateMeterConfig> {
+public final class ConcurrentRingBufferRateMeterTest extends AbstractRateMeterUnitTest<Builder, ConcurrentRateMeterConfig> {
   public ConcurrentRingBufferRateMeterTest() {
     super(
-        ConcurrentRingBufferRateMeterConfig.Builder::new,
+        () -> ConcurrentRingBufferRateMeter.defaultConfig()
+            .toBuilder(),
         ConcurrentRingBufferRateMeter::new);
   }
 }

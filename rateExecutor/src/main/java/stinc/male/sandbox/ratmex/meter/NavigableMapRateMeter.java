@@ -18,11 +18,16 @@ import javax.annotation.concurrent.NotThreadSafe;
  * Unlike {@link RingBufferRateMeter}, this implementation produces garbage.
  */
 @NotThreadSafe
-public final class NavigableMapRateMeter extends AbstractNavigableMapRateMeter<RateMeterConfig> {
-  private static final RateMeterConfig defaultConfig = RateMeterConfig.newBuilder()
-      .setTicksCounterSupplier(LongTicksCounter::new)
-      .setHistoryLength(2)
-      .build();
+public final class NavigableMapRateMeter extends AbstractNavigableMapRateMeter<ConcurrentRateMeterConfig> {
+  private static final ConcurrentRateMeterConfig defaultConfig;
+
+  static {
+    ConcurrentRateMeterConfig.Builder configBuilder = ConcurrentRateMeterConfig.newBuilder();
+    configBuilder.setTicksCounterSupplier(LongTicksCounter::new)
+        .setHistoryLength(2)
+        .build();
+    defaultConfig = configBuilder.build();
+  }
 
   /**
    * @return A default configuration.
@@ -38,7 +43,9 @@ public final class NavigableMapRateMeter extends AbstractNavigableMapRateMeter<R
    * @param config An additional {@linkplain #getConfig() configuration}. Must not be null.
    */
   public NavigableMapRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
-    super(startNanos, samplesInterval, config, () -> new TreeMap<>(NanosComparator.instance()), true);
+    this(startNanos, samplesInterval, ConcurrentRateMeterConfig.newBuilder(defaultConfig)
+        .set(config)
+        .build());
   }
 
   /**
@@ -47,5 +54,9 @@ public final class NavigableMapRateMeter extends AbstractNavigableMapRateMeter<R
    */
   public NavigableMapRateMeter(final long startNanos, final Duration samplesInterval) {
     this(startNanos, samplesInterval, defaultConfig);
+  }
+
+  private NavigableMapRateMeter(final long startNanos, final Duration samplesInterval, final ConcurrentRateMeterConfig config) {
+    super(startNanos, samplesInterval, config, () -> new TreeMap<>(NanosComparator.instance()), true);
   }
 }

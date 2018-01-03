@@ -7,11 +7,8 @@ import stinc.male.sandbox.ratmex.TestTag;
 @Tag(TestTag.CONCURRENCY)
 public final class NavigableMapRateMeterSequentialTest extends AbstractRateMeterConcurrencyTest<Builder, RateMeterConfig> {
   public NavigableMapRateMeterSequentialTest() {
-    super(
-        () -> new RateMeterConfig.Builder()
-            .setTicksCounterSupplier(NavigableMapRateMeter.defaultConfig()
-                .getTicksCounterSupplier()),
-        NavigableMapRateMeter::new,
-        1);
+    super(() -> NavigableMapRateMeter.defaultConfig()
+            .toBuilder(),
+        NavigableMapRateMeter::new, 1);
   }
 }

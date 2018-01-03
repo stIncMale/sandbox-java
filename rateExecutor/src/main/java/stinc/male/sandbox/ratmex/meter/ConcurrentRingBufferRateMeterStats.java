@@ -10,7 +10,7 @@ public interface ConcurrentRingBufferRateMeterStats {
   /**
    * @return The number of situations when {@link ConcurrentRingBufferRateMeter} might have registered ticks at an incorrect instant.
    * This is only relevant if
-   * {@link AbstractRateMeter#getConfig() getConfig()}{@code .}{@link ConcurrentRingBufferRateMeterConfig#isStrictTick() isStrictTick()} is false.
+   * {@link AbstractRateMeter#getConfig() getConfig()}{@code .}{@link ConcurrentRateMeterConfig#isStrictTick() isStrictTick()} is false.
    */
   long failedAccuracyEventsCountForTick();
 }

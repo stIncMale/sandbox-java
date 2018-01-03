@@ -24,9 +24,14 @@ public final class SpinLockStrategy implements LockStrategy {//TODO use Thread.o
   }
 
   @Override
+  public final boolean isSharedLocked() {
+    return atomicBoolean.get();
+  }
+
+  @Override
   public final long lock() {
     waitStrategy.await(() -> atomicBoolean.compareAndSet(false, true));
-    return 0;
+    return 1;
   }
 
   @Override

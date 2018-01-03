@@ -12,14 +12,15 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 /**
  * A configuration that can be used to create {@link AbstractRateMeter}.
  *
- * The {@code @}{@link Immutable} for this class only guarantees that {@code get...} methods always behave as methods of an immutable class.
+ * The {@code @}{@link Immutable} for this class only guarantees that {@code get...} methods behave as methods of an immutable class
+ * despite this class is not final.
  */
 @Immutable
 public class RateMeterConfig {
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   @Nullable
   private final Duration timeSensitivity;
-  private final int maxTicksCountAttempts;
+  private final int maxTicksCountAttempts;//TODO move to concurrent
   private final int historyLength;
 
   protected RateMeterConfig(

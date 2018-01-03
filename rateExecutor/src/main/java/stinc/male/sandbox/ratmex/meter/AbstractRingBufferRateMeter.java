@@ -2,21 +2,20 @@ package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
-abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRingBufferRateMeterConfig>
+abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfig>
     extends AbstractRateMeter<S, C> {
   private final boolean sequential;
   private final LongArray samplesHistory;//the length of this array is multiple of the historyLength
   private final long samplesWindowStepNanos;//essentially timeSensitivityNanos
   private final int maxTicksCountAttempts;
   @Nullable
-  private final StampedLock ticksCountLock;//we don't need an analogous field for a sequential implementation
+  private final LockStrategy ticksCountLock;//we don't need an analogous field for a sequential implementation
   /*Same length as samples history;
     required to overcome a problem which arises when we move the samples window too far while we are registering a new sample.
     A smaller number of locks can be used in the future via a technique similar to lock striping.*/
@@ -71,7 +70,8 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRingBufferRate
       atomicCompletedSamplesWindowShiftSteps = null;
       completedSamplesWindowShiftStepsWaitStrategy = null;
     } else {
-      ticksCountLock = new StampedLock();
+      ticksCountLock = config.getLockStrategySupplier()
+          .get();
       if (config.isStrictTick()) {
         ticksCountLocks = new LockStrategy[samplesHistory.length()];
         for (int idx = 0; idx < ticksCountLocks.length; idx++) {
@@ -144,13 +144,13 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRingBufferRate
               though the likelihood of such situation is now much less.*/
             if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2) {
               //we have spent half of the read attempts, let us fall over to lock approach
-              ticksCountReadLockStamp = ticksCountLock.readLock();
+              ticksCountReadLockStamp = ticksCountLock.sharedLock();
             }
           }
         }
       } finally {
         if (ticksCountReadLockStamp != 0) {
-          ticksCountLock.unlockRead(ticksCountReadLockStamp);
+          ticksCountLock.unlockShared(ticksCountReadLockStamp);
         }
       }
     }
@@ -208,13 +208,13 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRingBufferRate
               though the likelihood of such situation is now much less.*/
             if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2) {
               //we have spent half of the read attempts, let us fall over to lock approach
-              ticksCountReadLockStamp = ticksCountLock.readLock();
+              ticksCountReadLockStamp = ticksCountLock.sharedLock();
             }
           }
         }
       } finally {
         if (ticksCountReadLockStamp != 0) {
-          ticksCountLock.unlockRead(ticksCountReadLockStamp);
+          ticksCountLock.unlockShared(ticksCountReadLockStamp);
         }
       }
     }
@@ -256,7 +256,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRingBufferRate
           long ticksCountWriteLockStamp = 0;
           while (samplesWindowShiftSteps < targetSamplesWindowShiftSteps) {//move the samples window if we need to
             if (ticksCountWriteLockStamp == 0) {
-              ticksCountWriteLockStamp = ticksCountLock.isReadLocked() ? ticksCountLock.writeLock() : 0;
+              ticksCountWriteLockStamp = ticksCountLock.isSharedLocked() ? ticksCountLock.lock() : 0;
             }
             moved = atomicSamplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps);
             if (moved) {
@@ -298,7 +298,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRingBufferRate
             }
           } finally {
             if (ticksCountWriteLockStamp != 0) {
-              ticksCountLock.unlockWrite(ticksCountWriteLockStamp);
+              ticksCountLock.unlock(ticksCountWriteLockStamp);
             }
           }
         }
@@ -450,8 +450,8 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRingBufferRate
    * This method is called by {@link #tick(long, long)} not more than once per invocation of {@link #tick(long, long)}
    * when it fails to correctly register ticks.
    * Such a failure can only happen if this object is not thread-safe
-   * (see {@link #AbstractRingBufferRateMeter(long, Duration, ConcurrentRingBufferRateMeterConfig, Function, boolean)})
-   * and {@link ConcurrentRingBufferRateMeterConfig#isStrictTick()} is false.
+   * (see {@link #AbstractRingBufferRateMeter(long, Duration, ConcurrentRateMeterConfig, Function, boolean)})
+   * and {@link ConcurrentRateMeterConfig#isStrictTick()} is false.
    */
   protected void registerFailedAccuracyEventForTick() {
   }

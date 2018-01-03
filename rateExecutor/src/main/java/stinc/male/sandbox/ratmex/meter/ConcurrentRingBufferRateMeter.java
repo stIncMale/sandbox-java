@@ -19,17 +19,9 @@ import javax.annotation.concurrent.ThreadSafe;
  * it can have a substantial negative effect on performance.
  */
 @ThreadSafe
-public final class ConcurrentRingBufferRateMeter
-    extends AbstractRingBufferRateMeter<ConcurrentRingBufferRateMeterStats, ConcurrentRingBufferRateMeterConfig> {
-  private static final ConcurrentRingBufferRateMeterConfig defaultConfig;
-
-  static {
-    final ConcurrentRingBufferRateMeterConfig.Builder defaultConfigBuilder = ConcurrentRingBufferRateMeterConfig.newBuilder();
-    defaultConfigBuilder.setTicksCounterSupplier(LongAdderTicksCounter::new);
-    defaultConfigBuilder.setWaitStrategySupplier(ParkWaitStrategy::instance);
-    defaultConfigBuilder.setLockStrategySupplier(StampedLockStrategy::new);
-    defaultConfig = defaultConfigBuilder.build();
-  }
+public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentRingBufferRateMeterStats, ConcurrentRateMeterConfig> {
+  private static final ConcurrentRateMeterConfig defaultConfig = ConcurrentRateMeterConfig.newBuilder()
+      .build();
 
   @Nullable
   private final DefaultConcurrentRingBufferRateMeterStats stats;
@@ -37,7 +29,7 @@ public final class ConcurrentRingBufferRateMeter
   /**
    * @return A default configuration.
    */
-  public static final ConcurrentRingBufferRateMeterConfig defaultConfig() {
+  public static final ConcurrentRateMeterConfig defaultConfig() {
     return defaultConfig;
   }
 
@@ -47,13 +39,13 @@ public final class ConcurrentRingBufferRateMeter
    * Must not be null, see {@link RateMeter} for valid values.
    * @param config An additional {@linkplain #getConfig() configuration}. Must not be null.
    */
-  public ConcurrentRingBufferRateMeter(final long startNanos, final Duration samplesInterval, final ConcurrentRingBufferRateMeterConfig config) {
+  public ConcurrentRingBufferRateMeter(final long startNanos, final Duration samplesInterval, final ConcurrentRateMeterConfig config) {
     super(startNanos, samplesInterval, config, ConcurrentLongArray::new, false);
     stats = config.isCollectStats() ? new DefaultConcurrentRingBufferRateMeterStats() : null;
   }
 
   /**
-   * This constructor is equivalent to {@link #ConcurrentRingBufferRateMeter(long, Duration, ConcurrentRingBufferRateMeterConfig)}
+   * This constructor is equivalent to {@link #ConcurrentRingBufferRateMeter(long, Duration, ConcurrentRateMeterConfig)}
    * with {@link #defaultConfig()} as the third argument.
    */
   public ConcurrentRingBufferRateMeter(final long startNanos, final Duration samplesInterval) {

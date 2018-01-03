@@ -18,15 +18,14 @@ import javax.annotation.concurrent.ThreadSafe;
  * Unlike {@link ConcurrentRingBufferRateMeter}, this implementation produces garbage.
  */
 @ThreadSafe
-public final class ConcurrentNavigableMapRateMeter extends AbstractNavigableMapRateMeter<RateMeterConfig> {
-  private static final RateMeterConfig defaultConfig = RateMeterConfig.newBuilder()
-      .setTicksCounterSupplier(LongAdderTicksCounter::new)
+public final class ConcurrentNavigableMapRateMeter extends AbstractNavigableMapRateMeter<ConcurrentRateMeterConfig> {
+  private static final ConcurrentRateMeterConfig defaultConfig = ConcurrentRateMeterConfig.newBuilder()
       .build();
 
   /**
    * @return A default configuration.
    */
-  public static final RateMeterConfig defaultConfig() {
+  public static final ConcurrentRateMeterConfig defaultConfig() {
     return defaultConfig;
   }
 
@@ -36,12 +35,12 @@ public final class ConcurrentNavigableMapRateMeter extends AbstractNavigableMapR
    * Must not be null, see {@link RateMeter} for valid values.
    * @param config An additional {@linkplain #getConfig() configuration}. Must not be null.
    */
-  public ConcurrentNavigableMapRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
+  public ConcurrentNavigableMapRateMeter(final long startNanos, final Duration samplesInterval, final ConcurrentRateMeterConfig config) {
     super(startNanos, samplesInterval, config, () -> new ConcurrentSkipListMap<>(NanosComparator.instance()), false);
   }
 
   /**
-   * This constructor is equivalent to {@link #ConcurrentNavigableMapRateMeter(long, Duration, RateMeterConfig)}
+   * This constructor is equivalent to {@link #ConcurrentNavigableMapRateMeter(long, Duration, ConcurrentRateMeterConfig)}
    * with {@link #defaultConfig()} as the third argument.
    */
   public ConcurrentNavigableMapRateMeter(final long startNanos, final Duration samplesInterval) {

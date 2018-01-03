@@ -3,20 +3,21 @@ package stinc.male.sandbox.ratmex.meter;
 import java.time.Duration;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 @Immutable
-public final class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
+public final class ConcurrentRateMeterConfig extends RateMeterConfig {//TODO check arguments
   private final boolean strictTick;
   private final boolean collectStats;
   private final Supplier<? extends WaitStrategy> waitStrategySupplier;
   private final Supplier<? extends LockStrategy> lockStrategySupplier;
 
-  ConcurrentRingBufferRateMeterConfig(
+  ConcurrentRateMeterConfig(
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
-      final Duration timeSensitivity,
+      @Nullable final Duration timeSensitivity,
       final int maxTicksCountAttempts,
       final int historyLength,
       final boolean strictTick,
@@ -71,7 +72,7 @@ public final class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   /**
    * Specifies which {@link WaitStrategy} must be used by {@link ConcurrentRingBufferRateMeter}.
    *
-   * @return {@code YieldWaitStrategy::instance} by default.
+   * @return {@link ParkWaitStrategy}{@code ::}{@link ParkWaitStrategy#instance() instance} by default.
    */
   public final Supplier<? extends WaitStrategy> getWaitStrategySupplier() {
     return waitStrategySupplier;
@@ -111,29 +112,36 @@ public final class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
     Builder() {
       strictTick = true;
       collectStats = false;
-      waitStrategySupplier = YieldWaitStrategy::instance;
+      waitStrategySupplier = ParkWaitStrategy::instance;
       lockStrategySupplier = () -> new SpinLockStrategy(YieldWaitStrategy.instance());
     }
 
-    Builder(final ConcurrentRingBufferRateMeterConfig config) {
+    Builder(final ConcurrentRateMeterConfig config) {
       super(config);
       strictTick = config.isStrictTick();
-      collectStats = false;
+      collectStats = config.isCollectStats();
       waitStrategySupplier = config.getWaitStrategySupplier();
+      lockStrategySupplier = config.getLockStrategySupplier();
     }
 
     Builder(final RateMeterConfig config) {
-      super(config);
-      strictTick = true;
-      collectStats = false;
-      waitStrategySupplier = YieldWaitStrategy::instance;
-      lockStrategySupplier = () -> new SpinLockStrategy(YieldWaitStrategy.instance());
+      this();
+      set(config);
+    }
+
+    public final Builder set(final RateMeterConfig config) {
+      ticksCounterSupplier = config.getTicksCounterSupplier();
+      maxTicksCountAttempts = config.getMaxTicksCountAttempts();
+      historyLength = config.getHistoryLength();
+      timeSensitivity = config.getTimeSensitivity()
+          .orElse(null);
+      return this;
     }
 
     /**
-     * Sets {@link ConcurrentRingBufferRateMeterConfig#isCollectStats() collect stats} to false if {@code strictTick} is true.
+     * Sets {@link ConcurrentRateMeterConfig#isCollectStats() collect stats} to false if {@code strictTick} is true.
      *
-     * @see ConcurrentRingBufferRateMeterConfig#isStrictTick()
+     * @see ConcurrentRateMeterConfig#isStrictTick()
      */
     public final Builder setStrictTick(final boolean strictTick) {
       this.strictTick = strictTick;
@@ -144,9 +152,9 @@ public final class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
     }
 
     /**
-     * The value of {@code collectStats} is ignored if {@link ConcurrentRingBufferRateMeterConfig#isStrictTick() strict tick} is enabled.
+     * The value of {@code collectStats} is ignored if {@link ConcurrentRateMeterConfig#isStrictTick() strict tick} is enabled.
      *
-     * @see ConcurrentRingBufferRateMeterConfig#isCollectStats()
+     * @see ConcurrentRateMeterConfig#isCollectStats()
      */
     public final Builder setCollectStats(final boolean collectStats) {
       if (!strictTick) {
@@ -156,7 +164,7 @@ public final class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
     }
 
     /**
-     * @see ConcurrentRingBufferRateMeterConfig#getWaitStrategySupplier()
+     * @see ConcurrentRateMeterConfig#getWaitStrategySupplier()
      */
     public final Builder setWaitStrategySupplier(final Supplier<? extends WaitStrategy> waitStrategySupplier) {
       checkNotNull(waitStrategySupplier, "waitStrategySupplier");
@@ -165,7 +173,7 @@ public final class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
     }
 
     /**
-     * @see ConcurrentRingBufferRateMeterConfig#getLockStrategySupplier()
+     * @see ConcurrentRateMeterConfig#getLockStrategySupplier()
      */
     public final Builder setLockStrategySupplier(final Supplier<? extends LockStrategy> lockStrategySupplier) {
       checkNotNull(lockStrategySupplier, "lockStrategySupplier");
@@ -174,8 +182,8 @@ public final class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
     }
 
     @Override
-    public final ConcurrentRingBufferRateMeterConfig build() {
-      return new ConcurrentRingBufferRateMeterConfig(
+    public final ConcurrentRateMeterConfig build() {
+      return new ConcurrentRateMeterConfig(
           ticksCounterSupplier,
           timeSensitivity,
           maxTicksCountAttempts,

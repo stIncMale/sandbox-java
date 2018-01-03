@@ -8,10 +8,8 @@ import stinc.male.sandbox.ratmex.TestTag;
 public final class RingBufferRateMeterSequentialTest extends AbstractRateMeterConcurrencyTest<Builder, RateMeterConfig> {
   public RingBufferRateMeterSequentialTest() {
     super(
-        () -> new RateMeterConfig.Builder()
-            .setTicksCounterSupplier(RingBufferRateMeter.defaultConfig()
-                .getTicksCounterSupplier()),
-        RingBufferRateMeter::new,
-        1);
+        () -> RingBufferRateMeter.defaultConfig()
+            .toBuilder(),
+        RingBufferRateMeter::new, 1);
   }
 }

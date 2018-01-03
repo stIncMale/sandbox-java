@@ -5,14 +5,13 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
-abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends AbstractRateMeter<Void, C> {
+abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig> extends AbstractRateMeter<Void, C> {
   private final boolean sequential;
   private final NavigableMap<Long, TicksCounter> samplesHistory;
   private final int maxTicksCountAttempts;
@@ -21,7 +20,7 @@ abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends 
   private volatile long volatileCleanLastRightSamplesWindowBoundary;//cleanLastRightSamplesWindowBoundary for a concurrent implementation
   private long cleanLastRightSamplesWindowBoundary;//for a sequential implementation
   @Nullable
-  private final StampedLock ticksCountLock;//TODO use LockStrategy//we don't need an analogous field for a sequential implementation
+  private final LockStrategy ticksCountLock;//we don't need an analogous field for a sequential implementation
 
   /**
    * @param startNanos A {@linkplain #getStartNanos() starting point} that is used to calculate elapsed time in nanoseconds (tNanos).
@@ -55,7 +54,10 @@ abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends 
     Preconditions.checkArgument(getTimeSensitivityNanos() <= getSamplesIntervalNanos(), "config",
         () -> String.format("timeSensitivity=%sns must be not greater than samplesInterval=%sns",
             getTimeSensitivityNanos(), getSamplesIntervalNanos()));
-    ticksCountLock = sequential ? null : new StampedLock();
+    ticksCountLock = sequential
+        ? null
+        : config.getLockStrategySupplier()
+            .get();
     this.sequential = sequential;
     maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
   }
@@ -97,13 +99,13 @@ abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends 
               though the likelihood of such situation is now much less.*/
             if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2) {
               //we have spent half of the read attempts, let us fall over to lock approach
-              ticksCountReadLockStamp = ticksCountLock.readLock();
+              ticksCountReadLockStamp = ticksCountLock.sharedLock();
             }
           }
         }
       } finally {
         if (ticksCountReadLockStamp != 0) {
-          ticksCountLock.unlockRead(ticksCountReadLockStamp);
+          ticksCountLock.unlockShared(ticksCountReadLockStamp);
         }
       }
     }
@@ -146,13 +148,13 @@ abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends 
               though the likelihood of such situation is now much less.*/
             if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2) {
               //we have spent half of the read attempts, let us fall over to lock approach
-              ticksCountReadLockStamp = ticksCountLock.readLock();
+              ticksCountReadLockStamp = ticksCountLock.sharedLock();
             }
           }
         }
       } finally {
         if (ticksCountReadLockStamp != 0) {
-          ticksCountLock.unlockRead(ticksCountReadLockStamp);
+          ticksCountLock.unlockShared(ticksCountReadLockStamp);
         }
       }
     }
@@ -179,7 +181,7 @@ abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends 
             which acquires the read lock to prevent concurrently running tick methods from moving the samples window too far.
             There is a race condition which still may lead to the samples window being moved,
             though the likelihood of such situation is now much less, and tickCount method expresses failed reads via RateMeterReading*/
-          ticksCountWriteLockStamp = ticksCountLock.isReadLocked() ? ticksCountLock.writeLock() : 0;
+          ticksCountWriteLockStamp = ticksCountLock.isSharedLocked() ? ticksCountLock.lock() : 0;
         }
         try {
           final long timeSensitivityNanos = getTimeSensitivityNanos();
@@ -201,7 +203,7 @@ abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends 
           }
         } finally {
           if (ticksCountWriteLockStamp != 0) {
-            ticksCountLock.unlockWrite(ticksCountWriteLockStamp);
+            ticksCountLock.unlock(ticksCountWriteLockStamp);
           }
         }
         if (existingSample != null) {//we need to merge samples

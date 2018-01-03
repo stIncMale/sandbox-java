@@ -8,6 +8,8 @@ public interface LockStrategy {
 
   void unlockShared(long stamp);
 
+  boolean isSharedLocked();
+
   long lock();
 
   void unlock(long stamp);
