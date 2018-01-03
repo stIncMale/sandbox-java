@@ -457,7 +457,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
   }
 
   private final long lockTicksCount(final int idx) {
-    return ticksCountLocks == null ? 0 : ticksCountLocks[idx].lock();
+    return ticksCountLocks == null ? 1 : ticksCountLocks[idx].lock();
   }
 
   private final void unlockTicksCount(final int idx, final long stamp) {
@@ -467,7 +467,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
   }
 
   private final long sharedLockTicksCount(final int idx) {
-    return ticksCountLocks == null ? 0 : ticksCountLocks[idx].sharedLock();
+    return ticksCountLocks == null ? 1 : ticksCountLocks[idx].sharedLock();
   }
 
   private final void unlockSharedTicksCount(final int idx, final long stamp) {
