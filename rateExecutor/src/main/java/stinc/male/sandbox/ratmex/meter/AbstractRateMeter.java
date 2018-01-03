@@ -20,6 +20,8 @@ public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements
   private final long startNanos;
   private final Duration samplesInterval;
   private final long samplesIntervalNanos;
+  private final Duration timeSensitivity;
+  private final long timeSensitivityNanos;
   private final long maxTNanos;
   private final C config;
 
@@ -42,6 +44,13 @@ public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements
             "Must be less than (Long.MAX_VALUE - 1)nanos = %snanos, but actual value is %s",
             Long.MAX_VALUE - 1,
             samplesIntervalNanos));
+    timeSensitivity = config.getTimeSensitivity()
+        .orElseGet(() -> {
+          Preconditions.checkArgument(samplesIntervalNanos % 20 == 0,
+              "config", "samplesIntervalNanos must be a multiple of 20 because timeSensitivity is not specified");
+          return Duration.ofNanos(samplesIntervalNanos / 20);
+        });
+    timeSensitivityNanos = timeSensitivity.toNanos();
     maxTNanos = maxTNanos(startNanos, samplesIntervalNanos, config.getHistoryLength() + 1);
     this.config = config;
     ticksTotal = config.getTicksCounterSupplier()
@@ -60,7 +69,7 @@ public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements
 
   @Override
   public final Duration getTimeSensitivity() {
-    return config.getTimeSensitivity();
+    return timeSensitivity;
   }
 
   @Override
@@ -100,6 +109,15 @@ public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements
    */
   protected final long getSamplesIntervalNanos() {
     return samplesIntervalNanos;
+  }
+
+  /**
+   * Should be used instead of {@link #getTimeSensitivity()}{@code .}{@link Duration#toNanos() toNanos()} to avoid unnecessary calculations.
+   *
+   * @return {@link #getTimeSensitivity()} in nanoseconds.
+   */
+  protected final long getTimeSensitivityNanos() {
+    return timeSensitivityNanos;
   }
 
   /**

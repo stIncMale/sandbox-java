@@ -48,20 +48,18 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRingBufferRate
       final boolean sequential) {
     super(startNanos, samplesInterval, config);
     checkNotNull(samplesHistorySupplier, "samplesHistorySupplier");
-    final long timeSensitivityNanos = config.getTimeSensitivity()
-        .toNanos();
-    final long samplesIntervalNanos = getSamplesIntervalNanos();
-    Preconditions.checkArgument(timeSensitivityNanos <= samplesIntervalNanos, "config",
-        () -> String.format("getTimeSensitivityNanos()=%s must be not greater than getSamplesIntervalNanos()=%s",
-            timeSensitivityNanos, getSamplesIntervalNanos()));
-    final int samplesIntervalArrayLength = (int)(samplesIntervalNanos / timeSensitivityNanos);
-    Preconditions.checkArgument(
-        samplesIntervalNanos / samplesIntervalArrayLength * samplesIntervalArrayLength == samplesIntervalNanos,
-        "samplesInterval", () -> String.format(
-            "The specified getSamplesInterval()=%sns and getTimeSensitivity()=%sns " +
-                "can not be used together because samplesInterval can not be divided evenly by timeSensitivity",
-            samplesIntervalNanos, timeSensitivityNanos));
-    samplesWindowStepNanos = samplesIntervalNanos / samplesIntervalArrayLength;
+    Preconditions.checkArgument(getTimeSensitivityNanos() <= getSamplesIntervalNanos(), "config",
+        () -> String.format("timeSensitivity=%sns must be less than or equals to samplesIntervalNanos=%sns",
+            getTimeSensitivityNanos(), getSamplesIntervalNanos()));
+    Preconditions.checkArgument(getSamplesIntervalNanos() % getTimeSensitivityNanos() == 0,
+        "samplesInterval", () -> String.format("The specified samplesInterval=%sns and timeSensitivity=%sns " +
+                "can not be used together because samplesInterval is not a multiple of timeSensitivity",
+            getSamplesIntervalNanos(), getTimeSensitivityNanos()));
+    final int samplesIntervalArrayLength = (int)(getSamplesIntervalNanos() / getTimeSensitivityNanos());
+    Preconditions.checkArgument(getSamplesIntervalNanos() == samplesIntervalArrayLength * getTimeSensitivityNanos(), "samplesInterval",
+        () -> String.format("The ratio of the specified samplesInterval=%sns and timeSensitivity=%sns is too high",
+            getSamplesIntervalNanos(), getTimeSensitivityNanos()));
+    samplesWindowStepNanos = getSamplesIntervalNanos() / samplesIntervalArrayLength;
     samplesHistory = samplesHistorySupplier.apply(config.getHistoryLength() * samplesIntervalArrayLength);
     maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
     this.sequential = sequential;

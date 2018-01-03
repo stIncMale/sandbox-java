@@ -15,7 +15,6 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends AbstractRateMeter<Void, C> {
   private final boolean sequential;
   private final NavigableMap<Long, TicksCounter> samplesHistory;
-  private final long timeSensitivityNanos;
   private final int maxTicksCountAttempts;
   @Nullable
   private final AtomicBoolean atomicCleanInProgress;//we don't need an analogous field for a sequential implementation
@@ -53,12 +52,9 @@ abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends 
     atomicCleanInProgress = sequential ? null : new AtomicBoolean();
     volatileCleanLastRightSamplesWindowBoundary = getStartNanos();
     cleanLastRightSamplesWindowBoundary = getStartNanos();
-    timeSensitivityNanos = config.getTimeSensitivity()
-        .toNanos();
-    Preconditions.checkArgument(
-        timeSensitivityNanos <= getSamplesIntervalNanos(), "config",
-        () -> String.format("getTimeSensitivityNanos()=%s must be not greater than getSamplesIntervalNanos()=%s",
-            timeSensitivityNanos, getSamplesIntervalNanos()));
+    Preconditions.checkArgument(getTimeSensitivityNanos() <= getSamplesIntervalNanos(), "config",
+        () -> String.format("timeSensitivity=%sns must be not greater than samplesInterval=%sns",
+            getTimeSensitivityNanos(), getSamplesIntervalNanos()));
     ticksCountLock = sequential ? null : new StampedLock();
     this.sequential = sequential;
     maxTicksCountAttempts = getConfig().getMaxTicksCountAttempts() < 3 ? 3 : getConfig().getMaxTicksCountAttempts();
@@ -186,6 +182,7 @@ abstract class AbstractNavigableMapRateMeter<C extends RateMeterConfig> extends 
           ticksCountWriteLockStamp = ticksCountLock.isReadLocked() ? ticksCountLock.writeLock() : 0;
         }
         try {
+          final long timeSensitivityNanos = getTimeSensitivityNanos();
           if (timeSensitivityNanos == 1) {
             final TicksCounter newSample = getConfig().getTicksCounterSupplier()
                 .apply(count);

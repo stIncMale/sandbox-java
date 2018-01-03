@@ -1,7 +1,9 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
@@ -15,13 +17,14 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 @Immutable
 public class RateMeterConfig {
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
+  @Nullable
   private final Duration timeSensitivity;
   private final int maxTicksCountAttempts;
   private final int historyLength;
 
   protected RateMeterConfig(
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
-      final Duration timeSensitivity,
+      @Nullable final Duration timeSensitivity,
       final int maxTicksCountAttempts,
       final int historyLength) {
     this.ticksCounterSupplier = ticksCounterSupplier;
@@ -50,12 +53,16 @@ public class RateMeterConfig {
   }
 
   /**
-   * @return {@code Duration.ofNanos(200)} by default.
+   * An {@linkplain Optional#empty() empty} time sensitivity means that {@link AbstractRateMeter}
+   * will automatically use {@linkplain RateMeter#getSamplesInterval() samples interval} / 20 as the time sensitivity,
+   * which in turn means that the samples interval must be a multiple of 20.
+   *
+   * @return An {@linkplain Optional#empty() empty} {@link Optional} by default.
    *
    * @see RateMeter#getTimeSensitivity()
    */
-  public final Duration getTimeSensitivity() {//todo return null by default and use 1/20 of samplesInterval
-    return timeSensitivity;
+  public final Optional<Duration> getTimeSensitivity() {
+    return Optional.ofNullable(timeSensitivity);
   }
 
   /**
@@ -101,20 +108,22 @@ public class RateMeterConfig {
   @NotThreadSafe
   public static class Builder {
     protected Function<Long, ? extends TicksCounter> ticksCounterSupplier;
+    @Nullable
     protected Duration timeSensitivity;
     protected int maxTicksCountAttempts;
     protected int historyLength;
 
     protected Builder() {
       ticksCounterSupplier = LongAdderTicksCounter::new;
-      timeSensitivity = Duration.ofNanos(200);
+      timeSensitivity = null;
       maxTicksCountAttempts = 6;
       historyLength = 3;
     }
 
     protected Builder(final RateMeterConfig config) {
       ticksCounterSupplier = config.getTicksCounterSupplier();
-      timeSensitivity = config.getTimeSensitivity();
+      timeSensitivity = config.getTimeSensitivity()
+          .orElse(null);
       maxTicksCountAttempts = config.getMaxTicksCountAttempts();
       historyLength = config.getHistoryLength();
     }
@@ -131,14 +140,16 @@ public class RateMeterConfig {
     }
 
     /**
-     * @param timeSensitivity Must be positive (not {@linkplain Duration#isNegative() negative} and not {@linkplain Duration#isZero() zero}).
+     * @param timeSensitivity Must be either null or positive
+     * (not {@linkplain Duration#isNegative() negative} and not {@linkplain Duration#isZero() zero}).
      *
      * @see RateMeterConfig#getTimeSensitivity()
      */
-    public final Builder setTimeSensitivity(final Duration timeSensitivity) {
-      checkNotNull(timeSensitivity, "timeSensitivity");
-      checkArgument(!timeSensitivity.isNegative(), "timeSensitivity", "Must be positive");
-      checkArgument(!timeSensitivity.isZero(), "timeSensitivity", "Must not be zero");
+    public final Builder setTimeSensitivity(@Nullable final Duration timeSensitivity) {
+      if (timeSensitivity != null) {
+        checkArgument(!timeSensitivity.isNegative(), "timeSensitivity", "Must be positive");
+        checkArgument(!timeSensitivity.isZero(), "timeSensitivity", "Must not be zero");
+      }
       this.timeSensitivity = timeSensitivity;
       return this;
     }

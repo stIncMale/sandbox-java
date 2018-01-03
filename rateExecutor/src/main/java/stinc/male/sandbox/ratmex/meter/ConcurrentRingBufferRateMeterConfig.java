@@ -90,7 +90,7 @@ public final class ConcurrentRingBufferRateMeterConfig extends RateMeterConfig {
   public final String toString() {
     return getClass().getSimpleName()
         + "{ticksCounterSupplier=" + getTicksCounterSupplier()
-        + ", timeSensitivity=" + getTimeSensitivity()
+        + ", timeSensitivity=" + getTimeSensitivity().orElse(null)
         + ", collectStats=" + isCollectStats()
         + ", maxTicksCountAttempts=" + getMaxTicksCountAttempts()
         + ", historyLength=" + getHistoryLength()

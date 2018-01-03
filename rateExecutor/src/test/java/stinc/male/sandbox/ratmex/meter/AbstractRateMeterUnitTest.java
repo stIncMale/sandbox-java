@@ -53,10 +53,10 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
 
   @Test
   public final void rightSamplesWindowBoundary3() {
-    final RateMeter<?> rm = newRateMeter(0, ofNanos(10), ofNanos(7));
+    final RateMeter<?> rm = newRateMeter(0, ofNanos(10), ofNanos(5));
     final long rightmost = 123;
     rm.tick(1, rightmost);
-    assertEquals(rightmost, rm.rightSamplesWindowBoundary(), 7);
+    assertEquals(rightmost, rm.rightSamplesWindowBoundary(), 5);
   }
 
   @Test
