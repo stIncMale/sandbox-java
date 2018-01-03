@@ -11,26 +11,26 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 
 /**
  * A configuration that can be used to create {@link AbstractRateMeter}.
- *
- * The {@code @}{@link Immutable} for this class only guarantees that {@code get...} methods behave as methods of an immutable class
- * despite this class is not final.
  */
 @Immutable
 public class RateMeterConfig {
   private final Function<Long, ? extends TicksCounter> ticksCounterSupplier;
   @Nullable
   private final Duration timeSensitivity;
-  private final int maxTicksCountAttempts;//TODO move to concurrent
   private final int historyLength;
 
   protected RateMeterConfig(
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       @Nullable final Duration timeSensitivity,
-      final int maxTicksCountAttempts,
       final int historyLength) {
+    checkNotNull(ticksCounterSupplier, "ticksCounterSupplier");
+    if (timeSensitivity != null) {
+      checkArgument(!timeSensitivity.isNegative(), "timeSensitivity", "Must be positive");
+      checkArgument(!timeSensitivity.isZero(), "timeSensitivity", "Must not be zero");
+    }
+    checkArgument(historyLength >= 2, "historyLength", "Must be greater than or equal to 2");
     this.ticksCounterSupplier = ticksCounterSupplier;
     this.timeSensitivity = timeSensitivity;
-    this.maxTicksCountAttempts = maxTicksCountAttempts;
     this.historyLength = historyLength;
   }
 
@@ -43,11 +43,10 @@ public class RateMeterConfig {
   }
 
   /**
-   * Specifies a supplier which MUST be used by {@link AbstractRateMeter} to create ticks counters.
-   * Note that if {@link AbstractRateMeter} is used concurrently
-   * then supplier MUST provide a thread-safe implementation of {@link TicksCounter}.
+   * Specifies a supplier which must be used by {@link AbstractRateMeter} to create ticks counters.
+   * Note that if {@link AbstractRateMeter} is used concurrently, then the supplier must provide a thread-safe {@link TicksCounter}.
    *
-   * @return {@code LongAdderTicksCounter::new} by default.
+   * @return {@link LongAdderTicksCounter}{@code ::}{@link LongAdderTicksCounter#LongAdderTicksCounter(long) new} by default.
    */
   public final Function<Long, ? extends TicksCounter> getTicksCounterSupplier() {
     return ticksCounterSupplier;
@@ -64,21 +63,6 @@ public class RateMeterConfig {
    */
   public final Optional<Duration> getTimeSensitivity() {
     return Optional.ofNullable(timeSensitivity);
-  }
-
-  /**
-   * Specifies the desired maximum number of attempts to calculate the number of ticks (see {@link RateMeter#ticksCount()} for example).
-   * Note that this is just a hint, so an implementation may choose to do more attempts, but the number of attempts must be finite.
-   * <p>
-   * <b>The reasoning behind this hint</b><br>
-   * Implementations may allow a race condition (for performance reasons) while counting ticks.
-   * When running out of the number of attempts such implementations may choose to fall over to an approach that excludes the race
-   * and allows to eventually count the ticks.
-   *
-   * @return 6 by default.
-   */
-  public final int getMaxTicksCountAttempts() {
-    return maxTicksCountAttempts;
   }
 
   /**
@@ -101,7 +85,6 @@ public class RateMeterConfig {
     return getClass().getSimpleName()
         + "{ticksCounterSupplier=" + ticksCounterSupplier
         + ", timeSensitivity=" + timeSensitivity
-        + ", maxTicksCountAttempts=" + maxTicksCountAttempts
         + ", historyLength=" + historyLength
         + '}';
   }
@@ -111,21 +94,22 @@ public class RateMeterConfig {
     protected Function<Long, ? extends TicksCounter> ticksCounterSupplier;
     @Nullable
     protected Duration timeSensitivity;
-    protected int maxTicksCountAttempts;
     protected int historyLength;
 
     protected Builder() {
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = null;
-      maxTicksCountAttempts = 6;
       historyLength = 3;
     }
 
+    /**
+     * @param config Must not be null.
+     */
     protected Builder(final RateMeterConfig config) {
+      checkNotNull(config, "config");
       ticksCounterSupplier = config.getTicksCounterSupplier();
       timeSensitivity = config.getTimeSensitivity()
           .orElse(null);
-      maxTicksCountAttempts = config.getMaxTicksCountAttempts();
       historyLength = config.getHistoryLength();
     }
 
@@ -156,17 +140,6 @@ public class RateMeterConfig {
     }
 
     /**
-     * @param maxTicksCountAttempts Must be positive.
-     *
-     * @see RateMeterConfig#getMaxTicksCountAttempts()
-     */
-    public final Builder setMaxTicksCountAttempts(final int maxTicksCountAttempts) {
-      checkArgument(maxTicksCountAttempts > 0, "maxTicksCountAttempts", "Must be positive");
-      this.maxTicksCountAttempts = maxTicksCountAttempts;
-      return this;
-    }
-
-    /**
      * @param historyLength Must be greater than or equal to 2.
      *
      * @see RateMeterConfig#getHistoryLength()
@@ -181,7 +154,6 @@ public class RateMeterConfig {
       return new RateMeterConfig(
           ticksCounterSupplier,
           timeSensitivity,
-          maxTicksCountAttempts,
           historyLength);
     }
   }

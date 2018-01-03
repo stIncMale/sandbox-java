@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.LongAdder;
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
-final class DefaultConcurrentRingBufferRateMeterStats implements ConcurrentRingBufferRateMeterStats {
+final class DefaultConcurrentRingBufferRateMeterStats implements ConcurrentRateMeterStats {
   private final LongAdder failedAccuracyEventsCountForTick;
 
   DefaultConcurrentRingBufferRateMeterStats() {

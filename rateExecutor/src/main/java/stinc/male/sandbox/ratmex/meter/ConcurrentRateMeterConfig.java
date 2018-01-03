@@ -6,20 +6,26 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
+/**
+ * A configuration that can be used to create concurrent implementations of {@link AbstractRateMeter},
+ * e.g. {@link ConcurrentNavigableMapRateMeter}, {@link ConcurrentRingBufferRateMeter}.
+ */
 @Immutable
-public final class ConcurrentRateMeterConfig extends RateMeterConfig {//TODO check arguments
+public class ConcurrentRateMeterConfig extends RateMeterConfig {
+  private final int maxTicksCountAttempts;
   private final boolean strictTick;
   private final boolean collectStats;
   private final Supplier<? extends WaitStrategy> waitStrategySupplier;
   private final Supplier<? extends LockStrategy> lockStrategySupplier;
 
-  ConcurrentRateMeterConfig(
+  protected ConcurrentRateMeterConfig(
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       @Nullable final Duration timeSensitivity,
-      final int maxTicksCountAttempts,
       final int historyLength,
+      final int maxTicksCountAttempts,
       final boolean strictTick,
       final boolean collectStats,
       final Supplier<? extends WaitStrategy> waitStrategySupplier,
@@ -27,50 +33,68 @@ public final class ConcurrentRateMeterConfig extends RateMeterConfig {//TODO che
     super(
         ticksCounterSupplier,
         timeSensitivity,
-        maxTicksCountAttempts,
         historyLength);
+    checkArgument(maxTicksCountAttempts > 0, "maxTicksCountAttempts", "Must be positive");
+    checkNotNull(waitStrategySupplier, "waitStrategySupplier");
+    checkNotNull(lockStrategySupplier, "lockStrategySupplier");
+    this.maxTicksCountAttempts = maxTicksCountAttempts;
     this.strictTick = strictTick;
     this.collectStats = collectStats;
     this.waitStrategySupplier = waitStrategySupplier;
     this.lockStrategySupplier = lockStrategySupplier;
   }
 
-  public static final Builder newBuilder() {
+  public static Builder newBuilder() {
     return new Builder();
   }
 
-  public static final Builder newBuilder(final RateMeterConfig config) {
+  public static Builder newBuilder(final RateMeterConfig config) {
     return new Builder(config);
   }
 
   @Override
-  public final Builder toBuilder() {
+  public Builder toBuilder() {
     return new Builder(this);
   }
 
   /**
-   * Specifies if {@link ConcurrentRingBufferRateMeter} must guarantee absence of race conditions in the {@link RateMeter#tick(long, long)} method.
+   * Specifies the desired maximum number of attempts to calculate the number of ticks (see {@link RateMeter#ticksCount()} for example).
+   * Note that this is just a hint, so an implementation may choose to do more attempts, but the number of attempts must be finite.
+   * <p>
+   * <b>The reasoning behind this hint</b><br>
+   * Implementations may allow a race condition (for performance reasons) while counting ticks.
+   * When running out of the number of attempts such implementations may choose to fall over to an approach that excludes the race
+   * and allows to eventually count the ticks.
+   *
+   * @return 6 by default.
+   */
+  public final int getMaxTicksCountAttempts() {
+    return maxTicksCountAttempts;
+  }
+
+  /**
+   * Specifies if {@link ConcurrentRingBufferRateMeter} (or any other {@link RateMeter} which explicitly says it does this)
+   * must guarantee a strict behavior of {@link RateMeter#tick(long, long)} method.
    *
    * @return true by default.
    *
-   * @see ConcurrentRingBufferRateMeterStats#failedAccuracyEventsCountForTick()
+   * @see ConcurrentRateMeterStats#failedAccuracyEventsCountForTick()
    */
   public final boolean isStrictTick() {
     return strictTick;
   }
 
   /**
-   * This configuration parameter specifies if {@link ConcurrentRingBufferRateMeter} must collect {@link ConcurrentRingBufferRateMeter#stats() stats}.
+   * This configuration parameter specifies if a {@link RateMeter} which can collect {@link RateMeter#stats() stats} must do so.
    *
    * @return false by default.
-   * If {@link #isStrictTick()} is true, then returns false.
    */
   public final boolean isCollectStats() {
-    return !isStrictTick() && collectStats;
+    return collectStats;
   }
 
   /**
-   * Specifies which {@link WaitStrategy} must be used by {@link ConcurrentRingBufferRateMeter}.
+   * Specifies which {@link WaitStrategy} must be used by a thread-safe implementation {@link RateMeter} (if it at all uses it).
    *
    * @return {@link ParkWaitStrategy}{@code ::}{@link ParkWaitStrategy#instance() instance} by default.
    */
@@ -79,59 +103,71 @@ public final class ConcurrentRateMeterConfig extends RateMeterConfig {//TODO che
   }
 
   /**
-   * Specifies which {@link LockStrategy} must be used by {@link ConcurrentRingBufferRateMeter}.
+   * Specifies which {@link LockStrategy} must be used by a thread-safe implementation {@link RateMeter} (if it at all uses it).
    *
-   * @return {@code () -> new SpinLockStrategy(YieldWaitStrategy.instance())} by default.
+   * @return {@link StampedLockStrategy}{@code ::}{@link StampedLockStrategy#StampedLockStrategy new} by default.
    */
   public final Supplier<? extends LockStrategy> getLockStrategySupplier() {
     return lockStrategySupplier;
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     return getClass().getSimpleName()
         + "{ticksCounterSupplier=" + getTicksCounterSupplier()
         + ", timeSensitivity=" + getTimeSensitivity().orElse(null)
-        + ", collectStats=" + isCollectStats()
-        + ", maxTicksCountAttempts=" + getMaxTicksCountAttempts()
         + ", historyLength=" + getHistoryLength()
+        + ", maxTicksCountAttempts=" + maxTicksCountAttempts
         + ", strictTick=" + strictTick
-        + ", collectStats=" + isCollectStats()
+        + ", collectStats=" + collectStats
         + ", waitStrategySupplier=" + waitStrategySupplier
         + ", lockStrategySupplier=" + lockStrategySupplier
         + '}';
   }
 
   @NotThreadSafe
-  public static final class Builder extends RateMeterConfig.Builder {
-    private boolean strictTick;
-    private boolean collectStats;
-    private Supplier<? extends WaitStrategy> waitStrategySupplier;
-    private Supplier<? extends LockStrategy> lockStrategySupplier;
+  public static class Builder extends RateMeterConfig.Builder {
+    protected int maxTicksCountAttempts;
+    protected boolean strictTick;
+    protected boolean collectStats;
+    protected Supplier<? extends WaitStrategy> waitStrategySupplier;
+    protected Supplier<? extends LockStrategy> lockStrategySupplier;
 
-    Builder() {
+    protected Builder() {
+      maxTicksCountAttempts = 6;
       strictTick = true;
       collectStats = false;
       waitStrategySupplier = ParkWaitStrategy::instance;
-      lockStrategySupplier = () -> new SpinLockStrategy(YieldWaitStrategy.instance());
+      lockStrategySupplier = StampedLockStrategy::new;
     }
 
-    Builder(final ConcurrentRateMeterConfig config) {
+    /**
+     * @param config Must not be null.
+     */
+    protected Builder(final ConcurrentRateMeterConfig config) {
       super(config);
+      maxTicksCountAttempts = config.getMaxTicksCountAttempts();
       strictTick = config.isStrictTick();
       collectStats = config.isCollectStats();
       waitStrategySupplier = config.getWaitStrategySupplier();
       lockStrategySupplier = config.getLockStrategySupplier();
     }
 
-    Builder(final RateMeterConfig config) {
+    /**
+     * @param config Must not be null.
+     */
+    protected Builder(final RateMeterConfig config) {
       this();
+      checkNotNull(config, "config");
       set(config);
     }
 
+    /**
+     * @param config Must not be null.
+     */
     public final Builder set(final RateMeterConfig config) {
+      checkNotNull(config, "config");
       ticksCounterSupplier = config.getTicksCounterSupplier();
-      maxTicksCountAttempts = config.getMaxTicksCountAttempts();
       historyLength = config.getHistoryLength();
       timeSensitivity = config.getTimeSensitivity()
           .orElse(null);
@@ -139,27 +175,29 @@ public final class ConcurrentRateMeterConfig extends RateMeterConfig {//TODO che
     }
 
     /**
-     * Sets {@link ConcurrentRateMeterConfig#isCollectStats() collect stats} to false if {@code strictTick} is true.
+     * @param maxTicksCountAttempts Must be positive.
      *
-     * @see ConcurrentRateMeterConfig#isStrictTick()
+     * @see ConcurrentRateMeterConfig#getMaxTicksCountAttempts()
      */
-    public final Builder setStrictTick(final boolean strictTick) {
-      this.strictTick = strictTick;
-      if (strictTick) {
-        collectStats = false;
-      }
+    public final RateMeterConfig.Builder setMaxTicksCountAttempts(final int maxTicksCountAttempts) {
+      checkArgument(maxTicksCountAttempts > 0, "maxTicksCountAttempts", "Must be positive");
+      this.maxTicksCountAttempts = maxTicksCountAttempts;
       return this;
     }
 
     /**
-     * The value of {@code collectStats} is ignored if {@link ConcurrentRateMeterConfig#isStrictTick() strict tick} is enabled.
-     *
+     * @see ConcurrentRateMeterConfig#isStrictTick()
+     */
+    public final Builder setStrictTick(final boolean strictTick) {
+      this.strictTick = strictTick;
+      return this;
+    }
+
+    /**
      * @see ConcurrentRateMeterConfig#isCollectStats()
      */
     public final Builder setCollectStats(final boolean collectStats) {
-      if (!strictTick) {
-        this.collectStats = collectStats;
-      }
+      this.collectStats = collectStats;
       return this;
     }
 
@@ -182,12 +220,12 @@ public final class ConcurrentRateMeterConfig extends RateMeterConfig {//TODO che
     }
 
     @Override
-    public final ConcurrentRateMeterConfig build() {
+    public ConcurrentRateMeterConfig build() {
       return new ConcurrentRateMeterConfig(
           ticksCounterSupplier,
           timeSensitivity,
-          maxTicksCountAttempts,
           historyLength,
+          maxTicksCountAttempts,
           strictTick,
           collectStats,
           waitStrategySupplier,

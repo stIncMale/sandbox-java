@@ -2,7 +2,6 @@ package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
 import java.util.Optional;
-import java.util.TreeMap;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -19,7 +18,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * it can have a substantial negative effect on performance.
  */
 @NotThreadSafe
-public final class RingBufferRateMeter extends AbstractRingBufferRateMeter<Void, ConcurrentRateMeterConfig> {//TODO check arguments
+public final class RingBufferRateMeter extends AbstractRingBufferRateMeter<Void, ConcurrentRateMeterConfig> {
   private static final ConcurrentRateMeterConfig defaultConfig;
 
   static {

@@ -8,6 +8,16 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * This implementation uses a ring buffer to store and access a samples history.
  * <p>
+ * There are two modes:
+ * <ul>
+ * <li>strict (default) - {@link ConcurrentRateMeterConfig#isStrictTick()} is true.</li>
+ * <li>relaxed - {@link ConcurrentRateMeterConfig#isStrictTick()} is false.
+ * Displays much better performance in terms of both throughput and latency,
+ * and does not {@linkplain ConcurrentRateMeterStats#failedAccuracyEventsCountForTick() fail to correctly register} ticks
+ * with {@link #tick(long, long)} in reasonable practical situations in spite of allowing such incorrectness in theory.
+ * This is a recommended mode.</li>
+ * </ul>
+ * <p>
  * <i>Advantages</i><br>
  * Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation does not produces garbage.
  * <p>
@@ -19,7 +29,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * it can have a substantial negative effect on performance.
  */
 @ThreadSafe
-public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentRingBufferRateMeterStats, ConcurrentRateMeterConfig> {
+public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentRateMeterStats, ConcurrentRateMeterConfig> {
   private static final ConcurrentRateMeterConfig defaultConfig = ConcurrentRateMeterConfig.newBuilder()
       .build();
 
@@ -56,7 +66,7 @@ public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateM
    * @return An {@linkplain Optional#empty() empty} {@link Optional}.
    */
   @Override
-  public final Optional<ConcurrentRingBufferRateMeterStats> stats() {
+  public final Optional<ConcurrentRateMeterStats> stats() {
     return Optional.ofNullable(stats);
   }
 

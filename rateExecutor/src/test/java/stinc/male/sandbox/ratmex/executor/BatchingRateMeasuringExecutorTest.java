@@ -30,7 +30,7 @@ import stinc.male.sandbox.ratmex.meter.LongTicksCounter;
 import stinc.male.sandbox.ratmex.meter.ParkWaitStrategy;
 import stinc.male.sandbox.ratmex.meter.RateMeter;
 import stinc.male.sandbox.ratmex.meter.RateMeterReading;
-import stinc.male.sandbox.ratmex.meter.ConcurrentRingBufferRateMeterStats;
+import stinc.male.sandbox.ratmex.meter.ConcurrentRateMeterStats;
 import stinc.male.sandbox.ratmex.meter.RingBufferRateMeter;
 import stinc.male.sandbox.ratmex.meter.StampedLockStrategy;
 import static java.lang.Math.round;
@@ -135,7 +135,6 @@ public final class BatchingRateMeasuringExecutorTest {
             .setTicksCounterSupplier(LongTicksCounter::new)
             .setHistoryLength(2)
             .setTimeSensitivity(timeSensitivity)
-            .setMaxTicksCountAttempts(1)
             .build());
     final ConcurrentRateMeterConfig.Builder concurrentRmCfgBuilder = ConcurrentRingBufferRateMeter.defaultConfig()
         .toBuilder()
@@ -143,11 +142,11 @@ public final class BatchingRateMeasuringExecutorTest {
         .setLockStrategySupplier(StampedLockStrategy::new)
         .setWaitStrategySupplier(ParkWaitStrategy::instance);
     concurrentRmCfgBuilder.setCollectStats(true)
+        .setMaxTicksCountAttempts(5)
         .setTicksCounterSupplier(LongAdderTicksCounter::new)
         .setHistoryLength(3)
-        .setTimeSensitivity(timeSensitivity)
-        .setMaxTicksCountAttempts(5);
-    final RateMeter<ConcurrentRingBufferRateMeterStats> completionRateMeter =
+        .setTimeSensitivity(timeSensitivity);
+    final RateMeter<ConcurrentRateMeterStats> completionRateMeter =
         new ConcurrentRingBufferRateMeter(startNanos, samplesInterval, concurrentRmCfgBuilder.build());
     final LongAdder globalCompleteCounter = new LongAdder();
     final Supplier<Runnable> submitterSupplier = () -> new Runnable() {
@@ -291,10 +290,10 @@ public final class BatchingRateMeasuringExecutorTest {
       println("targetRatePerSecond=" + format.format(targetRatePerSecond) +
           ", targetSubmits=" + targetSubmits, 2);
       //      println("failedAccuracyEventsCountForTick=" + submitterRateMeter.stats()
-      //          .map(ConcurrentRingBufferRateMeterStats::failedAccuracyEventsCountForTick)
+      //          .map(ConcurrentRateMeterStats::failedAccuracyEventsCountForTick)
       //          .orElse(0L) +
       //          ", failedAccuracyEventsCountForRate=" + submitterRateMeter.stats()
-      //          .map(ConcurrentRingBufferRateMeterStats::failedAccuracyEventsCountForRate)
+      //          .map(ConcurrentRateMeterStats::failedAccuracyEventsCountForRate)
       //          .orElse(0L), 2);
       println("batchCache.size=" + batchCache.size(), 2);
     }
