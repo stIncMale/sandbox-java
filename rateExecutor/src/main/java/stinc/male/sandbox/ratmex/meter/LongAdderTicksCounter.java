@@ -3,6 +3,9 @@ package stinc.male.sandbox.ratmex.meter;
 import java.util.concurrent.atomic.LongAdder;
 import javax.annotation.concurrent.ThreadSafe;
 
+/**
+ * This {@link TicksCounter} uses {@link LongAdder} field to store its {@linkplain #get() value}.
+ */
 @ThreadSafe
 public final class LongAdderTicksCounter extends AbstractTicksCounter {
   private final LongAdder adder;
