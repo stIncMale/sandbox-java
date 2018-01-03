@@ -261,7 +261,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
             moved = atomicSamplesWindowShiftSteps.compareAndSet(samplesWindowShiftSteps, targetSamplesWindowShiftSteps);
             if (moved) {
               break;
-            } else {
+            } else {//another thread has moved the samples window
               samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
             }
           }
@@ -493,8 +493,8 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
       if (ticksCountLocks == null) {//not strict mode, no locking
         samplesHistory.add(targetIdx, count);
         final long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
-        if (targetSamplesWindowShiftSteps < samplesWindowShiftSteps - samplesHistory.length()) {
-          //we could have registered (but it is not necessary) ticks at an incorrect instant because samples window had been moved too far
+        if (targetSamplesWindowShiftSteps <= samplesWindowShiftSteps - samplesHistory.length()) {
+          //we could have registered (but it is not necessary) ticks at an incorrect instant because samples window have been moved too far
           registerFailedAccuracyEventForTick();
         }
       } else {
@@ -502,7 +502,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
         try {
           final long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
           if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {
-            //double check that tNanos is still within the samples history
+            //check that tNanos is still within the samples history
             samplesHistory.add(targetIdx, count);
           }
         } finally {

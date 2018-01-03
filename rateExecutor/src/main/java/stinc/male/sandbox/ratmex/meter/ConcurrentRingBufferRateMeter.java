@@ -2,6 +2,7 @@ package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.locks.StampedLock;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -19,7 +20,9 @@ import javax.annotation.concurrent.ThreadSafe;
  * </ul>
  * <p>
  * <i>Advantages</i><br>
- * Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation does not produces garbage.
+ * Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation does not produces garbage,
+ * unless a {@link WaitStrategy} or a {@link LockStrategy} that are being used produce garbage
+ * (e.g. {@link StampedLockStrategy} produces garbage because {@link StampedLock} does).
  * <p>
  * <i>Disadvantages</i><br>
  * Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation can not tolerate a large ratio of

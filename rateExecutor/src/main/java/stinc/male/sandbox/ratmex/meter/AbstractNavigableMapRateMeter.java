@@ -99,7 +99,7 @@ abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig
               though the likelihood of such situation is now much less.*/
             if (ticksCountReadLockStamp == 0 && ri >= maxTicksCountAttempts / 2) {
               //we have spent half of the read attempts, let us fall over to lock approach
-              ticksCountReadLockStamp = ticksCountLock.sharedLock();
+              ticksCountReadLockStamp = ticksCountLock.sharedLock();//TODO try shared, then lock on the next iteration of fail; same for ring buffer
             }
           }
         }
