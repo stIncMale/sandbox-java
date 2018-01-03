@@ -1,12 +1,14 @@
 package stinc.male.sandbox.ratmex.meter;
 
-import stinc.male.sandbox.ratmex.internal.util.Preconditions;
+import javax.annotation.concurrent.NotThreadSafe;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 
+@NotThreadSafe
 final class SequentialLongArray implements LongArray {
   final long[] array;
 
   SequentialLongArray(final int length) {
-    Preconditions.checkArgument(length > 0, "length", "Must be positive");
+    checkArgument(length > 0, "length", "Must be positive");
     this.array = new long[length];
   }
 

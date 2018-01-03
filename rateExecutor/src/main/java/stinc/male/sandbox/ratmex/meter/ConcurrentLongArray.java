@@ -1,13 +1,15 @@
 package stinc.male.sandbox.ratmex.meter;
 
 import java.util.concurrent.atomic.AtomicLongArray;
-import stinc.male.sandbox.ratmex.internal.util.Preconditions;
+import javax.annotation.concurrent.ThreadSafe;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 
+@ThreadSafe
 final class ConcurrentLongArray implements LongArray {
   final AtomicLongArray array;
 
   ConcurrentLongArray(final int length) {
-    Preconditions.checkArgument(length > 0, "length", "Must be positive");
+    checkArgument(length > 0, "length", "Must be positive");
     this.array = new AtomicLongArray(length);
   }
 

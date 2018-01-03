@@ -2,12 +2,11 @@ package stinc.male.sandbox.ratmex.meter;
 
 import java.util.Comparator;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 /**
- * A {@linkplain Comparator comparator} that compares nanoseconds according to {@link System#nanoTime()} specification.
+ * A {@link Comparator} that compares nanoseconds according to {@link System#nanoTime()} specification.
  */
 @ThreadSafe
 public final class NanosComparator implements Comparator<Long> {
@@ -49,7 +48,9 @@ public final class NanosComparator implements Comparator<Long> {
    *
    * @param l1 An argument.
    * @param l2 Another argument.
+   *
    * @return The smaller of two nanosecond values.
+   *
    * @throws IllegalArgumentException If {@code l1} - {@code l2} == {@link Long#MIN_VALUE}.
    */
   public static final long min(final long l1, final long l2) throws IllegalArgumentException {
@@ -62,7 +63,9 @@ public final class NanosComparator implements Comparator<Long> {
    *
    * @param l1 An argument.
    * @param l2 Another argument.
+   *
    * @return The larger of two nanosecond values.
+   *
    * @throws IllegalArgumentException If {@code l1} - {@code l2} == {@link Long#MIN_VALUE}.
    */
   public static final long max(final long l1, final long l2) throws IllegalArgumentException {
@@ -77,19 +80,6 @@ public final class NanosComparator implements Comparator<Long> {
     checkNotNull(l1, "o1");
     checkNotNull(l2, "o2");
     return compare(l1.longValue(), l2.longValue());
-  }
-
-  /**
-   * @return {@code true} if and only if {@code obj} is instance of {@link NanosComparator}.
-   */
-  @Override
-  public final boolean equals(@Nullable final Object obj) {
-    return obj == instance;
-  }
-
-  @Override
-  public final int hashCode() {
-    return 2069133341;
   }
 
   private NanosComparator() {
