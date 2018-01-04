@@ -495,7 +495,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
         try {
           final long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
           if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {
-            //check that tNanos is still within the samples history
+            //check that targetSamplesWindowShiftSteps is still within the samples history
             samplesHistory.add(targetIdx, count);
           }
         } finally {
