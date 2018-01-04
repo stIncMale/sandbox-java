@@ -330,7 +330,8 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
   }
 
   private final RateMeter<?> newRateMeter(final long startNanos, final Duration samplesInterval, final Duration timeSensitivity) {
-    @SuppressWarnings("unchecked") final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
+    @SuppressWarnings("unchecked")
+    final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
         .get()
         .setTimeSensitivity(timeSensitivity)
         .build();
