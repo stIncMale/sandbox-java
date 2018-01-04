@@ -8,8 +8,9 @@ import stinc.male.sandbox.ratmex.TestTag;
 public final class ConcurrentRingBufferRateMeterConcurrentTest extends AbstractRateMeterConcurrencyTest<Builder, ConcurrentRateMeterConfig> {
   public ConcurrentRingBufferRateMeterConcurrentTest() {
     super(
-        () -> ConcurrentRingBufferRateMeter.defaultConfig()
-            .toBuilder(),
+        () -> (Builder)ConcurrentRingBufferRateMeter.defaultConfig()
+            .toBuilder().setStrictTick(false)
+            .setHistoryLength(2),
         ConcurrentRingBufferRateMeter::new,
         Math.max(2, Runtime.getRuntime()
             .availableProcessors()));
