@@ -5,7 +5,11 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
+/**
+ * This implementation of {@link WaitStrategy} combines exponential backoff and {@link LockSupport#park() parking}.
+ */
 @ThreadSafe
 public final class ParkWaitStrategy implements WaitStrategy {
   private static final ParkWaitStrategy instance = new ParkWaitStrategy(50, 200);
@@ -13,6 +17,12 @@ public final class ParkWaitStrategy implements WaitStrategy {
   private final long minDelay;
   private final long maxDelay;
 
+  /**
+   * @param minDelayNanos The lower desired bound of the blocking time intervals between tests of a {@linkplain #await(BooleanSupplier) condition}.
+   * Note that this is just a hint, so this implementation may use a smaller value.
+   * @param maxDelayNanos The upper desired bound of the blocking time intervals between tests of a {@linkplain #await(BooleanSupplier) condition}.
+   * Note that this is just a hint, so this implementation may use a larger value.
+   */
   public ParkWaitStrategy(final long minDelayNanos, final long maxDelayNanos) {
     checkArgument(minDelayNanos > 0, "minDelayNanos", "Must be positive");
     checkArgument(maxDelayNanos > 0, "maxDelayNanos", "Must be positive");
@@ -23,7 +33,11 @@ public final class ParkWaitStrategy implements WaitStrategy {
   }
 
   /**
-   * Always returns the same instance.
+   * Always returns the same instance with:
+   * <ul>
+   * <li>{@code minDelayNanos} = 50;</li>
+   * <li>{@code maxDelayNanos} = 200.</li>
+   * </ul>
    *
    * @return An instance of {@link ParkWaitStrategy}.
    */
@@ -33,6 +47,7 @@ public final class ParkWaitStrategy implements WaitStrategy {
 
   @Override
   public final void await(final BooleanSupplier condition) {
+    checkNotNull(condition, "condition");
     boolean interrupted = false;
     long delayNanos = minDelay;
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();

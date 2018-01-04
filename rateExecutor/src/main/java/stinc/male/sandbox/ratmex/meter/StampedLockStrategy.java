@@ -4,6 +4,9 @@ import java.util.concurrent.locks.StampedLock;
 import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 
+/**
+ * This implementation of {@link LockStrategy} uses {@link StampedLock} and directly dispatches all methods to analogs in {@link StampedLock}.
+ */
 @ThreadSafe
 public final class StampedLockStrategy implements LockStrategy {
   private final StampedLock stampedLock;
