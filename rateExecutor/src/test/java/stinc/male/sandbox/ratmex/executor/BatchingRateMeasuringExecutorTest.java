@@ -140,7 +140,7 @@ public final class BatchingRateMeasuringExecutorTest {
         .toBuilder()
         .setStrictTick(false)
         .setLockStrategySupplier(StampedLockStrategy::new)
-        .setWaitStrategySupplier(ParkWaitStrategy::instance);
+        .setWaitStrategySupplier(ParkWaitStrategy::defaultInstance);
     concurrentRmCfgBuilder.setCollectStats(true)
         .setMaxTicksCountAttempts(5)
         .setTicksCounterSupplier(LongAdderTicksCounter::new)

@@ -12,6 +12,8 @@ public interface LockStrategy {
 
   boolean isSharedLocked();
 
+  long tryLock();
+
   long lock();
 
   void unlock(long stamp);

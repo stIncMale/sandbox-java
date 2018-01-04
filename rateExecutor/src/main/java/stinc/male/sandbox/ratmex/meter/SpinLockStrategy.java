@@ -2,9 +2,10 @@ package stinc.male.sandbox.ratmex.meter;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.concurrent.ThreadSafe;
+import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 
 @ThreadSafe
-public final class SpinLockStrategy implements LockStrategy {//TODO use Thread.onSpinWait()
+public final class SpinLockStrategy implements LockStrategy {
   private final AtomicBoolean atomicBoolean;
   private final WaitStrategy waitStrategy;
 
@@ -15,7 +16,7 @@ public final class SpinLockStrategy implements LockStrategy {//TODO use Thread.o
 
   @Override
   public final long trySharedLock() {
-    return atomicBoolean.compareAndSet(false, true) ? 1 : 0;
+    return tryLock();
   }
 
   @Override
@@ -25,12 +26,18 @@ public final class SpinLockStrategy implements LockStrategy {//TODO use Thread.o
 
   @Override
   public final void unlockShared(final long stamp) {
+    checkArgument(stamp != 0, "stamp", "Must not be 0");
     unlock(stamp);
   }
 
   @Override
   public final boolean isSharedLocked() {
     return atomicBoolean.get();
+  }
+
+  @Override
+  public final long tryLock() {
+    return atomicBoolean.compareAndSet(false, true) ? 1 : 0;
   }
 
   @Override
@@ -41,6 +48,7 @@ public final class SpinLockStrategy implements LockStrategy {//TODO use Thread.o
 
   @Override
   public final void unlock(final long stamp) {
+    checkArgument(stamp != 0, "stamp", "Must not be 0");
     atomicBoolean.set(false);
   }
 }

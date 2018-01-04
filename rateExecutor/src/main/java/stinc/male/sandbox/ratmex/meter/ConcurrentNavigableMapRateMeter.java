@@ -9,13 +9,19 @@ import javax.annotation.concurrent.ThreadSafe;
  * This implementation uses {@link NavigableMap} to store and access a samples history.
  * <p>
  * <i>Advantages</i><br>
- * Unlike {@link ConcurrentRingBufferRateMeter}, this implementation tolerates a large ratio of
+ * <ul>
+ * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation tolerates a large ratio of
  * {@link RateMeter#getSamplesInterval()} and {@link RateMeter#getTimeSensitivity()}.
  * The reason for this is that it only creates objects representing samples when it is necessary,
- * hence potentially reducing the number of samples that must be added up to count the {@linkplain #ticksCount() current ticks}.
+ * hence potentially reducing the number of samples that must be added up to count the {@linkplain #ticksCount() current ticks}.</li>
+ * </ul>
  * <p>
  * <i>Disadvantages</i><br>
- * Unlike {@link ConcurrentRingBufferRateMeter}, this implementation produces garbage.
+ * <ul>
+ * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation produces garbage.</li>
+ * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation displays performance
+ * that diminishes with growth of {@link ConcurrentRateMeterConfig#getHistoryLength() samples history length}.</li>
+ * </ul>
  */
 @ThreadSafe
 public final class ConcurrentNavigableMapRateMeter extends AbstractNavigableMapRateMeter<ConcurrentRateMeterConfig> {

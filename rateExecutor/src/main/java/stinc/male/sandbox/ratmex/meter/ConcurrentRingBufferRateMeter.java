@@ -20,16 +20,22 @@ import javax.annotation.concurrent.ThreadSafe;
  * </ul>
  * <p>
  * <i>Advantages</i><br>
- * Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation does not produces garbage,
+ * <ul>
+ * <li>Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation does not produces garbage,
  * unless a {@link WaitStrategy} or a {@link LockStrategy} that are being used produce garbage
- * (e.g. {@link StampedLockStrategy} produces garbage because {@link StampedLock} does).
+ * (e.g. {@link StampedLockStrategy} produces garbage because {@link StampedLock} does).</li>
+ * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation can tolerate
+ * {@link ConcurrentRateMeterConfig#getHistoryLength() long samples history}.</li>
+ * </ul>
  * <p>
  * <i>Disadvantages</i><br>
- * Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation can not tolerate a large ratio of
+ * <ul>
+ * <li>Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation can not tolerate a large ratio of
  * {@link RateMeter#getSamplesInterval()} and {@link RateMeter#getTimeSensitivity()}.
  * The reason for this is that a ring buffer requires all objects representing samples to always exist,
  * and if the number of such objects (which is the same as the aforementioned ratio) is large,
- * it can have a substantial negative effect on performance.
+ * it can have a substantial negative effect on performance.</li>
+ * </ul>
  */
 @ThreadSafe
 public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentRateMeterStats, ConcurrentRateMeterConfig> {

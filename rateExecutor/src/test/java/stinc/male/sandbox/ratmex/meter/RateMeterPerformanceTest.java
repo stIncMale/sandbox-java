@@ -20,22 +20,23 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import stinc.male.sandbox.ratmex.meter.ConcurrentRateMeterConfig.Builder;
 import stinc.male.sandbox.ratmex.TestTag;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
 @Tag(TestTag.PERFORMANCE)
 public class RateMeterPerformanceTest {
-  private static final Duration samplesInterval = Duration.of(1, ChronoUnit.MILLIS);
-  private static final Duration timeSensitivity = Duration.of(50, ChronoUnit.MICROS);
-  private static final boolean SERVER = true;
   private static final boolean QUICK = true;
+  private static final boolean JAVA_SERVER = true;
+  private static final boolean JAVA_ASSERTIONS = true;
+  private static final boolean DEFAULT_CONFIG = true;
   //JUnit5 Assertions.assertEquals(double, double, double) requires positive delta, hence we have to use Double.MIN_VALUE
   private static final double ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL = 0d + Double.MIN_VALUE;
+  private static final Duration samplesInterval = Duration.of(1, ChronoUnit.MILLIS);
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder()
-        .jvmArgsPrepend(SERVER ? "-server" : "-client")
+        .jvmArgsPrepend(JAVA_SERVER ? "-server" : "-client")
+        .jvmArgsPrepend(JAVA_ASSERTIONS ? "-enableassertions" : "-disableassertions")//TODO remove this flag from maven in performance project
         .syncIterations(true)
         .shouldFailOnError(true)
         .shouldDoGC(true)
@@ -55,11 +56,12 @@ public class RateMeterPerformanceTest {
     }
     return result;
   };
-  private static final Supplier<WaitStrategy> waitStrategySupplier = YieldWaitStrategy::instance;
-  private static final Supplier<LockStrategy> lockStrategySupplier = () -> new SpinLockStrategy(waitStrategySupplier.get());
-  private static final Supplier<Builder> rateMeterConfigBuilderSupplier = () -> {
+  private static final Supplier<LockStrategy> lockStrategySupplier = () -> new SpinLockStrategy(YieldWaitStrategy.instance());
+  private static final Supplier<ConcurrentRateMeterConfig.Builder> concurrentRateMeterConfigBuilderSupplier = () -> {
     final ConcurrentRateMeterConfig.Builder result = ConcurrentRateMeterConfig.newBuilder();
-    result.setTimeSensitivity(timeSensitivity);
+    //    result.setWaitStrategySupplier(YieldWaitStrategy::instance);
+    //    result.setLockStrategySupplier(() -> new SpinLockStrategy(YieldWaitStrategy.instance()));
+    result.setStrictTick(false);
     return result;
   };
 
@@ -618,10 +620,10 @@ public class RateMeterPerformanceTest {
   }
 
   private static final void rate(final RateMeter<?> rm, final Blackhole bh) {
-    bh.consume(rm.rate());
+//    bh.consume(rm.rate());
     //    bh.consume(rm.rate(new RateMeterReading()));
     //    bh.consume(rm.rate(samplesInterval));
-    //    bh.consume(rm.rate(rm.rightSamplesWindowBoundary()));
+        bh.consume(rm.rate(rm.rightSamplesWindowBoundary()));
   }
 
   private static final void tickAndRate(final RateMeter<?> rm, final Blackhole bh, final int counter, final int tickToRateRatio) {
@@ -657,35 +659,20 @@ public class RateMeterPerformanceTest {
 
     @Setup(Level.Trial)
     public final void setup() {
-      navigableMapRateMeter = new NavigableMapRateMeter(nanoTime(), samplesInterval,
-          rateMeterConfigBuilderSupplier.get()
-              .setTicksCounterSupplier(LongTicksCounter::new)
-              .setHistoryLength(2)
-              .build());
-      concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval, rateMeterConfigBuilderSupplier.get()
-          .build());
-      ringBufferRateMeter = new RingBufferRateMeter(nanoTime(), samplesInterval,
-          rateMeterConfigBuilderSupplier.get()
-              .setTicksCounterSupplier(LongTicksCounter::new)
-              .setHistoryLength(2)
-              .build());
-      final ConcurrentRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
-          = ConcurrentRateMeterConfig.newBuilder(rateMeterConfigBuilderSupplier.get()
-          .build());
-      concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
-          .setWaitStrategySupplier(waitStrategySupplier)
-          .setLockStrategySupplier(lockStrategySupplier)
-          .setTicksCounterSupplier(LongAdderTicksCounter::new)
-          .setHistoryLength(30);
-      concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
-          concurrentRingBufferRateMeterConfigBuilder.build());
-      concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter<>(
-          new RingBufferRateMeter(nanoTime(), samplesInterval,
-              rateMeterConfigBuilderSupplier.get()
-                  .setTicksCounterSupplier(LongTicksCounter::new)
-                  .setHistoryLength(2)
-                  .build()),
-          lockStrategySupplier.get());
+      final long startNanos = nanoTime();
+      navigableMapRateMeter = new NavigableMapRateMeter(startNanos, samplesInterval);
+      concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(startNanos, samplesInterval,
+          DEFAULT_CONFIG
+              ? ConcurrentNavigableMapRateMeter.defaultConfig()
+              : concurrentRateMeterConfigBuilderSupplier.get()
+                  .build());
+      ringBufferRateMeter = new RingBufferRateMeter(startNanos, samplesInterval);
+      concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(startNanos, samplesInterval,
+          DEFAULT_CONFIG
+              ? ConcurrentRingBufferRateMeter.defaultConfig()
+              : concurrentRateMeterConfigBuilderSupplier.get()
+                  .build());
+      concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter<>(ringBufferRateMeter, lockStrategySupplier.get());
     }
   }
 
@@ -700,26 +687,18 @@ public class RateMeterPerformanceTest {
 
     @Setup(Level.Trial)
     public final void setup() {
-      concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(nanoTime(), samplesInterval, rateMeterConfigBuilderSupplier.get()
-          .build());
-      final ConcurrentRateMeterConfig.Builder concurrentRingBufferRateMeterConfigBuilder
-          = ConcurrentRateMeterConfig.newBuilder(rateMeterConfigBuilderSupplier.get()
-          .build());
-      concurrentRingBufferRateMeterConfigBuilder.setStrictTick(true)
-          .setCollectStats(true)
-          .setWaitStrategySupplier(waitStrategySupplier)
-          .setLockStrategySupplier(lockStrategySupplier)
-          .setTicksCounterSupplier(LongAdderTicksCounter::new)
-          .setHistoryLength(30);
-      concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
-          concurrentRingBufferRateMeterConfigBuilder.build());
-      concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter<>(
-          new RingBufferRateMeter(nanoTime(), samplesInterval,
-              rateMeterConfigBuilderSupplier.get()
-                  .setTicksCounterSupplier(LongTicksCounter::new)
-                  .setHistoryLength(2)
-                  .build()),
-          lockStrategySupplier.get());
+      final long startNanos = nanoTime();
+      concurrentNavigableMapRateMeter = new ConcurrentNavigableMapRateMeter(startNanos, samplesInterval,
+          DEFAULT_CONFIG
+              ? ConcurrentNavigableMapRateMeter.defaultConfig()
+              : concurrentRateMeterConfigBuilderSupplier.get()
+                  .build());
+      concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(startNanos, samplesInterval,
+          DEFAULT_CONFIG
+              ? ConcurrentRingBufferRateMeter.defaultConfig()
+              : concurrentRateMeterConfigBuilderSupplier.get()
+                  .build());
+      concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter<>(new RingBufferRateMeter(startNanos, samplesInterval), lockStrategySupplier.get());
     }
 
     @TearDown(Level.Trial)

@@ -96,7 +96,7 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
   /**
    * Specifies which {@link WaitStrategy} must be used by a thread-safe implementation {@link RateMeter} (if it at all uses it).
    *
-   * @return {@link ParkWaitStrategy}{@code ::}{@link ParkWaitStrategy#instance() instance} by default.
+   * @return {@link ParkWaitStrategy}{@code ::}{@link ParkWaitStrategy#defaultInstance() defaultInstance} by default.
    */
   public final Supplier<? extends WaitStrategy> getWaitStrategySupplier() {
     return waitStrategySupplier;
@@ -137,7 +137,7 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
       maxTicksCountAttempts = 6;
       strictTick = true;
       collectStats = false;
-      waitStrategySupplier = ParkWaitStrategy::instance;
+      waitStrategySupplier = ParkWaitStrategy::defaultInstance;
       lockStrategySupplier = StampedLockStrategy::new;
     }
 

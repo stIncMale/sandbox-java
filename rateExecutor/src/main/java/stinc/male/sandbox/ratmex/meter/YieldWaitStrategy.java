@@ -19,6 +19,7 @@ public final class YieldWaitStrategy implements WaitStrategy {
   @Override
   public final void await(final BooleanSupplier condition) {
     while (!condition.getAsBoolean()) {
+      Thread.onSpinWait();
       Thread.yield();
     }
   }

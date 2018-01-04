@@ -36,6 +36,11 @@ public final class StampedLockStrategy implements LockStrategy {
   }
 
   @Override
+  public final long tryLock() {
+    return stampedLock.tryWriteLock();
+  }
+
+  @Override
   public final long lock() {
     final long result = stampedLock.writeLock();
     assert result != 0;

@@ -79,7 +79,6 @@ public class RateMeterConfig {
    * for example the performance of {@link NavigableMapRateMeter}, {@link ConcurrentNavigableMapRateMeter}
    * degrades as the length of the history grows,
    * while {@link RingBufferRateMeter} and {@link ConcurrentRingBufferRateMeter} can tolerate an arbitrary long history.
-   * TODO specify this among advantages/disadvantages
    *
    * @return 30 by default.
    */
