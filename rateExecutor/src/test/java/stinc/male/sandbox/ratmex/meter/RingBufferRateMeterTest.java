@@ -6,7 +6,8 @@ public final class RingBufferRateMeterTest extends AbstractRateMeterUnitTest<Bui
   public RingBufferRateMeterTest() {
     super(
         () -> RingBufferRateMeter.defaultConfig()
-            .toBuilder(),
+            .toBuilder()
+            .setHistoryLength(2),
         RingBufferRateMeter::new);
   }
 }

@@ -73,8 +73,15 @@ public class RateMeterConfig {
    * <p>
    * Note that the specification of {@link RateMeter#rate(long)} implies that any {@link RateMeter}
    * must maintain samples history for at least 2{@linkplain RateMeter#getSamplesInterval() samplesInterval}.
+   * <p>
+   * The longer history a {@link RateMeter} maintains, the less likely a measurement can be {@linkplain RateMeterReading#isAccurate() inaccurate},
+   * but the more memory it occupies. This might also negatively affect performance;
+   * for example the performance of {@link NavigableMapRateMeter}, {@link ConcurrentNavigableMapRateMeter}
+   * degrades as the length of the history grows,
+   * while {@link RingBufferRateMeter} and {@link ConcurrentRingBufferRateMeter} can tolerate an arbitrary long history.
+   * TODO specify this among advantages/disadvantages
    *
-   * @return 3 by default.
+   * @return 30 by default.
    */
   public final int getHistoryLength() {
     return historyLength;
@@ -99,7 +106,7 @@ public class RateMeterConfig {
     protected Builder() {
       ticksCounterSupplier = LongAdderTicksCounter::new;
       timeSensitivity = null;
-      historyLength = 3;
+      historyLength = 30;
     }
 
     /**

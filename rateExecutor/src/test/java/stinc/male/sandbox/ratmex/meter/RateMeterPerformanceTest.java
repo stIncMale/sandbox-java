@@ -676,7 +676,7 @@ public class RateMeterPerformanceTest {
           .setWaitStrategySupplier(waitStrategySupplier)
           .setLockStrategySupplier(lockStrategySupplier)
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
-          .setHistoryLength(20);
+          .setHistoryLength(30);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
       concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter<>(
@@ -710,7 +710,7 @@ public class RateMeterPerformanceTest {
           .setWaitStrategySupplier(waitStrategySupplier)
           .setLockStrategySupplier(lockStrategySupplier)
           .setTicksCounterSupplier(LongAdderTicksCounter::new)
-          .setHistoryLength(20);
+          .setHistoryLength(30);
       concurrentRingBufferRateMeter = new ConcurrentRingBufferRateMeter(nanoTime(), samplesInterval,
           concurrentRingBufferRateMeterConfigBuilder.build());
       concurrentSimpleRateMeter = new ConcurrentSimpleRateMeter<>(

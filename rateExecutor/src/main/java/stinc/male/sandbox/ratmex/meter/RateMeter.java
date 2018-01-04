@@ -15,7 +15,7 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * <i>Instant</i><br>
  * {@link RateMeter} treats instants as the time (number of nanoseconds) elapsed since the {@linkplain #getStartNanos() start}.
  * So instant is a pair (startNanos, elapsedNanos), but because startNanos is known and fixed,
- * we can equivalently specify an instant via a single value tNanos = startNanos + elapsedNanos.
+ * we can equivalently specify an instant via a single value tNanos = startNanos + elapsedNanos (note that tNanos >= startNanos).
  * {@link RateMeter} uses tNanos notation instead of (startNanos, elapsedNanos) notation.
  * All nanosecond values are compared as specified by {@link System#nanoTime()}.
  * <p>
@@ -279,7 +279,8 @@ public interface RateMeter<S> {
    * Calculates rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * as if {@code tNanos} were the right boundary of the samples window,
    * if {@code tNanos} is ahead of or within the samples history
-   * (i.e. greater than or equal to {@link #rightSamplesWindowBoundary()} - {@link #getSamplesInterval()}),
+   * (i.e. in the most conservative case ahead of {@link #rightSamplesWindowBoundary()} - {@link #getSamplesInterval()},
+   * but an implementation may maintain samples history longer than 2samplesInterval, thus relaxing this boundary),
    * otherwise returns {@link #rateAverage()}.
    *
    * @param tNanos An effective (imaginary) right boundary of the samples window.

@@ -6,7 +6,8 @@ public final class NavigableMapRateMeterTest extends AbstractRateMeterUnitTest<B
   public NavigableMapRateMeterTest() {
     super(
         () -> NavigableMapRateMeter.defaultConfig()
-            .toBuilder(),
+            .toBuilder()
+            .setHistoryLength(2),
         NavigableMapRateMeter::new);
   }
 }

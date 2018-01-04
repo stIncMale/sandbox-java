@@ -15,7 +15,7 @@ public final class StampedLockStrategy implements LockStrategy {
   @Override
   public final long sharedLock() {
     final long result = stampedLock.readLock();
-    assert  result != 0;
+    assert result != 0;
     return result;
   }
 
@@ -33,7 +33,7 @@ public final class StampedLockStrategy implements LockStrategy {
   @Override
   public final long lock() {
     final long result = stampedLock.writeLock();
-    assert  result != 0;
+    assert result != 0;
     return result;
   }
 

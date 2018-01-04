@@ -30,7 +30,7 @@ public final class ParkWaitStrategy implements WaitStrategy {
     boolean interrupted = false;
     try {
       while (!condition.getAsBoolean()) {
-        LockSupport.parkNanos(1);
+        LockSupport.parkNanos(parkNanos);
         if (Thread.interrupted()) {
           interrupted = true;
         }
