@@ -39,7 +39,7 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
   }
 
   @Test
-  public final void test() throws InterruptedException {
+  public final void test() {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 1; i <= 10_000; i++) {
       final Duration samplesInterval = i == 1 ? ofNanos(1) : ofNanos(rnd.nextInt(1, 400));
