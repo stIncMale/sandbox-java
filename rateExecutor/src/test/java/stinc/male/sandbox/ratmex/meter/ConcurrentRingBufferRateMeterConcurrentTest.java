@@ -9,7 +9,7 @@ public final class ConcurrentRingBufferRateMeterConcurrentTest extends AbstractR
   public ConcurrentRingBufferRateMeterConcurrentTest() {
     super(
         () -> (Builder)ConcurrentRingBufferRateMeter.defaultConfig()
-            .toBuilder().setStrictTick(false)
+            .toBuilder()
             .setHistoryLength(2),
         ConcurrentRingBufferRateMeter::new,
         Math.max(2, Runtime.getRuntime()
