@@ -264,7 +264,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
               final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
               waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);//"serializing waiting condition"
               /*We are going to reset some or all samples because we need to reuse them (this is a ring buffer).
-                Not that no other threads can concurrently reset samples because they are waiting on the "serializing waiting condition",
+                Note that no other threads can concurrently reset samples because they are waiting on the "serializing waiting condition",
                 which can be found above.*/
               if (numberOfSteps < samplesHistory.length()) {//reset some (not all) samples
                 for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
@@ -495,7 +495,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
         try {
           final long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
           if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {
-            //check that targetSamplesWindowShiftSteps is still within the samples history
+            //check that targetIdx element has not been reused due to the samples history have been moved too far
             samplesHistory.add(targetIdx, count);
           }
         } finally {
