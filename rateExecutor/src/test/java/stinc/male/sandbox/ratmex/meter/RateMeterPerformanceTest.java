@@ -620,10 +620,10 @@ public class RateMeterPerformanceTest {
   }
 
   private static final void rate(final RateMeter<?> rm, final Blackhole bh) {
-//    bh.consume(rm.rate());
+    bh.consume(rm.rate());
     //    bh.consume(rm.rate(new RateMeterReading()));
     //    bh.consume(rm.rate(samplesInterval));
-        bh.consume(rm.rate(rm.rightSamplesWindowBoundary()));
+    //    bh.consume(rm.rate(rm.rightSamplesWindowBoundary()));
   }
 
   private static final void tickAndRate(final RateMeter<?> rm, final Blackhole bh, final int counter, final int tickToRateRatio) {

@@ -16,11 +16,8 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
   private final int maxTicksCountAttempts;
   @Nullable
   private final LockStrategy ticksCountLock;//we don't need an analogous field for a sequential implementation
-  /*Same length as samples history;
-    required to overcome a problem which arises when we move the samples window too far while we are registering a new sample.
-    A smaller number of locks can be used in the future via a technique similar to lock striping.*/
   @Nullable
-  private final LockStrategy[] ticksCountLocks;//we don't need an analogous field for a sequential implementation
+  private final LockStrategy ticksResetLock;//we don't need an analogous field for a sequential implementation
   @Nullable
   private final AtomicLong atomicSamplesWindowShiftSteps;//samplesWindowShiftSteps for a concurrent implementation
   private long samplesWindowShiftSteps;//for a sequential implementation
@@ -66,7 +63,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
     this.sequential = sequential;
     if (sequential) {
       ticksCountLock = null;
-      ticksCountLocks = null;
+      ticksResetLock = null;
       atomicSamplesWindowShiftSteps = null;
       samplesWindowShiftSteps = 0;
       atomicCompletedSamplesWindowShiftSteps = null;
@@ -75,13 +72,10 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
       ticksCountLock = config.getLockStrategySupplier()
           .get();
       if (config.isStrictTick()) {
-        ticksCountLocks = new LockStrategy[samplesHistory.length()];
-        for (int idx = 0; idx < ticksCountLocks.length; idx++) {
-          ticksCountLocks[idx] = config.getLockStrategySupplier()
-              .get();
-        }
+        ticksResetLock = config.getLockStrategySupplier()
+            .get();
       } else {
-        ticksCountLocks = null;
+        ticksResetLock = null;
       }
       atomicSamplesWindowShiftSteps = new AtomicLong();
       samplesWindowShiftSteps = 0;
@@ -471,32 +465,16 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
   protected void registerFailedAccuracyEventForTick() {
   }
 
-  private final long lockTicksCount(final int idx) {
-    return ticksCountLocks == null ? 1 : ticksCountLocks[idx].lock();
-  }
-
-  private final void unlockTicksCount(final int idx, final long stamp) {
-    if (ticksCountLocks != null) {
-      ticksCountLocks[idx].unlock(stamp);
-    }
-  }
-
-  private final long sharedLockTicksCount(final int idx) {
-    return ticksCountLocks == null ? 1 : ticksCountLocks[idx].sharedLock();
-  }
-
-  private final void unlockSharedTicksCount(final int idx, final long stamp) {
-    if (ticksCountLocks != null) {
-      ticksCountLocks[idx].unlockShared(stamp);
-    }
-  }
-
   private final void tickResetSample(final int idx, final long value) {
-    final long stamp = lockTicksCount(idx);
-    try {
+    if (ticksResetLock == null) {//either sequential or not strict mode; no locking
       samplesHistory.set(idx, value);
-    } finally {
-      unlockTicksCount(idx, stamp);
+    } else {
+      final long ticksResetExclusiveLockStamp = ticksResetLock.lock();
+      try {
+        samplesHistory.set(idx, value);
+      } finally {
+        ticksResetLock.unlock(ticksResetExclusiveLockStamp);
+      }
     }
   }
 
@@ -505,7 +483,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
       samplesHistory.add(targetIdx, count);
     } else {
       assert atomicSamplesWindowShiftSteps != null;
-      if (ticksCountLocks == null) {//not strict mode, no locking
+      if (ticksResetLock == null) {//not strict mode, no locking
         samplesHistory.add(targetIdx, count);
         final long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
         if (targetSamplesWindowShiftSteps <= samplesWindowShiftSteps - samplesHistory.length()) {
@@ -513,7 +491,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
           registerFailedAccuracyEventForTick();
         }
       } else {
-        final long stamp = sharedLockTicksCount(targetIdx);
+        final long ticksResetSharedLockStamp = ticksResetLock.sharedLock();
         try {
           final long samplesWindowShiftSteps = atomicSamplesWindowShiftSteps.get();
           if (samplesWindowShiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {
@@ -521,7 +499,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
             samplesHistory.add(targetIdx, count);
           }
         } finally {
-          unlockSharedTicksCount(targetIdx, stamp);
+          ticksResetLock.unlockShared(ticksResetSharedLockStamp);
         }
       }
     }
