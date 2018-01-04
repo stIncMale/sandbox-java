@@ -13,6 +13,11 @@ public final class StampedLockStrategy implements LockStrategy {
   }
 
   @Override
+  public final long trySharedLock() {
+    return stampedLock.tryReadLock();
+  }
+
+  @Override
   public final long sharedLock() {
     final long result = stampedLock.readLock();
     assert result != 0;

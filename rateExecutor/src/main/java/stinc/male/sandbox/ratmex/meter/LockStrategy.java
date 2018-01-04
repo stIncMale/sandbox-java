@@ -4,6 +4,8 @@ import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 public interface LockStrategy {
+  long trySharedLock();
+
   long sharedLock();
 
   void unlockShared(long stamp);
