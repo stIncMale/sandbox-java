@@ -1,12 +1,13 @@
 package stinc.male.sandbox.ratmex.meter;
 
-import stinc.male.sandbox.ratmex.meter.RateMeterConfig.Builder;
+import stinc.male.sandbox.ratmex.meter.ConcurrentRateMeterConfig.Builder;
 
 public final class ConcurrentNavigableMapRateMeterTest extends AbstractRateMeterUnitTest<Builder, ConcurrentRateMeterConfig> {
   public ConcurrentNavigableMapRateMeterTest() {
     super(
-        () -> ConcurrentNavigableMapRateMeter.defaultConfig()
-            .toBuilder(),
+        () -> (Builder)ConcurrentNavigableMapRateMeter.defaultConfig()
+            .toBuilder()
+            .setHistoryLength(2),
         ConcurrentNavigableMapRateMeter::new);
   }
 }
