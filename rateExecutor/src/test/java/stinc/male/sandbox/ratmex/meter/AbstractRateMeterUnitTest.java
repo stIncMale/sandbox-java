@@ -291,7 +291,8 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
     rm.tick(-1, 60);
     assertDoubleEquals((-2 - 1), rm.rate(70));
     assertReading(rm.rate(70), 70, true, false, rm.rate(70, r));
-    assertReading(rm.rateAverage(), 60, false, true, rm.rate(30, r));
+    assertReading(rm.rateAverage(), 60, false, true, rm.rate(0, r));
+    assertReading(7, 30, true, false, rm.rate(30, r));
     assertDoubleEquals((-2d - 1) / (30d / 15), rm.rate(70, ofNanos(15)));
     assertReading(rm.rate(70, ofNanos(15)), 70, true, false, rm.rate(70, ofNanos(15), r));
   }
@@ -340,7 +341,7 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
   }
 
   private static final void assertDoubleEquals(final double expected, final double actual) {
-    assertEquals(expected, actual, 0.000000000001);
+    assertEquals(expected, actual, Double.MIN_VALUE);
   }
 
   private static final void assertReading(
