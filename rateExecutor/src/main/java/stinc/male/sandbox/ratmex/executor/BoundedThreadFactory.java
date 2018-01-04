@@ -3,7 +3,9 @@ package stinc.male.sandbox.ratmex.executor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 
+@ThreadSafe
 final class BoundedThreadFactory implements ThreadFactory {
   @Nullable
   private final ThreadFactory factory;
@@ -19,7 +21,8 @@ final class BoundedThreadFactory implements ThreadFactory {
   @Nullable
   @Override
   public final Thread newThread(@Nullable final Runnable r) {
-    @Nullable final Thread result;
+    @Nullable
+    final Thread result;
     final int currentCount = counter.get();
     if (currentCount < max && counter.compareAndSet(currentCount, currentCount + 1)) {//omit CAS when possible (similar to DCL idiom)
       result = factory == null ? new Thread(r) : factory.newThread(r);

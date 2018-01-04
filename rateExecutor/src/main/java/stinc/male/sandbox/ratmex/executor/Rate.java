@@ -10,7 +10,7 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgumen
 /**
  * A representation of a rate.
  * Formally represents a set of probability distributions which have probability density functions equal to 0
- * for any values outside [{@linkplain #getMin() min}; {@linkplain #getMax() max}].
+ * for any rate values outside [{@linkplain #getMin() min}; {@linkplain #getMax() max}].
  */
 @Immutable
 public final class Rate {
@@ -26,7 +26,7 @@ public final class Rate {
    * but arbitrary time units. Must not be {@linkplain Duration#isZero() zero} or {@linkplain Duration#isNegative() negative}.
    */
   public Rate(final double min, final double max, final Duration unit) {
-    checkArgument(min <= max, "max", () -> String.format("Must not be less than %s, but actual value is %s", min, max));
+    checkArgument(min <= max, "max", () -> String.format("Must not be less than %s=%s, but actual value is %s", "min", min, max));
     checkUnit(unit, "unit");
     this.min = min;
     this.max = max;
@@ -46,6 +46,7 @@ public final class Rate {
         relativeDeviation >= 0,
         "relativeDeviation",
         () -> String.format("Must not be less than 0, but actual value is %s", relativeDeviation));
+    checkUnit(unit, "unit");
     return withAbsoluteDeviation(average, relativeDeviation * average, unit);
   }
 
@@ -60,9 +61,10 @@ public final class Rate {
    */
   public static Rate withAbsoluteDeviation(final double average, final double absoluteDeviation, final Duration unit) {
     checkArgument(
-            absoluteDeviation >= 0,
-            "absoluteDeviation",
-            () -> String.format("Must not be negative, but actual value is %s", absoluteDeviation));
+        absoluteDeviation >= 0,
+        "absoluteDeviation",
+        () -> String.format("Must not be negative, but actual value is %s", absoluteDeviation));
+    checkUnit(unit, "unit");
     return new Rate(average - absoluteDeviation, average + absoluteDeviation, unit);
   }
 
@@ -91,6 +93,7 @@ public final class Rate {
    * Converts rate from representation in {@link #getUnit()} to representation in the specified {@code unit}s.
    *
    * @param unit See {@link #Rate(double, double, Duration)}.
+   *
    * @return A converted {@link Rate}, which may be not new.
    */
   public final Rate toUnit(final Duration unit) {
