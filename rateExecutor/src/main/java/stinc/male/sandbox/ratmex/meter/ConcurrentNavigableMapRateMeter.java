@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * This implementation uses {@link NavigableMap} to store and access a samples history.
+ * This thread-safe implementation uses {@link NavigableMap} to store and access a samples history.
  * <p>
  * <i>Advantages</i><br>
  * <ul>

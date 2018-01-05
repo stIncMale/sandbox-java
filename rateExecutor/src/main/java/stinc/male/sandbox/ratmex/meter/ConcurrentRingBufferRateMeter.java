@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * This implementation uses a ring buffer to store and access a samples history.
+ * This thread-safe implementation uses a ring buffer to store and access a samples history.
  * <p>
  * There are two modes:
  * <ul>
