@@ -22,10 +22,11 @@ import javax.annotation.concurrent.ThreadSafe;
  * <i>Advantages</i><br>
  * <ul>
  * <li>Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation does not produces garbage,
- * unless a {@link WaitStrategy} or a {@link LockStrategy} that are being used produce garbage
+ * unless customizable tools that are being used by the implementation produce garbage
  * (e.g. {@link StampedLockStrategy} produces garbage because {@link StampedLock} does).</li>
- * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation can tolerate
- * {@link ConcurrentRateMeterConfig#getHistoryLength() long samples history}.</li>
+ * <li>Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation can tolerate
+ * {@link RateMeterConfig#getHistoryLength() long samples history}.</li>
+ * <li>Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation takes advantage of memory locality of data.</li>
  * </ul>
  * <p>
  * <i>Disadvantages</i><br>

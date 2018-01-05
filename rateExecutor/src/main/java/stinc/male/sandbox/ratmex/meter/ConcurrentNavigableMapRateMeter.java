@@ -20,7 +20,8 @@ import javax.annotation.concurrent.ThreadSafe;
  * <ul>
  * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation produces garbage.</li>
  * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation displays performance
- * that diminishes with growth of {@link ConcurrentRateMeterConfig#getHistoryLength() samples history length}.</li>
+ * that diminishes with growth of {@link RateMeterConfig#getHistoryLength() samples history length}.</li>
+ * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation does not benefit from the idea of of memory locality of data.</li>
  * </ul>
  */
 @ThreadSafe
