@@ -1,7 +1,7 @@
 package stinc.male.sandbox.ratmex.executor;
 
-import java.time.Duration;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -10,12 +10,12 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * A <b>Rat</b>e-<b>Me</b>asuring e<b>X</b>ecutor (hence <b>RatMeX</b>)
- * which does not only executes tasks with a fixed {@link Rate rate},
+ * A <b>Rat</b>e-<b>Me</b>asuring e<b>X</b>ecutor service (hence <b>RatMeX</b>)
+ * which not only executes tasks with a fixed {@link Rate rate},
  * but also measures the actual rate of submission and completion of the tasks
  * and allows one to monitor the rate and react if the executor has failed to conform to the target rate.
  * <p>
- * <b>The reasoning behind {@link RateMeasuringExecutor}</b><br>
+ * <b>The reasoning behind {@link RateMeasuringExecutorService}</b><br>
  * The functionality described by this interface can not be directly obtained from
  * {@link ScheduledExecutorService#scheduleAtFixedRate(Runnable, long, long, TimeUnit)}, which says the following regarding the task being scheduled:
  * <i>"If any execution of this task takes longer than its period, then subsequent executions may start late, but will not concurrently execute"</i>.
@@ -25,10 +25,10 @@ import javax.annotation.concurrent.ThreadSafe;
  * <li>{@link ScheduledExecutorService} executes a scheduled task serially, which means that you can not easily benefit from multithreading,
  * and the rate is heavily limited by the time the task takes to complete.</li>
  * </ul>
- * {@link RateMeasuringExecutor} overcomes both of the above points.
+ * {@link RateMeasuringExecutorService} overcomes both of the above points.
  */
 @ThreadSafe
-public interface RateMeasuringExecutor extends AutoCloseable {
+public interface RateMeasuringExecutorService extends ExecutorService, AutoCloseable {
   /**
    * This method is similar to {@link #scheduleAtFixedRate(Runnable, Rate, ScheduleConfig)},
    * but the configuration is chosen by the implementation.
@@ -67,35 +67,6 @@ public interface RateMeasuringExecutor extends AutoCloseable {
    * and will throw an exception upon task cancellation or abnormal termination of a task execution.
    */
   ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate, ScheduleConfig config);
-
-  /**
-   * Blocks until all tasks have completed execution after a {@linkplain #shutdownNow() shutdown request},
-   * or the timeout occurs, or the current thread is {@linkplain Thread#interrupt() interrupted}, whichever happens first.
-   *
-   * @param timeout The maximum duration of time to wait.
-   * There are no guarantees beyond best-effort attempts to not exceed this duration.
-   * Must not be {@link Duration#isNegative() negative}.
-   *
-   * @return true if this method returned because this executor {@linkplain #isTerminated() terminated}; false otherwise.
-   */
-  boolean awaitTermination(Duration timeout);
-
-  /**
-   * @return true if all tasks have completed following {@linkplain #shutdownNow()}; false otherwise.
-   * Note that {@link #isTerminated()} is never true unless {@linkplain #shutdownNow()} was called first.
-   */
-  boolean isTerminated();
-
-  /**
-   * Attempts to stop all actively executing tasks, halts the processing of waiting tasks.
-   * This method does not wait for actively executing tasks to terminate. Use {@link #awaitTermination(Duration)} to do that.
-   * There are no guarantees beyond best-effort attempts to stop processing actively executing tasks.
-   * For example, typical implementations will cancel via {@link Thread#interrupt()},
-   * so any task that fails to respond to interrupts may never terminate.
-   *
-   * @return {@code this}.
-   */
-  RateMeasuringExecutor shutdownNow();
 
   /**
    * This method is equivalent to calling {@link #shutdownNow()}.

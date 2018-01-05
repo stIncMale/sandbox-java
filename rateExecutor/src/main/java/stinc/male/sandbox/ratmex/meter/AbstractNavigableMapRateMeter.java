@@ -29,7 +29,7 @@ abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig
    * @param config An additional {@linkplain #getConfig() configuration}. Must not be null.
    * @param samplesHistorySupplier A supplier providing an object that will be used to store and access the samples history.
    * The {@link NavigableMap} provided by this supplier must use {@link NanosComparator} as {@link NavigableMap#comparator() comparator},
-   * and must be thread-safe if {@code sequential} argument is false.
+   * and must be thread-safe if {@code sequential} argument is false. If these constraints are violated, then the behavior is unspecified.
    * @param sequential Specifies whether the {@link RateMeter} must be thread-safe (will be used concurrently, so the value is false),
    * or not (will be used sequentially, so the value is true).
    */

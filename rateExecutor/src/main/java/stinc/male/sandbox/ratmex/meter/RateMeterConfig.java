@@ -45,6 +45,7 @@ public class RateMeterConfig {
   /**
    * Specifies a supplier which must be used by {@link AbstractRateMeter} to create ticks counters.
    * Note that if {@link AbstractRateMeter} is used concurrently, then the supplier must provide a thread-safe {@link TicksCounter}.
+   * If this constraint is violated, then the behavior is unspecified.
    *
    * @return {@link LongAdderTicksCounter}{@code ::}{@link LongAdderTicksCounter#LongAdderTicksCounter(long) new} by default.
    */
