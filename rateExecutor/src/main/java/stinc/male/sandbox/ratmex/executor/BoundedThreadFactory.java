@@ -24,7 +24,7 @@ final class BoundedThreadFactory implements ThreadFactory {
     @Nullable
     final Thread result;
     final int currentCount = counter.get();
-    if (currentCount < max && counter.compareAndSet(currentCount, currentCount + 1)) {//omit CAS when possible (similar to DCL idiom)
+    if (currentCount < max && counter.compareAndSet(currentCount, currentCount + 1)) {
       result = factory == null ? new Thread(r) : factory.newThread(r);
     } else {
       result = null;

@@ -43,6 +43,11 @@ public final class ConversionsAndChecks {
     checkArgument(!unit.isNegative(), safeParamName, "Must not be negative");
   }
 
+  public static final void checkDuration(final Duration duration, final String safeParamName) throws IllegalArgumentException {
+    checkNotNull(duration, safeParamName);
+    checkArgument(!duration.isNegative(), safeParamName, "Must not be negative");
+  }
+
   public static final long maxTNanos(final long startNanos, final long safeSamplesIntervalNanos, final long safeHistoryLength) {
     return startNanos - safeHistoryLength * safeSamplesIntervalNanos + Long.MAX_VALUE;
   }

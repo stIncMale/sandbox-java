@@ -1,9 +1,11 @@
 package stinc.male.sandbox.ratmex.meter;
 
+import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import javax.annotation.concurrent.ThreadSafe;
+import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.checkDuration;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
@@ -12,31 +14,35 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
  */
 @ThreadSafe
 public final class ParkWaitStrategy implements WaitStrategy {
-  private static final ParkWaitStrategy instance = new ParkWaitStrategy(50, 200);
+  private static final ParkWaitStrategy instance = new ParkWaitStrategy(Duration.ofNanos(50), Duration.ofNanos(300));
 
-  private final long minDelay;
-  private final long maxDelay;
+  private final Duration minDelay;
+  private final long minDelayNanos;
+  private final Duration maxDelay;
+  private final long maxDelayNanos;
 
   /**
-   * @param minDelayNanos The lower desired bound of the blocking time intervals between tests of a {@linkplain #await(BooleanSupplier) condition}.
-   * Note that this is just a hint, so this implementation may use a smaller value.
-   * @param maxDelayNanos The upper desired bound of the blocking time intervals between tests of a {@linkplain #await(BooleanSupplier) condition}.
-   * Note that this is just a hint, so this implementation may use a larger value.
+   * @param minDelay The lower desired bound of the blocking time intervals between tests of a {@linkplain #await(BooleanSupplier) condition}.
+   * Must not be {@link Duration#isNegative() negative}.
+   * @param maxDelay The upper desired bound of the blocking time intervals between tests of a {@linkplain #await(BooleanSupplier) condition}.
+   * There are no guarantees beyond best-effort attempts to not exceed this duration.
+   * Must not be {@link Duration#isNegative() negative}.
    */
-  public ParkWaitStrategy(final long minDelayNanos, final long maxDelayNanos) {
-    checkArgument(minDelayNanos > 0, "minDelayNanos", "Must be positive");
-    checkArgument(maxDelayNanos > 0, "maxDelayNanos", "Must be positive");
-    checkArgument(maxDelayNanos >= minDelayNanos, "maxDelayNanos",
-        () -> String.format("Must be not less than %s=%sns", "minDelayNanos", minDelayNanos));
-    this.minDelay = minDelayNanos;
-    this.maxDelay = maxDelayNanos;
+  public ParkWaitStrategy(final Duration minDelay, final Duration maxDelay) {
+    checkDuration(minDelay, "minDelay");
+    checkDuration(maxDelay, "maxDelay");
+    checkArgument(maxDelay.compareTo(minDelay) > 0, "maxDelay", () -> String.format("Must be greater than %s=%s", "minDelay", minDelay));
+    this.minDelay = minDelay;
+    minDelayNanos = minDelay.toNanos();
+    this.maxDelay = maxDelay;
+    maxDelayNanos = maxDelay.toNanos();
   }
 
   /**
    * Always returns the same instance with:
    * <ul>
-   * <li>{@code minDelayNanos} = 50;</li>
-   * <li>{@code maxDelayNanos} = 200.</li>
+   * <li>{@code minDelay} 50ns;</li>
+   * <li>{@code maxDelay} 300ns.</li>
    * </ul>
    *
    * @return An instance of {@link ParkWaitStrategy}.
@@ -48,25 +54,45 @@ public final class ParkWaitStrategy implements WaitStrategy {
   @Override
   public final void await(final BooleanSupplier condition) {
     checkNotNull(condition, "condition");
-    boolean interrupted = false;
-    long delayNanos = minDelay;
-    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    try {
-      while (!condition.getAsBoolean()) {
-        Thread.onSpinWait();
-        LockSupport.parkNanos(rnd.nextLong(delayNanos));
-        if (delayNanos < maxDelay) {
-          delayNanos *= 2;
+    if (!condition.getAsBoolean()) {
+      boolean interrupted = false;
+      try {
+        final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        long minDelayNanos = this.minDelayNanos;
+        long maxDelayNanos = Math.min(minDelayNanos * 2, this.maxDelayNanos);
+        boolean maxReached = false;
+        do {
+          Thread.onSpinWait();
+          final long delayNanos = rnd.nextLong(minDelayNanos, maxDelayNanos);
+          LockSupport.parkNanos(rnd.nextLong(delayNanos));
+          if (Thread.interrupted()) {
+            interrupted = true;
+          }
+          if (!maxReached) {
+            final long doubledMaxDelayNanos = maxDelayNanos * 2;
+            if (doubledMaxDelayNanos < this.maxDelayNanos) {
+              minDelayNanos = maxDelayNanos;
+              maxDelayNanos = doubledMaxDelayNanos;
+            } else {
+              maxReached = true;
+              maxDelayNanos = this.maxDelayNanos;
+            }
+          }
+        } while (!condition.getAsBoolean());
+      } finally {
+        if (interrupted) {
+          Thread.currentThread()
+              .interrupt();
         }
-        if (Thread.interrupted()) {
-          interrupted = true;
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread()
-            .interrupt();
       }
     }
+  }
+
+  @Override
+  public final String toString() {
+    return getClass().getSimpleName() +
+        "{minDelay=" + minDelay +
+        ", maxDelay=" + maxDelay +
+        '}';
   }
 }

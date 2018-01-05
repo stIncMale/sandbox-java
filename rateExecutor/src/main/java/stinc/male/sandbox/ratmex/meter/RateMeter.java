@@ -9,27 +9,34 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.conve
 import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTNanos;
 
 /**
- * A utility that measures rate of {@linkplain #tick(long, long) ticks}.
+ * A utility that measures rate of ticks.
  * <p>
  * <b>Glossary</b><br>
+ * <i>Tick</i><br>
+ * A tick is any event which is registered with {@link #tick(long, long)} method.
+ * <p>
  * <i>Instant</i><br>
  * {@link RateMeter} treats instants as the time (number of nanoseconds) elapsed since the {@linkplain #getStartNanos() start}.
- * So instant is a pair (startNanos, elapsedNanos), but because startNanos is known and fixed,
+ * So an instant is a pair (startNanos, elapsedNanos), but because startNanos is known and fixed,
  * we can equivalently specify an instant via a single value tNanos = startNanos + elapsedNanos (note that tNanos >= startNanos).
  * {@link RateMeter} uses tNanos notation instead of (startNanos, elapsedNanos) notation.
  * All nanosecond values are compared as specified by {@link System#nanoTime()}.
  * <p>
  * <i>Sample</i><br>
- * Sample is a pair (tNanos, ticksCount), where ticksCount \u2208 [{@link Long#MIN_VALUE}; {@link Long#MAX_VALUE}].
+ * A sample is a pair (tNanos, ticksCount), where ticksCount \u2208 [{@link Long#MIN_VALUE}; {@link Long#MAX_VALUE}].
  * <p>
  * <i>Samples window</i><br>
- * Samples window is a half-closed time interval
+ * A samples window is a half-closed time interval
  * ({@linkplain #rightSamplesWindowBoundary() rightmostScoredInstant} - {@linkplain #getSamplesInterval() samplesInterval}; rightmostScoredInstant]
  * (comparison according to {@link System#nanoTime()}).
  * Samples window can only be moved to the right and the only way to do this is to call {@link #tick(long, long)}.
- * Current ticks are those inside the samples window.
- * Current rate is calculated based on current ticks and by default is measured in samplesInterval<sup>-1</sup>,
- * hence current rate value always equals to the current ticks count.
+ * <p>
+ * <i>Current ticks</i><br>
+ * Current ticks are those registered inside the current samples window.
+ * <p>
+ * <i>Rate</i><br>
+ * A rate (or more precisely an instant, or current rate) is calculated based on current ticks
+ * and by default is measured in samplesInterval<sup>-1</sup>, hence current rate value always equals to the current ticks count.
  * <p>
  * For example if samplesInterval is 30ns,<br>
  * startNanos is 10ns,<br>

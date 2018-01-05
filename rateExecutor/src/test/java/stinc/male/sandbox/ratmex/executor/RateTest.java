@@ -4,7 +4,7 @@ import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class RateTest {
+public final class RateTest {
   public RateTest() {
   }
 
