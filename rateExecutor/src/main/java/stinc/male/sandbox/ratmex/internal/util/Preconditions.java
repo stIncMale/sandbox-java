@@ -5,16 +5,13 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 public final class Preconditions {
-  private static final String format(final String format, final Object... args) {
-    return String.format(Locale.ROOT, format, args);
-  }
-
-  public static final void checkNotNull(
-      @Nullable final Object argument,
+  public static final <T> T checkNotNull(
+      @Nullable final T argument,
       final String safeParamName) throws NullPointerException {
     if (argument == null) {
       throw new NullPointerException(format("The argument %s must not be null", safeParamName));
     }
+    return argument;
   }
 
   public static final void checkArgument(
@@ -39,5 +36,9 @@ public final class Preconditions {
 
   private Preconditions() {
     throw new UnsupportedOperationException("The class isn't designed to be instantiated");
+  }
+
+  private static final String format(final String format, final Object... args) {
+    return String.format(Locale.ROOT, format, args);
   }
 }
