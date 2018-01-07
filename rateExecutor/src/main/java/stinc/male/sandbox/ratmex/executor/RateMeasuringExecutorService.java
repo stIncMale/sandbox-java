@@ -39,7 +39,7 @@ public interface RateMeasuringExecutorService extends ExecutorService, AutoClose
    * This behavior is different from the behavior of {@link #scheduleAtFixedRate(Runnable, Rate, ScheduleConfig)},
    * where a user decides what to do in case of a failure.
    */
-  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate) throws RejectedExecutionException;
+  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate) throws RateFailedException;
 
   /**
    * Schedules a {@code task} to be executed with a fixed {@code rate}.
@@ -66,11 +66,12 @@ public interface RateMeasuringExecutorService extends ExecutorService, AutoClose
    * The future's {@link Future#get() get()} method will never return normally,
    * and will throw an exception upon task cancellation or abnormal termination of a task execution.
    */
-  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate, ScheduleConfig config);
+  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate, ScheduleConfig config) throws RateFailedException;
 
   /**
    * This method is equivalent to calling {@link #shutdownNow()}.
    */
+  @Override
   default void close() {
     shutdownNow();
   }

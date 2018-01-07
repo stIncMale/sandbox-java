@@ -5,5 +5,5 @@ import stinc.male.sandbox.ratmex.meter.RateMeterReading;
 
 @NotThreadSafe
 public interface RateListener {
-  boolean onRate(Rate rate, RateMeterReading submitterReading, RateMeterReading workerReading) throws Exception;
+  boolean onRate(Rate rate, RateMeterReading submitterReading, RateMeterReading workerReading) throws RateFailedException;
 }
