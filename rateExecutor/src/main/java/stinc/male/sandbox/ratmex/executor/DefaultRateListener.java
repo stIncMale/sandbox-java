@@ -1,6 +1,6 @@
 package stinc.male.sandbox.ratmex.executor;
 
-import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * A default implementation of {@link RateListener}
@@ -8,7 +8,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  *
  * @param <E> A type of a {@link RateMeasuredEvent} which this listener can react to.
  */
-@NotThreadSafe
+@Immutable
 public class DefaultRateListener<E extends RateMeasuredEvent> implements RateListener<E> {
   private static final DefaultRateListener<RateMeasuredEvent> instance = new DefaultRateListener<>();
 

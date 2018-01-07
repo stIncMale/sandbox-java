@@ -1,5 +1,7 @@
 package stinc.male.sandbox.ratmex.executor;
 
+import javax.annotation.concurrent.Immutable;
+
 /**
  * A default implementation of {@link RateListener}
  * which {@linkplain #onMeasurement(RateMeasuredEvent) throws} {@link RateFailedException} if notices that the target rate is not respected
@@ -8,6 +10,7 @@ package stinc.male.sandbox.ratmex.executor;
  *
  * @param <E> A type of a {@link SubmitterWorkerRateMeasuredEvent} which this listener can react to.
  */
+@Immutable
 public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMeasuredEvent> extends DefaultRateListener<E> {
   private static final DefaultSubmitterWorkerRateListener<SubmitterWorkerRateMeasuredEvent> instance = new DefaultSubmitterWorkerRateListener<>();
 
