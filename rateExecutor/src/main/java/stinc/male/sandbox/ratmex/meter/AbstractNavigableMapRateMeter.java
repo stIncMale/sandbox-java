@@ -11,7 +11,7 @@ import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
-//TODO make public, methods not final, document
+//TODO make public, methods not final, document; provide subclass access to samples history
 abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig> extends AbstractRateMeter<Void, C> {
   private final boolean sequential;
   private final NavigableMap<Long, TicksCounter> samplesHistory;

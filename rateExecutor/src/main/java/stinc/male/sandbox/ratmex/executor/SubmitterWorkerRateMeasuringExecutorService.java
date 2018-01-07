@@ -21,6 +21,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import stinc.male.sandbox.ratmex.meter.RateMeter;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
@@ -44,9 +45,14 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
  * because it may induce an uneven load on worker threads and hence lead to a violation of the target rate of completion of tasks.
  * In order to use batching a submitter must know the number of worker threads (which must be fixed)
  * and distribute batched tasks evenly among worker threads.
+ *
+ * @param <C> A type of schedule config used in {@link #scheduleAtFixedRate(Runnable, Rate, C)}.
+ * @param <SRS> A type that represents {@linkplain RateMeter#stats() statistics} of submitter {@link RateMeter}.
+ * @param <WRS> A type that represents {@linkplain RateMeter#stats() statistics} of worker {@link RateMeter}.
  */
 @ThreadSafe
-public class SubmitterWorkerRateMeasuringExecutorService implements RateMeasuringExecutorService {
+public class SubmitterWorkerRateMeasuringExecutorService<C extends SubmitterWorkerScheduleConfig<SRS, WRS>, SRS, WRS>
+    implements RateMeasuringExecutorService<C> {
   private final ScheduledExecutorService submitter;
   @Nullable
   private final ExecutorService worker;
@@ -67,7 +73,7 @@ public class SubmitterWorkerRateMeasuringExecutorService implements RateMeasurin
    * Use -1 if the number of worker threads is unknown or is varying, but in this case batching of tasks will be disabled.
    * If {@code workerThreadsCount} >= 0, then the number of worker threads must never be changed once they all were started.
    * If this constraint is violated, then the {@link RateMeasuringExecutorService} may fail to conform to the target rate because of batching.
-   * {@linkplain #scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduling} any task.
+   * {@linkplain #scheduleAtFixedRate(Runnable, Rate, C) scheduling} any task.
    * @param shutdownSubmitterAndWorker A flag that specifies whether the externally provided submitter and the worker must be
    * shut down when this {@link ExecutorService} is shutting down.
    */
@@ -93,7 +99,7 @@ public class SubmitterWorkerRateMeasuringExecutorService implements RateMeasurin
    * If {@code threadsCount} is 1, then the number of worker threads is 0, and the submitter takes over worker role and executes tasks by itself.
    * @param prestartThreads A flag that specifies if all submitter and worker threads must be started
    * upon the construction of {@link SubmitterWorkerRateMeasuringExecutorService}, causing them to idly wait for work.
-   * If false, then all threads are started with the first {@linkplain #scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * If false, then all threads are started with the first {@linkplain #scheduleAtFixedRate(Runnable, Rate, C) scheduled task}.
    */
   public SubmitterWorkerRateMeasuringExecutorService(
       final ThreadFactory submitterThreadFactory,
@@ -116,7 +122,7 @@ public class SubmitterWorkerRateMeasuringExecutorService implements RateMeasurin
    * If {@code threadsCount} is 1, then the number of worker threads is 0, and the submitter takes over worker role and executes tasks by itself.
    * @param prestartThreads A flag that specifies if all submitter and worker threads must be started
    * upon the construction of {@link SubmitterWorkerRateMeasuringExecutorService}, causing them to idly wait for work.
-   * If false, then all threads are started with the first {@linkplain #scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * If false, then all threads are started with the first {@linkplain #scheduleAtFixedRate(Runnable, Rate, C) scheduled task}.
    */
   public SubmitterWorkerRateMeasuringExecutorService(final int threadsCount, final boolean prestartThreads) {
     this(
@@ -151,7 +157,7 @@ public class SubmitterWorkerRateMeasuringExecutorService implements RateMeasurin
   }
 
   @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(final Runnable task, final Rate rate, final ScheduleConfig config) {
+  public ScheduledFuture<?> scheduleAtFixedRate(final Runnable task, final Rate rate, final C config) {
     checkNotNull(task, "task");
     checkNotNull(rate, "rate");
     checkNotNull(config, "config");
@@ -227,6 +233,7 @@ public class SubmitterWorkerRateMeasuringExecutorService implements RateMeasurin
 
   /**
    * Delegates calls to the submitter and to the worker, while making sure that both calls together do not take more than the specified timeout.
+   * There is no guarantee beyond best-effort attempt to not exceed this duration.
    *
    * @return true if both the submitter and the worker return true; false otherwise.
    */
@@ -342,6 +349,10 @@ public class SubmitterWorkerRateMeasuringExecutorService implements RateMeasurin
     }
   }
 
+  private final C createScheduleConfig(final Rate rate) {
+    return null;//TODO
+  }
+
   private static final ScheduledExecutorService createSubmitter(@Nullable final ThreadFactory threadFactory, final boolean prestartThreads) {
     final ScheduledThreadPoolExecutor result = new ScheduledThreadPoolExecutor(1, ensureThreadFactory(threadFactory, "submitter-"));
     result.setMaximumPoolSize(1);
@@ -393,10 +404,6 @@ public class SubmitterWorkerRateMeasuringExecutorService implements RateMeasurin
     assert ex.getMaximumPoolSize() == ex.getCorePoolSize();
     assert ex.getCorePoolSize() == threadsCount;
     ex.prestartAllCoreThreads();
-  }
-
-  private static final ScheduleConfig createScheduleConfig(final Rate rate) {
-    return null;//TODO
   }
 
   private static final int checkThreadsCountPositive(final int threadsCount) {

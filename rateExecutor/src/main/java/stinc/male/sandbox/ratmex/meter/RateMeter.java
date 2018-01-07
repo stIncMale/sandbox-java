@@ -81,7 +81,7 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * and provide different guarantees on the accuracy.
  * Implementations with weaker guarantees may display better performance because they
  * can sacrifice accuracy for the sake of performance and yet may produce sufficiently accurate results in practice.
- * Implementations are recommended to aim for accuracy on the best effort basis,
+ * Implementations are recommended to aim for accuracy on the best-effort basis,
  * but all methods which have analogs with {@link RateMeterReading} parameters are allowed to produce approximate results.
  * An implementation should report detected inaccuracies via {@link #stats()} and {@link RateMeterReading}.
  * <p>

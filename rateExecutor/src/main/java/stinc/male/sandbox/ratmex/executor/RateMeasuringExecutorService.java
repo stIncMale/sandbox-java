@@ -26,20 +26,22 @@ import javax.annotation.concurrent.ThreadSafe;
  * and the rate is heavily limited by the time the task takes to complete.</li>
  * </ul>
  * {@link RateMeasuringExecutorService} overcomes both of the above points.
+ *
+ * @param <C> A type of schedule config used in {@link #scheduleAtFixedRate(Runnable, Rate, C)}.
  */
 @ThreadSafe
-public interface RateMeasuringExecutorService extends ExecutorService, AutoCloseable {
+public interface RateMeasuringExecutorService<C extends ScheduleConfig> extends ExecutorService, AutoCloseable {
   /**
-   * This method is similar to {@link #scheduleAtFixedRate(Runnable, Rate, ScheduleConfig)},
+   * This method is similar to {@link #scheduleAtFixedRate(Runnable, Rate, C)},
    * but the configuration is chosen by the implementation.
    *
    * @throws RejectedExecutionException If failed to conform to the target rate.
    * The returned {@link ScheduledFuture} is {@link ScheduledFuture#isCancelled() cancelled} in this case.
    * <p>
-   * This behavior is different from the behavior of {@link #scheduleAtFixedRate(Runnable, Rate, ScheduleConfig)},
+   * This behavior is different from the behavior of {@link #scheduleAtFixedRate(Runnable, Rate, C)},
    * where a user decides what to do in case of a failure.
    */
-  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate) throws RateFailedException;
+  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate);
 
   /**
    * Schedules a {@code task} to be executed with a fixed {@code rate}.
@@ -66,7 +68,7 @@ public interface RateMeasuringExecutorService extends ExecutorService, AutoClose
    * The future's {@link Future#get() get()} method will never return normally,
    * and will throw an exception upon task cancellation or abnormal termination of a task execution.
    */
-  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate, ScheduleConfig config) throws RateFailedException;
+  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate, C config);
 
   /**
    * This method is equivalent to calling {@link #shutdownNow()}.

@@ -25,7 +25,7 @@ public final class ParkWaitStrategy implements WaitStrategy {
    * @param minDelay The lower desired bound of the blocking time intervals between tests of a {@linkplain #await(BooleanSupplier) condition}.
    * Must not be {@link Duration#isNegative() negative}.
    * @param maxDelay The upper desired bound of the blocking time intervals between tests of a {@linkplain #await(BooleanSupplier) condition}.
-   * There are no guarantees beyond best-effort attempts to not exceed this duration.
+   * There is no guarantee beyond best-effort attempt to not exceed this duration.
    * Must not be {@link Duration#isNegative() negative}.
    */
   public ParkWaitStrategy(final Duration minDelay, final Duration maxDelay) {
