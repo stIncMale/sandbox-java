@@ -21,6 +21,16 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
   private final Supplier<? extends WaitStrategy> waitStrategySupplier;
   private final Supplier<? extends LockStrategy> lockStrategySupplier;
 
+  /**
+   * @param ticksCounterSupplier See {@link RateMeterConfig#RateMeterConfig(Function, Duration, int)}.
+   * @param timeSensitivity See {@link RateMeterConfig#RateMeterConfig(Function, Duration, int)}.
+   * @param historyLength See {@link RateMeterConfig#RateMeterConfig(Function, Duration, int)}.
+   * @param maxTicksCountAttempts See {@link Builder#setMaxTicksCountAttempts(int)}.
+   * @param strictTick See {@link Builder#setStrictTick(boolean)}.
+   * @param collectStats See {@link Builder#setCollectStats(boolean)}.
+   * @param waitStrategySupplier See {@link Builder#setWaitStrategySupplier(Supplier)}.
+   * @param lockStrategySupplier See {@link Builder#setLockStrategySupplier(Supplier)}.
+   */
   protected ConcurrentRateMeterConfig(
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       @Nullable final Duration timeSensitivity,
@@ -202,6 +212,8 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
     }
 
     /**
+     * @param waitStrategySupplier Must not be null.
+     *
      * @see ConcurrentRateMeterConfig#getWaitStrategySupplier()
      */
     public final Builder setWaitStrategySupplier(final Supplier<? extends WaitStrategy> waitStrategySupplier) {
@@ -211,6 +223,8 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
     }
 
     /**
+     * @param lockStrategySupplier Must not be null.
+     *
      * @see ConcurrentRateMeterConfig#getLockStrategySupplier()
      */
     public final Builder setLockStrategySupplier(final Supplier<? extends LockStrategy> lockStrategySupplier) {

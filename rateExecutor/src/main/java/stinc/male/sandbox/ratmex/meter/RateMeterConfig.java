@@ -19,6 +19,11 @@ public class RateMeterConfig {
   private final Duration timeSensitivity;
   private final int historyLength;
 
+  /**
+   * @param ticksCounterSupplier See {@link Builder#setTicksCounterSupplier(Function)}.
+   * @param timeSensitivity See {@link Builder#setTimeSensitivity(Duration)}.
+   * @param historyLength See {@link Builder#setHistoryLength(int)}.
+   */
   protected RateMeterConfig(
       final Function<Long, ? extends TicksCounter> ticksCounterSupplier,
       @Nullable final Duration timeSensitivity,

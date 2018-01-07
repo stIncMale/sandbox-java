@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
-final class BoundedThreadFactory implements ThreadFactory {
+final class BoundedThreadFactory implements ThreadFactory {//TODO remove?
   @Nullable
   private final ThreadFactory factory;
   private final int max;

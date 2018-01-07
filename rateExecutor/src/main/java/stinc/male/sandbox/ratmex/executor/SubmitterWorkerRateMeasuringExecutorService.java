@@ -150,16 +150,16 @@ public class SubmitterWorkerRateMeasuringExecutorService<C extends SubmitterWork
   }
 
   @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(final Runnable task, final Rate rate) throws RejectedExecutionException {
+  public ScheduledFuture<?> scheduleAtFixedRate(final Runnable task, final Rate targetRate) throws RejectedExecutionException {
     checkNotNull(task, "task");
-    checkNotNull(rate, "rate");
-    return scheduleAtFixedRate(task, rate, createScheduleConfig(rate));
+    checkNotNull(targetRate, "targetRate");
+    return scheduleAtFixedRate(task, targetRate, createScheduleConfig(targetRate));
   }
 
   @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(final Runnable task, final Rate rate, final C config) {
+  public ScheduledFuture<?> scheduleAtFixedRate(final Runnable task, final Rate targetRate, final C config) {
     checkNotNull(task, "task");
-    checkNotNull(rate, "rate");
+    checkNotNull(targetRate, "targetRate");
     checkNotNull(config, "config");
     ensureAllThreadsStarted();
     return null;//TODO

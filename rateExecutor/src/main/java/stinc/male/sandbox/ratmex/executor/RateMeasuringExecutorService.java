@@ -13,7 +13,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * A <b>Rat</b>e-<b>Me</b>asuring e<b>X</b>ecutor service (hence <b>RatMeX</b>)
  * which not only executes tasks with a fixed {@link Rate rate},
  * but also measures the actual rate of submission and completion of the tasks
- * and allows one to monitor the rate and react if the executor has failed to conform to the target rate.
+ * and allows one to {@linkplain RateListener monitor the rate and react} if the executor has failed to conform to the target rate.
  * <p>
  * <b>The reasoning behind {@link RateMeasuringExecutorService}</b><br>
  * The functionality described by this interface can not be directly obtained from
@@ -41,7 +41,7 @@ public interface RateMeasuringExecutorService<C extends ScheduleConfig> extends 
    * This behavior is different from the behavior of {@link #scheduleAtFixedRate(Runnable, Rate, C)},
    * where a user decides what to do in case of a failure.
    */
-  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate);
+  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate targetRate);
 
   /**
    * Schedules a {@code task} to be executed with a fixed {@code rate}.
@@ -61,14 +61,14 @@ public interface RateMeasuringExecutorService<C extends ScheduleConfig> extends 
    * return {@code true}.
    *
    * @param task A task to schedule for execution. Must not be {@code null}.
-   * @param rate A target rate of submission and completion of the task. Must not be {@code null}.
+   * @param targetRate A target rate of submission and completion of the task. Must not be {@code null}.
    * @param config An additional configuration. Must not be {@code null}.
    *
    * @return A {@link ScheduledFuture} representing pending completion of the {@code task}.
    * The future's {@link Future#get() get()} method will never return normally,
    * and will throw an exception upon task cancellation or abnormal termination of a task execution.
    */
-  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate rate, C config);
+  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate targetRate, C config);
 
   /**
    * This method is equivalent to calling {@link #shutdownNow()}.
