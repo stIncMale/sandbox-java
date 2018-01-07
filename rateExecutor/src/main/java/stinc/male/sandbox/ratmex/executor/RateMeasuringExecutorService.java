@@ -12,7 +12,7 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * A <b>Rat</b>e-<b>Me</b>asuring e<b>X</b>ecutor service (hence <b>RatMeX</b>)
  * which not only executes tasks with a fixed {@link Rate rate},
- * but also measures the actual rate of submission and completion of the tasks
+ * but also measures the actual rate completion of the tasks
  * and allows one to {@linkplain RateListener monitor the rate and react} if the executor has failed to conform to the target rate.
  * <p>
  * <b>The reasoning behind {@link RateMeasuringExecutorService}</b><br>
@@ -28,9 +28,11 @@ import javax.annotation.concurrent.ThreadSafe;
  * {@link RateMeasuringExecutorService} overcomes both of the above points.
  *
  * @param <C> A type of schedule config used in {@link #scheduleAtFixedRate(Runnable, Rate, C)}.
+ * @param <E> TODO
  */
 @ThreadSafe
-public interface RateMeasuringExecutorService<C extends ScheduleConfig> extends ExecutorService, AutoCloseable {
+public interface RateMeasuringExecutorService<C extends ScheduleConfig<E>, E extends RateMeasuredEvent> extends ExecutorService,
+    AutoCloseable {
   /**
    * This method is similar to {@link #scheduleAtFixedRate(Runnable, Rate, C)},
    * but the configuration is chosen by the implementation.
@@ -60,8 +62,8 @@ public interface RateMeasuringExecutorService<C extends ScheduleConfig> extends 
    * {@link Future#isDone isDone()} on the returned future will
    * return {@code true}.
    *
-   * @param task A task to schedule for execution. Must not be {@code null}.
-   * @param targetRate A target rate of submission and completion of the task. Must not be {@code null}.
+   * @param task A task to schedule for repetitive execution. Must not be {@code null}.
+   * @param targetRate A target rate of completion of the task executions. Must not be {@code null}.
    * @param config An additional configuration. Must not be {@code null}.
    *
    * @return A {@link ScheduledFuture} representing pending completion of the {@code task}.

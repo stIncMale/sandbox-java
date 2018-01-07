@@ -47,12 +47,13 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
  * and distribute batched tasks evenly among worker threads.
  *
  * @param <C> A type of schedule config used in {@link #scheduleAtFixedRate(Runnable, Rate, C)}.
+ * @param <E> TODO
  * @param <SRS> A type that represents {@linkplain RateMeter#stats() statistics} of submitter {@link RateMeter}.
  * @param <WRS> A type that represents {@linkplain RateMeter#stats() statistics} of worker {@link RateMeter}.
  */
 @ThreadSafe
-public class SubmitterWorkerRateMeasuringExecutorService<C extends SubmitterWorkerScheduleConfig<SRS, WRS>, SRS, WRS>
-    implements RateMeasuringExecutorService<C> {
+public class SubmitterWorkerRateMeasuringExecutorService<C extends SubmitterWorkerScheduleConfig<E, SRS, WRS>, E extends SubmitterWorkerRateMeasuredEvent, SRS, WRS>
+    implements RateMeasuringExecutorService<C, E> {
   private final ScheduledExecutorService submitter;
   @Nullable
   private final ExecutorService worker;

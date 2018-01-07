@@ -11,14 +11,16 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 
 /**
  * A configuration of a {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+ *
+ * @param <E> TODO
  */
 @Immutable
-public class ScheduleConfig {
+public class ScheduleConfig<E extends RateMeasuredEvent> {
   private final Duration initialDelay;
   @Nullable
   private final Duration duration;
   @Nullable
-  private final RateListener rateListener;
+  private final RateListener<? super E> rateListener;
 
   /**
    * @param initialDelay See {@link Builder#setInitialDelay(Duration)}.
@@ -28,7 +30,7 @@ public class ScheduleConfig {
   protected ScheduleConfig(
       final Duration initialDelay,
       @Nullable final Duration duration,
-      @Nullable final RateListener rateListener) {
+      @Nullable final RateListener<? super E> rateListener) {
     checkDuration(initialDelay, "initialDelay");
     if (duration != null) {
       checkArgument(!duration.isZero(), "duration", "Must not be zero");
@@ -39,12 +41,12 @@ public class ScheduleConfig {
     this.rateListener = rateListener;
   }
 
-  public static Builder newBuilder() {
-    return new Builder();
+  public static final <E extends RateMeasuredEvent> Builder<E> newScheduleConfigBuilder() {
+    return new Builder<>();
   }
 
-  public Builder toBuilder() {
-    return new Builder(this);
+  public Builder<E> toBuilder() {
+    return new Builder<>(this);
   }
 
   /**
@@ -72,7 +74,7 @@ public class ScheduleConfig {
   /**
    * TODO
    */
-  public final Optional<RateListener> getRateListener() {
+  public final Optional<RateListener<? super E>> getRateListener() {
     return Optional.ofNullable(rateListener);
   }
 
@@ -86,23 +88,23 @@ public class ScheduleConfig {
   }
 
   @NotThreadSafe
-  public static class Builder {
+  public static class Builder<E extends RateMeasuredEvent> {
     protected Duration initialDelay;
     @Nullable
     protected Duration duration;
     @Nullable
-    protected RateListener rateListener;
+    protected RateListener<? super E> rateListener;
 
     protected Builder() {
       initialDelay = Duration.ZERO;
       duration = null;
-      rateListener = null;//TODO create default
+      rateListener = DefaultRateListener.defaultRateListenerInstance();
     }
 
     /**
      * @param config Must not be null.
      */
-    protected Builder(final ScheduleConfig config) {
+    protected Builder(final ScheduleConfig<? super E> config) {
       checkNotNull(config, "config");
       initialDelay = config.getInitialDelay();
       duration = config.getDuration()
@@ -116,7 +118,7 @@ public class ScheduleConfig {
      *
      * @see ScheduleConfig#getInitialDelay()
      */
-    public final ScheduleConfig.Builder setInitialDelay(final Duration initialDelay) {
+    public final ScheduleConfig.Builder<E> setInitialDelay(final Duration initialDelay) {
       checkDuration(initialDelay, "initialDelay");
       this.initialDelay = initialDelay;
       return this;
@@ -125,7 +127,7 @@ public class ScheduleConfig {
     /**
      * @see ScheduleConfig#getDuration()
      */
-    public final ScheduleConfig.Builder setDuration(@Nullable final Duration duration) {
+    public final ScheduleConfig.Builder<E> setDuration(@Nullable final Duration duration) {
       if (duration != null) {
         checkArgument(!duration.isZero(), "duration", "Must not be zero");
         checkArgument(!duration.isNegative(), "duration", "Must not be negative");
@@ -137,13 +139,13 @@ public class ScheduleConfig {
     /**
      * @see ScheduleConfig#getRateListener()
      */
-    public final ScheduleConfig.Builder setRateListener(@Nullable final RateListener rateListener) {
+    public final ScheduleConfig.Builder<E> setRateListener(@Nullable final RateListener<? super E> rateListener) {
       this.rateListener = rateListener;
       return this;
     }
 
-    public ScheduleConfig build() {
-      return new ScheduleConfig(
+    public ScheduleConfig<E> build() {
+      return new ScheduleConfig<>(
           initialDelay,
           duration,
           rateListener);
