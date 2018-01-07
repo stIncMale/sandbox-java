@@ -8,6 +8,7 @@ import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
+//TODO make public, methods not final, document
 abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfig>
     extends AbstractRateMeter<S, C> {
   private final boolean sequential;
