@@ -214,6 +214,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
     return reading;
   }
 
+  //TODO create an experimental analogous method and test how many times it can move the window per second
   @Override
   public final void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
