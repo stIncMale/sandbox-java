@@ -52,7 +52,8 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
  * @param <WRS> A type that represents {@linkplain RateMeter#stats() statistics} of worker {@link RateMeter}.
  */
 @ThreadSafe
-public class SubmitterWorkerRateMeasuringExecutorService<C extends SubmitterWorkerScheduleConfig<E, SRS, WRS>, E extends SubmitterWorkerRateMeasuredEvent, SRS, WRS>
+public class SubmitterWorkerRateMeasuringExecutorService
+    <C extends SubmitterWorkerScheduleConfig<E, SRS, WRS>, E extends SubmitterWorkerRateMeasuredEvent<SRS, WRS>, SRS, WRS>
     implements RateMeasuringExecutorService<C, E> {
   private final ScheduledExecutorService submitter;
   @Nullable
@@ -157,6 +158,12 @@ public class SubmitterWorkerRateMeasuringExecutorService<C extends SubmitterWork
     return scheduleAtFixedRate(task, targetRate, createScheduleConfig(targetRate));
   }
 
+  /**
+   * @param config An additional configuration. Must not be {@code null}.
+   * <p>
+   * Method {@link RateListener#onMeasurement(RateMeasuredEvent)} is called each time the submitter measures the current submission rate,
+   * which in turn happens each time the submitter decides if new tasks need to be submitted to the worker.
+   */
   @Override
   public ScheduledFuture<?> scheduleAtFixedRate(final Runnable task, final Rate targetRate, final C config) {
     checkNotNull(task, "task");

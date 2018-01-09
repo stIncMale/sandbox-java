@@ -12,7 +12,7 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
  * A configuration of a {@linkplain SubmitterWorkerRateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, SubmitterWorkerScheduleConfig) scheduled task}
  * for {@link SubmitterWorkerRateMeasuringExecutorService}.
  *
- * @param <E> TODO
+ * @param <E> A type of container with data provided to {@link RateListener} by {@link RateMeasuringExecutorService}.
  * @param <SRS> A type that represents {@linkplain RateMeter#stats() statistics} of submitter {@link RateMeter}.
  * @param <WRS> A type that represents {@linkplain RateMeter#stats() statistics} of worker {@link RateMeter}.
  */
@@ -22,12 +22,12 @@ public class SubmitterWorkerScheduleConfig<E extends RateMeasuredEvent, SRS, WRS
   private final Function<Rate, ? extends RateMeter<? extends WRS>> workerRateMeterSupplier;
 
   protected SubmitterWorkerScheduleConfig(
-      final Duration delay,
+      final Duration initialDelay,
       @Nullable final Duration duration,
-      @Nullable final RateListener<E> listener,
+      @Nullable final RateListener<? super E> rateListener,
       final Function<Rate, ? extends RateMeter<? extends SRS>> submitterRateMeterSupplier,
       final Function<Rate, ? extends RateMeter<? extends WRS>> workerRateMeterSupplier) {
-    super(delay, duration, listener);
+    super(initialDelay, duration, rateListener);
     checkNotNull(submitterRateMeterSupplier, "submitterRateMeterSupplier");
     checkNotNull(workerRateMeterSupplier, "workerRateMeterSupplier");
     this.submitterRateMeterSupplier = submitterRateMeterSupplier;
@@ -78,9 +78,13 @@ public class SubmitterWorkerScheduleConfig<E extends RateMeasuredEvent, SRS, WRS
       workerRateMeterSupplier = config.getWorkerRateMeterSupplier();
     }
 
+    /**
+     * @param config Must not be null.
+     */
     protected Builder(final ScheduleConfig<E> config) {
       super(config);
-      //TODO
+      checkNotNull(config, "config");
+      set(config);
     }
 
     /**
@@ -88,7 +92,11 @@ public class SubmitterWorkerScheduleConfig<E extends RateMeasuredEvent, SRS, WRS
      */
     public final Builder<E, SRS, WRS> set(final ScheduleConfig<E> config) {
       checkNotNull(config, "config");
-      //TODO
+      duration = config.getDuration()
+          .orElse(null);
+      initialDelay = config.getInitialDelay();
+      rateListener = config.getRateListener()
+          .orElse(null);
       return this;
     }
 
@@ -114,8 +122,13 @@ public class SubmitterWorkerScheduleConfig<E extends RateMeasuredEvent, SRS, WRS
       return this;
     }
 
-    public Builder<E, SRS, WRS> buildSubmitterWorkerBuilder() {
-      return null;//TODO
+    public SubmitterWorkerScheduleConfig<E, SRS, WRS> buildSubmitterWorkerBuilder() {
+      return new SubmitterWorkerScheduleConfig<>(
+          initialDelay,
+          duration,
+          rateListener,
+          submitterRateMeterSupplier,
+          workerRateMeterSupplier);
     }
   }
 }

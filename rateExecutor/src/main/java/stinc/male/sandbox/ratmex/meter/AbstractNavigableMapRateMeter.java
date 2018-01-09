@@ -176,7 +176,8 @@ abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig
       }
     }
     assert readingDone;
-    reading.setTNanos(rightNanos);
+    reading.setTNanos(rightNanos)
+        .setUnit(getSamplesInterval());
     return reading;
   }
 
@@ -302,7 +303,8 @@ abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig
   public final RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     checkArgument(tNanos, "tNanos");
     checkNotNull(reading, "reading");
-    reading.setTNanos(tNanos);
+    reading.setTNanos(tNanos)
+        .setUnit(getSamplesInterval());
     reading.setAccurate(true);
     final boolean readingDone;
     final long samplesIntervalNanos = getSamplesIntervalNanos();

@@ -1,6 +1,6 @@
 package stinc.male.sandbox.ratmex.executor;
 
-import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * A default implementation of {@link RateListener}
@@ -8,7 +8,7 @@ import javax.annotation.concurrent.Immutable;
  *
  * @param <E> A type of a {@link RateMeasuredEvent} which this listener can react to.
  */
-@Immutable
+@ThreadSafe
 public class DefaultRateListener<E extends RateMeasuredEvent> implements RateListener<E> {
   private static final DefaultRateListener<RateMeasuredEvent> instance = new DefaultRateListener<>();
 
@@ -30,6 +30,8 @@ public class DefaultRateListener<E extends RateMeasuredEvent> implements RateLis
    */
   @Override
   public boolean onMeasurement(final E event) throws RateFailedException {
+    final double completionRate = event.getCompletionRate()
+        .getValueDouble();
     //TODO
     return false;
   }

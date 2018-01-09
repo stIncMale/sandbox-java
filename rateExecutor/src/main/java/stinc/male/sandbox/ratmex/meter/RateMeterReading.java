@@ -1,5 +1,6 @@
 package stinc.male.sandbox.ratmex.meter;
 
+import java.time.Duration;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -7,31 +8,40 @@ import javax.annotation.concurrent.NotThreadSafe;
  */
 @NotThreadSafe
 public final class RateMeterReading {
+  private final long startNanos;
+  private long tNanos;
   private long valueLong;
   private double valueDouble;
-  private long tNanos;
+  private Duration unit;
   private boolean accurate;
   private boolean rounded;
 
-  public RateMeterReading() {
+  /**
+   * All methods exposing the state of the newly constructed {@link RateMeterReading} return default values for variables of the type returned,
+   * except for method {@link #getUnit()} which returns {@link Duration#ZERO}.
+   * See {@link RateMeter#getStartNanos()}.
+   */
+  public RateMeterReading() {//TODO setter for startNanos
+    this.startNanos = 0;
   }
 
   /**
-   * @return long representation of the value read. Either {@linkplain #isRounded() rounded}, or not.
-   * Note that even if the reading is not {@linkplain #isRounded() rounded}, this value may not be equal to {@link #getValueDouble()}
-   * because not every long value can be exactly represented as double value.
+   * @return See {@link RateMeter#getStartNanos()}.
    */
-  public final long getValueLong() {
-    return valueLong;
+  public final long getStartNanos() {
+    return startNanos;
   }
 
   /**
-   * @return double representation of the value read.
-   * Note that even if the reading is not {@linkplain #isRounded() rounded}, this value may not be equal to {@link #getValueLong()}
-   * because not every long value can be exactly represented as double value.
+   * @param safeTNanos See {@link #getTNanos()}.
+   * This method does not check if {@code safeTNanos} is valid regarding the {@link #getStartNanos()}.
+   * Implementations of {@link RateMeter} which fill {@link RateMeterReading} must guarantee that this value is valid.
+   *
+   * @return {@code this}.
    */
-  public final double getValueDouble() {
-    return valueDouble;
+  public final RateMeterReading setTNanos(final long safeTNanos) {
+    this.tNanos = safeTNanos;
+    return this;
   }
 
   /**
@@ -41,22 +51,6 @@ public final class RateMeterReading {
    */
   public final long getTNanos() {
     return tNanos;
-  }
-
-  /**
-   * @return A flag that specifies whether a {@link RateMeter} was able to provide an accurate reading,
-   * or it failed and returned average or approximate rate (see {@link RateMeter}).
-   */
-  public final boolean isAccurate() {
-    return accurate;
-  }
-
-  /**
-   * @return A flag that specifies whether {@link #getValueLong()} returns a {@linkplain Math#round(double) rounded} representation of
-   * {@link #getValueDouble()}, or not.
-   */
-  public final boolean isRounded() {
-    return rounded;
   }
 
   /**
@@ -90,6 +84,32 @@ public final class RateMeterReading {
   }
 
   /**
+   * @return long representation of the value read. Either {@linkplain #isRounded() rounded}, or not.
+   * Note that even if the reading is not {@linkplain #isRounded() rounded}, this value may not be equal to {@link #getValueDouble()}
+   * because not every long value can be exactly represented as double value.
+   */
+  public final long getValueLong() {
+    return valueLong;
+  }
+
+  /**
+   * @return double representation of the value read.
+   * Note that even if the reading is not {@linkplain #isRounded() rounded}, this value may not be equal to {@link #getValueLong()}
+   * because not every long value can be exactly represented as double value.
+   */
+  public final double getValueDouble() {
+    return valueDouble;
+  }
+
+  /**
+   * @return A flag that specifies whether {@link #getValueLong()} returns a {@linkplain Math#round(double) rounded} representation of
+   * {@link #getValueDouble()}, or not.
+   */
+  public final boolean isRounded() {
+    return rounded;
+  }
+
+  /**
    * @param accurate See {@link #isAccurate()}.
    *
    * @return {@code this}.
@@ -100,21 +120,40 @@ public final class RateMeterReading {
   }
 
   /**
-   * @param tNanos See {@link #getTNanos()}.
-   *
-   * @return {@code this}.
+   * @return A flag that specifies whether a {@link RateMeter} was able to provide an accurate reading,
+   * or it failed and returned average or approximate rate (see {@link RateMeter}).
    */
-  public final RateMeterReading setTNanos(final long tNanos) {
-    this.tNanos = tNanos;
+  public final boolean isAccurate() {
+    return accurate;
+  }
+
+  /**
+   * @param safeUnit See {@link #getUnit()}.
+   * This method does not check if {@code safeUnit} is valid.
+   * Implementations of {@link RateMeter} which fill {@link RateMeterReading} must guarantee that this value is valid.
+   *
+   * @return {@code this}
+   */
+  public RateMeterReading setUnit(final Duration safeUnit) {
+    this.unit = safeUnit;
     return this;
+  }
+
+  /**
+   * @return A time interval in which rate is measured, i.e. rate is measured in unit<sup>-1</sup>.
+   */
+  public final Duration getUnit() {
+    return unit;
   }
 
   @Override
   public final String toString() {
     return getClass().getSimpleName()
-        + "{valueLong=" + valueLong
-        + ", valueDouble=" + valueDouble
+        + "{startNanos=" + startNanos
         + ", tNanos=" + tNanos
+        + ", valueLong=" + valueLong
+        + ", valueDouble=" + valueDouble
+        + ", unit=" + unit
         + ", accurate=" + accurate
         + ", rounded=" + rounded
         + '}';

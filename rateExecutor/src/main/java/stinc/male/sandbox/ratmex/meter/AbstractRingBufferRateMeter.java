@@ -210,11 +210,13 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
       }
     }
     assert readingDone;
-    reading.setTNanos(rightSamplesWindowBoundary(samplesWindowShiftSteps));
+    reading.setTNanos(rightSamplesWindowBoundary(samplesWindowShiftSteps))
+        .setUnit(getSamplesInterval());
     return reading;
   }
 
   //TODO create an experimental analogous method and test how many times it can move the window per second
+  //TODO compare single/multi thread for very short samples window; for various history lengths
   @Override
   public final void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
@@ -390,7 +392,8 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
   public final RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     checkArgument(tNanos, "tNanos");
     checkNotNull(reading, "reading");
-    reading.setTNanos(tNanos);
+    reading.setTNanos(tNanos)
+        .setUnit(getSamplesInterval());
     reading.setAccurate(true);
     final boolean readingDone;
     final long samplesIntervalNanos = getSamplesIntervalNanos();

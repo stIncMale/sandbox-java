@@ -73,15 +73,18 @@ public final class ConversionsAndChecks {
   }
 
   public static final RateMeterReading convertRate(
-      final RateMeterReading rateReadingInUnits,
-      final long safeUnitSizeNanos,
-      final long newSafeUnitSizeNanos) {
+      final RateMeterReading safeReading,
+      final Duration newSafeUnit) {
     final RateMeterReading result;
-    if (safeUnitSizeNanos == newSafeUnitSizeNanos) {
-      result = rateReadingInUnits;
+    final Duration safeUnit = safeReading.getUnit();
+    if (safeUnit.equals(newSafeUnit)) {
+      result = safeReading;
     } else {
-      final double convertedRate = convertRate(rateReadingInUnits.getValueDouble(), safeUnitSizeNanos, newSafeUnitSizeNanos);
-      return rateReadingInUnits.setValue(convertedRate);
+      final long safeUnitSizeNanos = safeUnit.toNanos();
+      final long newSafeUnitSizeNanos = newSafeUnit.toNanos();
+      final double convertedRate = convertRate(safeReading.getValueDouble(), safeUnitSizeNanos, newSafeUnitSizeNanos);
+      return safeReading.setValue(convertedRate)
+          .setUnit(newSafeUnit);
     }
     return result;
   }

@@ -12,7 +12,7 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 /**
  * A configuration of a {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
  *
- * @param <E> TODO
+ * @param <E> A type of container with data provided to {@link RateListener} by {@link RateMeasuringExecutorService}.
  */
 @Immutable
 public class ScheduleConfig<E extends RateMeasuredEvent> {
@@ -72,7 +72,8 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {
   }
 
   /**
-   * TODO
+   * A listener allowing monitoring the rate and reacting if there are deviations from the
+   * {@linkplain RateMeasuredEvent#getTargetRate() target rate}.
    */
   public final Optional<RateListener<? super E>> getRateListener() {
     return Optional.ofNullable(rateListener);

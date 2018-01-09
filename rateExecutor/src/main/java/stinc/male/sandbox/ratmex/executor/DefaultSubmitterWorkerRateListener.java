@@ -1,6 +1,6 @@
 package stinc.male.sandbox.ratmex.executor;
 
-import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * A default implementation of {@link RateListener}
@@ -10,9 +10,10 @@ import javax.annotation.concurrent.Immutable;
  *
  * @param <E> A type of a {@link SubmitterWorkerRateMeasuredEvent} which this listener can react to.
  */
-@Immutable
-public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMeasuredEvent> extends DefaultRateListener<E> {
-  private static final DefaultSubmitterWorkerRateListener<SubmitterWorkerRateMeasuredEvent> instance = new DefaultSubmitterWorkerRateListener<>();
+@ThreadSafe
+public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMeasuredEvent<SRS, WRS>, SRS, WRS> extends DefaultRateListener<E> {
+  private static final DefaultSubmitterWorkerRateListener<?, ?, ?> instance =
+      new DefaultSubmitterWorkerRateListener<>();
 
   protected DefaultSubmitterWorkerRateListener() {
   }
@@ -23,9 +24,9 @@ public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMea
    * @return A default {@link RateListener} for {@link SubmitterWorkerRateMeasuredEvent}.
    */
   @SuppressWarnings("unchecked")
-  public static final <E extends SubmitterWorkerRateMeasuredEvent>
-  DefaultSubmitterWorkerRateListener<E> defaultSubmitterWorkerRateListenerInstance() {
-    return (DefaultSubmitterWorkerRateListener<E>)instance;
+  public static final <E extends SubmitterWorkerRateMeasuredEvent<SRS, WRS>, SRS, WRS>
+  DefaultSubmitterWorkerRateListener<E, SRS, WRS> defaultSubmitterWorkerRateListenerInstance() {
+    return (DefaultSubmitterWorkerRateListener<E, SRS, WRS>)instance;
   }
 
   /**
@@ -34,7 +35,7 @@ public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMea
    * or {@linkplain SubmitterWorkerRateMeasuredEvent#getCompletionRate() worker}.
    */
   @Override
-  public boolean onMeasurement(final SubmitterWorkerRateMeasuredEvent event) throws RateFailedException {
+  public boolean onMeasurement(final E event) throws RateFailedException {
     //TODO
     return false;
   }

@@ -276,10 +276,7 @@ public interface RateMeter<S> {
   default RateMeterReading rate(final Duration unit, final RateMeterReading reading) {
     checkUnit(unit, "unit");
     checkNotNull(reading, "reading");
-    final Duration samplesInterval = getSamplesInterval();
-    return unit.equals(samplesInterval)
-        ? rate(reading)
-        : convertRate(rate(reading), samplesInterval.toNanos(), unit.toNanos());
+    return convertRate(rate(reading), unit);
   }
 
   /**
@@ -337,9 +334,7 @@ public interface RateMeter<S> {
     checkTNanos(tNanos, startNanos, maxTNanos(startNanos, samplesIntervalNanos, 3), "tNanos");
     checkUnit(unit, "unit");
     checkNotNull(reading, "reading");
-    return unit.equals(samplesInterval)
-        ? rate(tNanos, reading)
-        : convertRate(rate(tNanos, reading), samplesIntervalNanos, unit.toNanos());
+    return convertRate(rate(tNanos, reading), unit);
   }
 
   /**
