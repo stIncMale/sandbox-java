@@ -4,9 +4,11 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import javax.annotation.Nullable;
+import stinc.male.sandbox.ratmex.NanosComparator;
 import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
 //TODO make public, methods not final, document
 abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfig>
@@ -46,15 +48,15 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
     super(startNanos, samplesInterval, config);
     checkNotNull(samplesHistorySupplier, "samplesHistorySupplier");
     Preconditions.checkArgument(getTimeSensitivityNanos() <= getSamplesIntervalNanos(), "config",
-        () -> String.format("timeSensitivity=%sns must be less than or equals to samplesIntervalNanos=%sns",
+        () -> format("timeSensitivity=%sns must be less than or equals to samplesIntervalNanos=%sns",
             getTimeSensitivityNanos(), getSamplesIntervalNanos()));
     Preconditions.checkArgument(getSamplesIntervalNanos() % getTimeSensitivityNanos() == 0,
-        "samplesInterval", () -> String.format("The specified samplesInterval=%sns and timeSensitivity=%sns " +
+        "samplesInterval", () -> format("The specified samplesInterval=%sns and timeSensitivity=%sns " +
                 "can not be used together because samplesInterval is not a multiple of timeSensitivity",
             getSamplesIntervalNanos(), getTimeSensitivityNanos()));
     final int samplesIntervalArrayLength = (int)(getSamplesIntervalNanos() / getTimeSensitivityNanos());
     Preconditions.checkArgument(getSamplesIntervalNanos() == samplesIntervalArrayLength * getTimeSensitivityNanos(), "samplesInterval",
-        () -> String.format("The ratio of the specified samplesInterval=%sns and timeSensitivity=%sns is too high",
+        () -> format("The ratio of the specified samplesInterval=%sns and timeSensitivity=%sns is too high",
             getSamplesIntervalNanos(), getTimeSensitivityNanos()));
     samplesWindowStepNanos = getSamplesIntervalNanos() / samplesIntervalArrayLength;
     samplesHistory = samplesHistorySupplier.apply(config.getHistoryLength() * samplesIntervalArrayLength);
@@ -210,7 +212,8 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
       }
     }
     assert readingDone;
-    reading.setTNanos(rightSamplesWindowBoundary(samplesWindowShiftSteps))
+    reading.setStartNanos(getStartNanos())
+        .setTNanos(rightSamplesWindowBoundary(samplesWindowShiftSteps))
         .setUnit(getSamplesInterval());
     return reading;
   }
@@ -392,7 +395,8 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
   public final RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     checkArgument(tNanos, "tNanos");
     checkNotNull(reading, "reading");
-    reading.setTNanos(tNanos)
+    reading.setStartNanos(getStartNanos())
+        .setTNanos(tNanos)
         .setUnit(getSamplesInterval());
     reading.setAccurate(true);
     final boolean readingDone;

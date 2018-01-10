@@ -29,10 +29,12 @@ public class DefaultRateListener<E extends RateMeasuredEvent> implements RateLis
    * @throws RateFailedException If the {@linkplain RateMeasuredEvent#getTargetRate() target rate} is not respected.
    */
   @Override
-  public boolean onMeasurement(final E event) throws RateFailedException {
-    final double completionRate = event.getCompletionRate()
-        .getValueDouble();
-    //TODO
-    return false;
+  public boolean onMeasurement(final E e) throws RateFailedException {
+    if (e.getTargetRate()
+        .compareTo(e.getCompletionRate()) != 0) {
+      throw new RateFailedException("The completion rate violated the target rate. ", e.getTargetRate(), e.getCompletionRate()
+          .getValueDouble());
+    }
+    return true;
   }
 }

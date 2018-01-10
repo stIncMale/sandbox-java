@@ -2,10 +2,11 @@ package stinc.male.sandbox.ratmex.internal.util;
 
 import java.time.Duration;
 import javax.annotation.Nullable;
-import stinc.male.sandbox.ratmex.meter.NanosComparator;
+import stinc.male.sandbox.ratmex.NanosComparator;
 import stinc.male.sandbox.ratmex.meter.RateMeterReading;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
 public final class ConversionsAndChecks {
   /**
@@ -32,7 +33,7 @@ public final class ConversionsAndChecks {
     }
     if (!ok) {
       throw new IllegalArgumentException(
-          String.format("The argument %s=%s is illegal. Must be in [%s; %s] (comparison according to System.nanoTime())",
+          format("The argument %s=%s is illegal. Must be in [%s; %s] (comparison according to System.nanoTime())",
               safeParamName, tNanos, safeStartNanos, safeMaxTNanos), cause);
     }
   }

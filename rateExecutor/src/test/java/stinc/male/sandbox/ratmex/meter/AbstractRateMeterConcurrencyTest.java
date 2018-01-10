@@ -20,10 +20,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import stinc.male.sandbox.ratmex.NanosComparator;
 import stinc.male.sandbox.ratmex.meter.RateMeterConfig.Builder;
 import stinc.male.sandbox.ratmex.TestTag;
 import static java.time.Duration.ofNanos;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
 @Tag(TestTag.CONCURRENCY)
 public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {
@@ -98,14 +100,14 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
             throw new RuntimeException(e);
           }
         });
-    assertEquals(tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary(), String.format("Iteration#%s, %s", iterationIdx, tp));
-    assertEquals(tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
-    assertEquals(tickGenerator.totalCount(), rm.ticksTotalCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
+    assertEquals(tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary(), format("Iteration#%s, %s", iterationIdx, tp));
+    assertEquals(tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount(), format("Iteration#%s, %s", iterationIdx, tp));
+    assertEquals(tickGenerator.totalCount(), rm.ticksTotalCount(), format("Iteration#%s, %s", iterationIdx, tp));
     final RateMeterReading reading = new RateMeterReading();
     assertEquals(rm.ticksCount(reading)
-        .getTNanos(), rm.rightSamplesWindowBoundary(), String.format("Iteration#%s, %s", iterationIdx, tp));
+        .getTNanos(), rm.rightSamplesWindowBoundary(), format("Iteration#%s, %s", iterationIdx, tp));
     assertEquals(rm.ticksCount(reading)
-        .getValueLong(), rm.ticksCount(), String.format("Iteration#%s, %s", iterationIdx, tp));
+        .getValueLong(), rm.ticksCount(), format("Iteration#%s, %s", iterationIdx, tp));
   }
 
   private static final class TestParams {

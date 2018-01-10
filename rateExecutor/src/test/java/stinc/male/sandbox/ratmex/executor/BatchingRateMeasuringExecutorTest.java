@@ -125,7 +125,7 @@ public final class BatchingRateMeasuringExecutorTest {
     final long targetRatePerSecond = 20_000_000;
     final long targetSubmitsTotal = targetRatePerSecond * 10L;
     final Rate targetSubmits = Rate.withRelativeDeviation(targetRatePerSecond, 0.05, Duration.ofSeconds(1));
-    println("targetSubmits=" + targetSubmits + ", targetSubmits.avg=" + ((targetSubmits.getMin() + targetSubmits.getMax()) / 2), 1);
+    println("targetSubmits=" + targetSubmits + ", targetSubmits.avg=" + ((targetSubmits.getMinValue() + targetSubmits.getMaxValue()) / 2), 1);
     final long startNanos = System.nanoTime();
     final RateMeter<?> submitterRateMeter = new RingBufferRateMeter(
         startNanos,
@@ -170,7 +170,7 @@ public final class BatchingRateMeasuringExecutorTest {
         samplesIntervalNanos = submitterRateMeter.getSamplesInterval()
             .toNanos();
         prevTNanos = startNanos;
-        targetSubmitsMean = (targetSubmits.getMin() + targetSubmits.getMax()) / 2;
+        targetSubmitsMean = (targetSubmits.getMinValue() + targetSubmits.getMaxValue()) / 2;
       }
 
       @Override
@@ -200,7 +200,7 @@ public final class BatchingRateMeasuringExecutorTest {
         final long result;
         if (measuredSubmits < targetSubmitsMean) {//as expected; the interval (prevTNanos; tNanos] is fresh and we are deciding submits for it
           if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
-            result = round(ratio * targetSubmits.getMax());
+            result = round(ratio * targetSubmits.getMaxValue());
             println("1 " + result +
                 ", passedT(ms)=" + Duration.ofNanos(tNanos - startNanos)
                 .toMillis() +
@@ -209,12 +209,12 @@ public final class BatchingRateMeasuringExecutorTest {
                 ", measuredSubmits=" + measuredSubmits +
                 ", ratio=" + ratio, 1);
           } else {//too fast in average; submit as few as possible to satisfy the min
-            result = round(ratio * targetSubmits.getMin());
+            result = round(ratio * targetSubmits.getMinValue());
             println("2 " + result, 1);
           }
         } else {//too fast
           if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
-            result = round(ratio * targetSubmits.getMax());
+            result = round(ratio * targetSubmits.getMaxValue());
             println("3 " + result, 1);
           } else {//too fast in average; do not submit anything
             result = 0;
@@ -229,8 +229,8 @@ public final class BatchingRateMeasuringExecutorTest {
         }
         //        if (measuredSubmits < targetSubmitsMean) {//as expected; the interval (prevTNanos; tNanos] is fresh and we are deciding submits for it
         //          if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
-        //            result = measuredSubmits < targetSubmits.getMax()
-        //                ? round(ratio * (targetSubmits.getMax() - measuredSubmits))
+        //            result = measuredSubmits < targetSubmits.getMaxValue()
+        //                ? round(ratio * (targetSubmits.getMaxValue() - measuredSubmits))
         //                : 0;
         //            println("1 " + result +
         //                ", passedT(ms)=" + Duration.ofNanos(tNanos - startNanos)
@@ -240,15 +240,15 @@ public final class BatchingRateMeasuringExecutorTest {
         //                ", measuredSubmits=" + measuredSubmits +
         //                ", ratio=" + ratio);
         //          } else {//too fast in average; submit as few as possible to satisfy the min
-        //            result = measuredSubmits < targetSubmits.getMin()
-        //                ? round(ratio * (targetSubmits.getMin() - measuredSubmits))
+        //            result = measuredSubmits < targetSubmits.getMinValue()
+        //                ? round(ratio * (targetSubmits.getMinValue() - measuredSubmits))
         //                : 0;
         //            println("2 " + result);
         //          }
         //        } else {//too fast
         //          if (deltaAverage < 0) {//too slow in average; submit as many as possible but not exceed max
-        //            result = measuredSubmits < targetSubmits.getMax()
-        //                ? round(ratio * (targetSubmits.getMax() - measuredSubmits))
+        //            result = measuredSubmits < targetSubmits.getMaxValue()
+        //                ? round(ratio * (targetSubmits.getMaxValue() - measuredSubmits))
         //                : 0;
         //            println("3 " + result);
         //          } else {//too fast in average; do not submit anything

@@ -54,7 +54,7 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 @ThreadSafe
 public class SubmitterWorkerRateMeasuringExecutorService
     <C extends SubmitterWorkerScheduleConfig<E, SRS, WRS>, E extends SubmitterWorkerRateMeasuredEvent<SRS, WRS>, SRS, WRS>
-    implements RateMeasuringExecutorService<C, E> {
+    implements RateMeasuringExecutorService<C, E> {//TODOo implement Configurable
   private final ScheduledExecutorService submitter;
   @Nullable
   private final ExecutorService worker;

@@ -8,7 +8,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  */
 @NotThreadSafe
 public final class RateMeterReading {
-  private final long startNanos;
+  private long startNanos;
   private long tNanos;
   private long valueLong;
   private double valueDouble;
@@ -19,10 +19,18 @@ public final class RateMeterReading {
   /**
    * All methods exposing the state of the newly constructed {@link RateMeterReading} return default values for variables of the type returned,
    * except for method {@link #getUnit()} which returns {@link Duration#ZERO}.
-   * See {@link RateMeter#getStartNanos()}.
    */
-  public RateMeterReading() {//TODO setter for startNanos
-    this.startNanos = 0;
+  public RateMeterReading() {
+  }
+
+  /**
+   * @param startNanos See {@link RateMeter#getStartNanos()}.
+   *
+   * @return {@code this}.
+   */
+  public final RateMeterReading setStartNanos(final long startNanos) {
+    this.startNanos = startNanos;
+    return this;
   }
 
   /**
@@ -140,7 +148,7 @@ public final class RateMeterReading {
   }
 
   /**
-   * @return A time interval in which rate is measured, i.e. rate is measured in unit<sup>-1</sup>.
+   * @return A time interval in which value is measured, i.e. rate is measured in unit<sup>-1</sup>.
    */
   public final Duration getUnit() {
     return unit;

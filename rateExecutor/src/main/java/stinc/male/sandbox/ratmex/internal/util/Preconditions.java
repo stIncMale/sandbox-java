@@ -1,8 +1,8 @@
 package stinc.male.sandbox.ratmex.internal.util;
 
-import java.util.Locale;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
 public final class Preconditions {
   public static final <T> T checkNotNull(
@@ -36,9 +36,5 @@ public final class Preconditions {
 
   private Preconditions() {
     throw new UnsupportedOperationException("The class isn't designed to be instantiated");
-  }
-
-  private static final String format(final String format, final Object... args) {
-    return String.format(Locale.ROOT, format, args);
   }
 }

@@ -7,9 +7,11 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import stinc.male.sandbox.ratmex.NanosComparator;
 import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
 //TODO make public, methods not final, document; provide subclass access to samples history
 abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig> extends AbstractRateMeter<Void, C> {
@@ -53,7 +55,7 @@ abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig
     volatileCleanLastRightSamplesWindowBoundary = getStartNanos();
     cleanLastRightSamplesWindowBoundary = getStartNanos();
     Preconditions.checkArgument(getTimeSensitivityNanos() <= getSamplesIntervalNanos(), "config",
-        () -> String.format("timeSensitivity=%sns must be not greater than samplesInterval=%sns",
+        () -> format("timeSensitivity=%sns must be not greater than samplesInterval=%sns",
             getTimeSensitivityNanos(), getSamplesIntervalNanos()));
     ticksCountLock = sequential
         ? null
@@ -176,7 +178,8 @@ abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig
       }
     }
     assert readingDone;
-    reading.setTNanos(rightNanos)
+    reading.setStartNanos(getStartNanos())
+        .setTNanos(rightNanos)
         .setUnit(getSamplesInterval());
     return reading;
   }
@@ -303,7 +306,8 @@ abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig
   public final RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
     checkArgument(tNanos, "tNanos");
     checkNotNull(reading, "reading");
-    reading.setTNanos(tNanos)
+    reading.setStartNanos(getStartNanos())
+        .setTNanos(tNanos)
         .setUnit(getSamplesInterval());
     reading.setAccurate(true);
     final boolean readingDone;

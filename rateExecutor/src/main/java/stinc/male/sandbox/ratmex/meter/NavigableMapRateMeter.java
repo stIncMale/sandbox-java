@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import javax.annotation.concurrent.NotThreadSafe;
+import stinc.male.sandbox.ratmex.NanosComparator;
 
 /**
  * This implementation uses {@link NavigableMap} to store and access a samples history.

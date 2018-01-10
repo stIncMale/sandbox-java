@@ -8,6 +8,7 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.check
 import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTNanos;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.convertRate;
+import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
 /**
  * A generic implementation of a {@linkplain Configurable configurable} {@link RateMeter}.
@@ -40,7 +41,7 @@ public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements
     this.samplesInterval = samplesInterval;
     samplesIntervalNanos = samplesInterval.toNanos();
     Preconditions.checkArgument(samplesIntervalNanos <= Long.MAX_VALUE / (config.getHistoryLength() + 1) - 1, "samplesInterval",
-        () -> String.format(
+        () -> format(
             "Must be less than (Long.MAX_VALUE - 1)nanos = %snanos, but actual value is %s",
             Long.MAX_VALUE - 1,
             samplesIntervalNanos));

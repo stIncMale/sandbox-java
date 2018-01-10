@@ -8,6 +8,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.checkDuration;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
 /**
  * This implementation of {@link WaitStrategy} combines exponential backoff and {@link LockSupport#park() parking}.
@@ -31,7 +32,7 @@ public final class ParkWaitStrategy implements WaitStrategy {
   public ParkWaitStrategy(final Duration minDelay, final Duration maxDelay) {
     checkDuration(minDelay, "minDelay");
     checkDuration(maxDelay, "maxDelay");
-    checkArgument(maxDelay.compareTo(minDelay) > 0, "maxDelay", () -> String.format("Must be greater than %s=%s", "minDelay", minDelay));
+    checkArgument(maxDelay.compareTo(minDelay) > 0, "maxDelay", () -> format("Must be greater than %s=%s", "minDelay", minDelay));
     this.minDelay = minDelay;
     minDelayNanos = minDelay.toNanos();
     this.maxDelay = maxDelay;

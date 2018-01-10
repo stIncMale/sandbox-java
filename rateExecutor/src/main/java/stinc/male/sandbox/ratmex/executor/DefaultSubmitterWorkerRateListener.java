@@ -35,8 +35,13 @@ public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMea
    * or {@linkplain SubmitterWorkerRateMeasuredEvent#getCompletionRate() worker}.
    */
   @Override
-  public boolean onMeasurement(final E event) throws RateFailedException {
-    //TODO
+  public boolean onMeasurement(final E e) throws RateFailedException {
+    super.onMeasurement(e);
+    if (e.getTargetRate()
+        .compareTo(e.getSubmissionRate()) != 0) {
+      throw new RateFailedException("The submission rate violated the target rate. ", e.getTargetRate(), e.getSubmissionRate()
+          .getValueDouble());
+    }
     return false;
   }
 }

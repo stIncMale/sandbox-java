@@ -1,9 +1,10 @@
-package stinc.male.sandbox.ratmex.meter;
+package stinc.male.sandbox.ratmex;
 
 import java.util.Comparator;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
+import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
 /**
  * A {@link Comparator} that compares nanoseconds according to {@link System#nanoTime()} specification.
@@ -29,7 +30,7 @@ public final class NanosComparator implements Comparator<Long> {
   public static final int compare(final long l1, final long l2) throws IllegalArgumentException {
     final long diff = l1 - l2;
     if (diff == Long.MIN_VALUE) {
-      throw new IllegalArgumentException(String.format("Nanos %s and %s aren't comparable", l1, l2));
+      throw new IllegalArgumentException(format("Nanos %s and %s aren't comparable", l1, l2));
     }
     final int result;
     if (diff < 0) {
