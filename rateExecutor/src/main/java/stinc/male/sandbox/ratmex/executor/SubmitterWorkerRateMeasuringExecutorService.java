@@ -46,7 +46,7 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
  * In order to use batching a submitter must know the number of worker threads (which must be fixed)
  * and distribute batched tasks evenly among worker threads.
  *
- * @param <C> A type of schedule config used in {@link #scheduleAtFixedRate(Runnable, Rate, C)}.
+ * @param <C> A type of scheduled task config used in {@link #scheduleAtFixedRate(Runnable, Rate, C)}.
  * @param <E> TODO
  * @param <SRS> A type that represents {@linkplain RateMeter#stats() statistics} of submitter {@link RateMeter}.
  * @param <WRS> A type that represents {@linkplain RateMeter#stats() statistics} of worker {@link RateMeter}.

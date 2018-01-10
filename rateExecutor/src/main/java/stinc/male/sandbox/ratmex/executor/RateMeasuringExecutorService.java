@@ -27,8 +27,8 @@ import javax.annotation.concurrent.ThreadSafe;
  * </ul>
  * {@link RateMeasuringExecutorService} overcomes both of the above points.
  *
- * @param <C> A type of schedule config used in {@link #scheduleAtFixedRate(Runnable, Rate, C)}.
- * @param <E> TODO
+ * @param <C> A type of scheduled task config used in {@link #scheduleAtFixedRate(Runnable, Rate, C)}.
+ * @param <E> A type of container with data provided to a {@linkplain ScheduleConfig#getRateListener() rate listener}.
  */
 @ThreadSafe
 public interface RateMeasuringExecutorService<C extends ScheduleConfig<E>, E extends RateMeasuredEvent> extends ExecutorService,
@@ -55,8 +55,8 @@ public interface RateMeasuringExecutorService<C extends ScheduleConfig<E>, E ext
    * <li>The executor {@linkplain #isTerminated() terminates}, also resulting in task {@linkplain Future#cancel(boolean) cancellation}.</li>
    * <li>An execution of the task throws a {@link RuntimeException}.
    * In this case calling {@link Future#get() get()} on the returned future will throw {@link ExecutionException}.</li>
-   * <li>TODO the end of execution timeout from config. No guarantee that not later</li>
-   * <li>TODO RateListener decides to stop the execution</li>
+   * <li>The scheduled task {@linkplain ScheduleConfig#getDuration() times out}.</li>
+   * <li>The {@linkplain ScheduleConfig#getRateListener() rate listener}'s method {@link RateListener#onMeasurement(RateMeasuredEvent)} returns false.</li>
    * </ul>
    * Subsequent executions are suppressed.  Subsequent calls to
    * {@link Future#isDone isDone()} on the returned future will

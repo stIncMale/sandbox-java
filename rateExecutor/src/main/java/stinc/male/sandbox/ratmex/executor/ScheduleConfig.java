@@ -15,7 +15,7 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
  * @param <E> A type of container with data provided to {@link RateListener} by {@link RateMeasuringExecutorService}.
  */
 @Immutable
-public class ScheduleConfig<E extends RateMeasuredEvent> {
+public class ScheduleConfig<E extends RateMeasuredEvent> {//TODO move defaults to config class spec; Classes (RateMeter, Executor) must specify configs they use
   private final Duration initialDelay;
   @Nullable
   private final Duration duration;
@@ -63,7 +63,8 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {
    * There is no guarantee beyond best-effort attempt to not exceed this duration.
    * <p>
    * An {@linkplain Optional#empty() empty} duration means that the task will be repeatedly executed
-   * until {@link RateMeasuringExecutorService} {@linkplain RateMeasuringExecutorService#isTerminated() is terminated}.
+   * until one of the exceptional completions specified by
+   * {@link RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig)} occur.
    *
    * @return An {@linkplain Optional#empty() empty} {@link Optional} by default.
    */
@@ -74,6 +75,8 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {
   /**
    * A listener allowing monitoring the rate and reacting if there are deviations from the
    * {@linkplain RateMeasuredEvent#getTargetRate() target rate}.
+   *
+   * @return TODO specify default which should extend
    */
   public final Optional<RateListener<? super E>> getRateListener() {
     return Optional.ofNullable(rateListener);
