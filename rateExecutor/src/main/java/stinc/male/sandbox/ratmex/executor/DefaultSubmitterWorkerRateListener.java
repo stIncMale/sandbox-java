@@ -1,6 +1,7 @@
 package stinc.male.sandbox.ratmex.executor;
 
 import javax.annotation.concurrent.ThreadSafe;
+import stinc.male.sandbox.ratmex.meter.ConcurrentRateMeterStats;
 
 /**
  * A default implementation of {@link RateListener}
@@ -11,9 +12,9 @@ import javax.annotation.concurrent.ThreadSafe;
  * @param <E> A type of a {@link SubmitterWorkerRateMeasuredEvent} which this listener can react to.
  */
 @ThreadSafe
-public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMeasuredEvent<SRS, WRS>, SRS, WRS> extends DefaultRateListener<E> {
-  private static final DefaultSubmitterWorkerRateListener<?, ?, ?> instance =
-      new DefaultSubmitterWorkerRateListener<>();
+public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMeasuredEvent<SRS, WRS>, SRS, WRS extends ConcurrentRateMeterStats>
+    extends DefaultRateListener<E> {
+  private static final DefaultSubmitterWorkerRateListener<?, ?, ?> instance = new DefaultSubmitterWorkerRateListener<>();
 
   protected DefaultSubmitterWorkerRateListener() {
   }
@@ -24,7 +25,7 @@ public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMea
    * @return A default {@link RateListener} for {@link SubmitterWorkerRateMeasuredEvent}.
    */
   @SuppressWarnings("unchecked")
-  public static final <E extends SubmitterWorkerRateMeasuredEvent<SRS, WRS>, SRS, WRS>
+  public static final <E extends SubmitterWorkerRateMeasuredEvent<SRS, WRS>, SRS, WRS extends ConcurrentRateMeterStats>
   DefaultSubmitterWorkerRateListener<E, SRS, WRS> defaultSubmitterWorkerRateListenerInstance() {
     return (DefaultSubmitterWorkerRateListener<E, SRS, WRS>)instance;
   }
@@ -42,6 +43,15 @@ public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMea
       throw new RateFailedException("The submission rate violated the target rate. ", e.getTargetRate(), e.getSubmissionRate()
           .getValueDouble());
     }
-    return false;
+    if (e.getWorkerRateMeterStats()
+        .map(ConcurrentRateMeterStats::failedAccuracyEventsCountForTick)
+        .orElse(0L) > 0) {
+      throw new RuntimeException("Worker rate meter railed to accurately register ticks. " +
+          "Consider increasing the samples history length, " +
+          "or specifying the target rate by using a greater unit, " +
+          "or switching to a strict mode. " +
+          "actualRateValue=" + e.getCompletionRate());
+    }
+    return true;
   }
 }

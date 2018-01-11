@@ -32,8 +32,11 @@ public class DefaultRateListener<E extends RateMeasuredEvent> implements RateLis
   public boolean onMeasurement(final E e) throws RateFailedException {
     if (e.getTargetRate()
         .compareTo(e.getCompletionRate()) != 0) {
-      throw new RateFailedException("The completion rate violated the target rate. ", e.getTargetRate(), e.getCompletionRate()
-          .getValueDouble());
+      throw new RateFailedException(
+          "The completion rate violated the target rate. ",
+          e.getTargetRate(),
+          e.getCompletionRate()
+              .getValueDouble());
     }
     return true;
   }

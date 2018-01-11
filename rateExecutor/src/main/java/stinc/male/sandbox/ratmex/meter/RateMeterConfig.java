@@ -95,11 +95,11 @@ public class RateMeterConfig {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName()
-        + "{ticksCounterSupplier=" + ticksCounterSupplier
-        + ", timeSensitivity=" + timeSensitivity
-        + ", historyLength=" + historyLength
-        + '}';
+    return getClass().getSimpleName() +
+        "{ticksCounterSupplier=" + ticksCounterSupplier +
+        ", timeSensitivity=" + timeSensitivity +
+        ", historyLength=" + historyLength +
+        '}';
   }
 
   @NotThreadSafe

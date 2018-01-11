@@ -11,5 +11,5 @@ public interface ConcurrentRateMeterStats {
   /**
    * @return The number of situations when {@link RateMeter} might have registered ticks at an incorrect instant.
    */
-  long failedAccuracyEventsCountForTick();
+  long failedAccuracyEventsCountForTick();//TODO rename?
 }

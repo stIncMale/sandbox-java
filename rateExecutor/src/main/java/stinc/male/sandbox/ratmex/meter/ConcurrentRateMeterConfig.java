@@ -121,16 +121,16 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName()
-        + "{ticksCounterSupplier=" + getTicksCounterSupplier()
-        + ", timeSensitivity=" + getTimeSensitivity().orElse(null)
-        + ", historyLength=" + getHistoryLength()
-        + ", maxTicksCountAttempts=" + maxTicksCountAttempts
-        + ", strictTick=" + strictTick
-        + ", collectStats=" + collectStats
-        + ", waitStrategySupplier=" + waitStrategySupplier
-        + ", lockStrategySupplier=" + lockStrategySupplier
-        + '}';
+    return getClass().getSimpleName() +
+        "{ticksCounterSupplier=" + getTicksCounterSupplier() +
+        ", timeSensitivity=" + getTimeSensitivity().orElse(null) +
+        ", historyLength=" + getHistoryLength() +
+        ", maxTicksCountAttempts=" + maxTicksCountAttempts +
+        ", strictTick=" + strictTick +
+        ", collectStats=" + collectStats +
+        ", waitStrategySupplier=" + waitStrategySupplier +
+        ", lockStrategySupplier=" + lockStrategySupplier +
+        '}';
   }
 
   @NotThreadSafe

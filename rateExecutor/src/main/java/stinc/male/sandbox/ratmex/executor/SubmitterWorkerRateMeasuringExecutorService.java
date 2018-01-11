@@ -10,7 +10,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -21,7 +20,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import stinc.male.sandbox.ratmex.meter.ConcurrentRateMeterStats;
+import stinc.male.sandbox.ratmex.meter.ConcurrentRingBufferRateMeter;
 import stinc.male.sandbox.ratmex.meter.RateMeter;
+import stinc.male.sandbox.ratmex.meter.RingBufferRateMeter;
+import static stinc.male.sandbox.ratmex.executor.DefaultRateListener.defaultRateListenerInstance;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
@@ -47,13 +50,13 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
  * and distribute batched tasks evenly among worker threads.
  *
  * @param <C> A type of scheduled task config used in {@link #scheduleAtFixedRate(Runnable, Rate, C)}.
- * @param <E> TODO
+ * @param <E> A type of container with data provided to {@link RateListener} by {@link SubmitterWorkerRateMeasuringExecutorService}.
  * @param <SRS> A type that represents {@linkplain RateMeter#stats() statistics} of submitter {@link RateMeter}.
  * @param <WRS> A type that represents {@linkplain RateMeter#stats() statistics} of worker {@link RateMeter}.
  */
 @ThreadSafe
 public class SubmitterWorkerRateMeasuringExecutorService
-    <C extends SubmitterWorkerScheduleConfig<E, SRS, WRS>, E extends SubmitterWorkerRateMeasuredEvent<SRS, WRS>, SRS, WRS>
+    <C extends SubmitterWorkerScheduledTaskConfig<E, SRS, WRS>, E extends SubmitterWorkerRateMeasuredEvent<SRS, WRS>, SRS, WRS>
     implements RateMeasuringExecutorService<C, E> {//TODOo implement Configurable
   private final ScheduledExecutorService submitter;
   @Nullable
@@ -61,6 +64,28 @@ public class SubmitterWorkerRateMeasuringExecutorService
   private final int workerThreadsCount;
   private final AtomicBoolean startThreadsOnFirstTask;
   private final boolean shutdownSubmitterAndWorker;
+
+  /**
+   * TODO especially specify that relaxed mode is used and that defaultRateListenerInstance checks for correctness
+   */
+  public static final SubmitterWorkerScheduledTaskConfig<
+      SubmitterWorkerRateMeasuredEvent<Void, ConcurrentRateMeterStats>,
+      Void,
+      ConcurrentRateMeterStats> defaultSubmitterWorkerScheduledTaskConfig() {
+    final SubmitterWorkerScheduledTaskConfig.Builder<SubmitterWorkerRateMeasuredEvent<Void, ConcurrentRateMeterStats>, Void, ConcurrentRateMeterStats>
+        result = SubmitterWorkerScheduledTaskConfig.newSubmitterWorkerScheduleConfigBuilder();
+    result.setSubmitterRateMeterSupplier((startNanos, targetRate) -> new RingBufferRateMeter(startNanos, targetRate.getUnit()))
+        .setWorkerRateMeterSupplier((startNanos, targetRate) -> new ConcurrentRingBufferRateMeter(
+            startNanos,
+            targetRate.getUnit(),
+            ConcurrentRingBufferRateMeter.defaultConfig()
+                .toBuilder()
+                .setStrictTick(false)
+                .setCollectStats(true)
+                .build()))
+        .setRateListener(defaultRateListenerInstance());
+    return result.buildSubmitterWorkerScheduledTaskConfig();
+  }
 
   /**
    * This constructor wraps provided submitter and worker thus giving a user the maximum agility and control.
@@ -149,14 +174,6 @@ public class SubmitterWorkerRateMeasuringExecutorService
     this.workerThreadsCount = workerThreadsCount;
     this.startThreadsOnFirstTask = new AtomicBoolean(startThreadsOnFirstTask);
     this.shutdownSubmitterAndWorker = shutdownSubmitterAndWorker;
-  }
-
-  //TODO specify the default config
-  @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(final Runnable task, final Rate targetRate) throws RejectedExecutionException {
-    checkNotNull(task, "task");
-    checkNotNull(targetRate, "targetRate");
-    return scheduleAtFixedRate(task, targetRate, createScheduleConfig(targetRate));
   }
 
   /**
@@ -356,10 +373,6 @@ public class SubmitterWorkerRateMeasuringExecutorService
       prestartAllThreads(submitter, 1);
       prestartAllThreads(worker, workerThreadsCount);
     }
-  }
-
-  private final C createScheduleConfig(final Rate rate) {
-    return null;//TODO
   }
 
   private static final ScheduledExecutorService createSubmitter(@Nullable final ThreadFactory threadFactory, final boolean prestartThreads) {

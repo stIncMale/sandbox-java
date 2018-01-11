@@ -166,10 +166,10 @@ public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements
 
   @Override
   public String toString() {
-    return getClass().getSimpleName()
-        + "{startNanos=" + startNanos
-        + ", samplesIntervalNanos=" + samplesIntervalNanos
-        + ", config=" + config
-        + '}';
+    return getClass().getSimpleName() +
+        "{startNanos=" + startNanos +
+        ", samplesIntervalNanos=" + samplesIntervalNanos +
+        ", config=" + config +
+        '}';
   }
 }

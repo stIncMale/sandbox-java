@@ -3,7 +3,6 @@ package stinc.male.sandbox.ratmex.executor;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -28,23 +27,10 @@ import javax.annotation.concurrent.ThreadSafe;
  * {@link RateMeasuringExecutorService} overcomes both of the above points.
  *
  * @param <C> A type of scheduled task config used in {@link #scheduleAtFixedRate(Runnable, Rate, C)}.
- * @param <E> A type of container with data provided to a {@linkplain ScheduleConfig#getRateListener() rate listener}.
+ * @param <E> A type of container with data provided to a {@linkplain ScheduledTaskConfig#getRateListener() rate listener}.
  */
 @ThreadSafe
-public interface RateMeasuringExecutorService<C extends ScheduleConfig<E>, E extends RateMeasuredEvent> extends ExecutorService,
-    AutoCloseable {
-  /**
-   * This method is similar to {@link #scheduleAtFixedRate(Runnable, Rate, C)},
-   * but the configuration is chosen by the implementation.
-   *
-   * @throws RejectedExecutionException If failed to conform to the target rate.
-   * The returned {@link ScheduledFuture} is {@link ScheduledFuture#isCancelled() cancelled} in this case.
-   * <p>
-   * This behavior is different from the behavior of {@link #scheduleAtFixedRate(Runnable, Rate, C)},
-   * where a user decides what to do in case of a failure.
-   */
-  ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Rate targetRate);
-
+public interface RateMeasuringExecutorService<C extends ScheduledTaskConfig<E>, E extends RateMeasuredEvent> extends ExecutorService, AutoCloseable {
   /**
    * Schedules a {@code task} to be executed with a fixed {@code rate}.
    * <p>
@@ -55,8 +41,8 @@ public interface RateMeasuringExecutorService<C extends ScheduleConfig<E>, E ext
    * <li>The executor {@linkplain #isTerminated() terminates}, also resulting in task {@linkplain Future#cancel(boolean) cancellation}.</li>
    * <li>An execution of the task throws a {@link RuntimeException}.
    * In this case calling {@link Future#get() get()} on the returned future will throw {@link ExecutionException}.</li>
-   * <li>The scheduled task {@linkplain ScheduleConfig#getDuration() times out}.</li>
-   * <li>The {@linkplain ScheduleConfig#getRateListener() rate listener}'s method {@link RateListener#onMeasurement(RateMeasuredEvent)} returns false.</li>
+   * <li>The scheduled task {@linkplain ScheduledTaskConfig#getDuration() times out}.</li>
+   * <li>The {@linkplain ScheduledTaskConfig#getRateListener() rate listener}'s method {@link RateListener#onMeasurement(RateMeasuredEvent)} returns false.</li>
    * </ul>
    * Subsequent executions are suppressed.  Subsequent calls to
    * {@link Future#isDone isDone()} on the returned future will

@@ -23,12 +23,12 @@ public class SubmitterWorkerRateMeasuredEvent<SRS, WRS> extends RateMeasuredEven
 
   /**
    * @param targetRate The target rate of completion of the
-   * {@linkplain SubmitterWorkerRateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * {@linkplain SubmitterWorkerRateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled task}.
    * Must not be {@code null}.
    * @param completionRate The current completion rate of the
-   * {@linkplain SubmitterWorkerRateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * {@linkplain SubmitterWorkerRateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled task}.
    * @param submissionRate The current submission rate of the
-   * {@linkplain SubmitterWorkerRateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * {@linkplain SubmitterWorkerRateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled task}.
    */
   public SubmitterWorkerRateMeasuredEvent(
       final Rate targetRate,
@@ -41,7 +41,7 @@ public class SubmitterWorkerRateMeasuredEvent<SRS, WRS> extends RateMeasuredEven
 
   /**
    * @return The current submission rate of the
-   * {@linkplain SubmitterWorkerRateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * {@linkplain SubmitterWorkerRateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled task}.
    */
   public final RateMeterReading getSubmissionRate() {
     return submissionRate;

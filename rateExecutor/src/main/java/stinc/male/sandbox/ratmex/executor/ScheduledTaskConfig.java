@@ -10,19 +10,20 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgumen
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
 /**
- * A configuration of a {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+ * A configuration of a {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled task}.
  * <p>
  * The default values:
  * <ul>
  * <li>{@link #getInitialDelay()} - {@link Duration#ZERO}</li>
  * <li>{@link #getDuration()} - {@link Optional}{@code .}{@linkplain Optional#empty() empty()}</li>
- * <li>{@link #getRateListener()} - TODO specify default which should extend DefaultRateListener</li>
+ * <li>{@link #getRateListener()} - {@link Optional}{@code .}{@linkplain Optional#empty() empty()}</li>
  * </ul>
  *
  * @param <E> A type of container with data provided to {@link RateListener} by {@link RateMeasuringExecutorService}.
  */
+//see comments in SubmitterWorkerScheduledTaskConfig for reasons why rateListener do not have a default value different from null
 @Immutable
-public class ScheduleConfig<E extends RateMeasuredEvent> {
+public class ScheduledTaskConfig<E extends RateMeasuredEvent> {
   private final Duration initialDelay;
   @Nullable
   private final Duration duration;
@@ -34,7 +35,7 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {
    * @param duration See {@link Builder#setDuration(Duration)}.
    * @param rateListener See {@link Builder#setRateListener(RateListener)}.
    */
-  protected ScheduleConfig(
+  protected ScheduledTaskConfig(
       final Duration initialDelay,
       @Nullable final Duration duration,
       @Nullable final RateListener<? super E> rateListener) {
@@ -69,7 +70,7 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {
    * <p>
    * An {@linkplain Optional#empty() empty} duration means that the task will be repeatedly executed
    * until one of the exceptional completions specified by
-   * {@link RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig)} occur.
+   * {@link RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig)} occur.
    */
   public final Optional<Duration> getDuration() {
     return Optional.ofNullable(duration);
@@ -85,11 +86,11 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName()
-        + "{initialDelay=" + initialDelay
-        + ", duration=" + duration
-        + ", rateListener=" + rateListener
-        + '}';
+    return getClass().getSimpleName() +
+        "{initialDelay=" + initialDelay +
+        ", duration=" + duration +
+        ", rateListener=" + rateListener +
+        '}';
   }
 
   @NotThreadSafe
@@ -103,13 +104,13 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {
     protected Builder() {
       initialDelay = Duration.ZERO;
       duration = null;
-      rateListener = DefaultRateListener.defaultRateListenerInstance();
+      rateListener = null;
     }
 
     /**
      * @param config Must not be null.
      */
-    public final Builder<E> set(final ScheduleConfig<E> config) {
+    public final Builder<E> set(final ScheduledTaskConfig<E> config) {
       checkNotNull(config, "config");
       initialDelay = config.getInitialDelay();
       duration = config.getDuration()
@@ -122,7 +123,7 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {
     /**
      * @param initialDelay Must not be {@linkplain Duration#isNegative() negative}.
      *
-     * @see ScheduleConfig#getInitialDelay()
+     * @see ScheduledTaskConfig#getInitialDelay()
      */
     public final Builder<E> setInitialDelay(final Duration initialDelay) {
       checkDuration(initialDelay, "initialDelay");
@@ -131,7 +132,7 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {
     }
 
     /**
-     * @see ScheduleConfig#getDuration()
+     * @see ScheduledTaskConfig#getDuration()
      */
     public final Builder<E> setDuration(@Nullable final Duration duration) {
       if (duration != null) {
@@ -143,15 +144,15 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {
     }
 
     /**
-     * @see ScheduleConfig#getRateListener()
+     * @see ScheduledTaskConfig#getRateListener()
      */
     public final Builder<E> setRateListener(@Nullable final RateListener<? super E> rateListener) {
       this.rateListener = rateListener;
       return this;
     }
 
-    public ScheduleConfig<E> build() {
-      return new ScheduleConfig<>(
+    public final ScheduledTaskConfig<E> buildScheduledTaskConfig() {
+      return new ScheduledTaskConfig<>(
           initialDelay,
           duration,
           rateListener);

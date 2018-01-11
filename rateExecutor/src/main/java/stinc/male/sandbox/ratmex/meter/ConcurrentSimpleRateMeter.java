@@ -209,9 +209,9 @@ public final class ConcurrentSimpleRateMeter<S> implements RateMeter<S> {//TODO 
 
   @Override
   public final String toString() {
-    return getClass().getSimpleName()
-        + "{rm=" + rm
-        + ", lockStrategy=" + lockStrategy
-        + '}';
+    return getClass().getSimpleName() +
+        "{rm=" + rm +
+        ", lockStrategy=" + lockStrategy +
+        '}';
   }
 }

@@ -29,7 +29,7 @@ public final class RateFailedException extends RuntimeException {
 
   /**
    * @return The target rate of completion of the
-   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled task}.
    */
   public final Rate getTargetRate() {
     return targetRate;

@@ -156,14 +156,14 @@ public final class RateMeterReading {
 
   @Override
   public final String toString() {
-    return getClass().getSimpleName()
-        + "{startNanos=" + startNanos
-        + ", tNanos=" + tNanos
-        + ", valueLong=" + valueLong
-        + ", valueDouble=" + valueDouble
-        + ", unit=" + unit
-        + ", accurate=" + accurate
-        + ", rounded=" + rounded
-        + '}';
+    return getClass().getSimpleName() +
+        "{startNanos=" + startNanos +
+        ", tNanos=" + tNanos +
+        ", valueLong=" + valueLong +
+        ", valueDouble=" + valueDouble +
+        ", unit=" + unit +
+        ", accurate=" + accurate +
+        ", rounded=" + rounded +
+        '}';
   }
 }

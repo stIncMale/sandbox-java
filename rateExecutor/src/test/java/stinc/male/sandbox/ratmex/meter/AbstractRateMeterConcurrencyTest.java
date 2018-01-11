@@ -135,14 +135,14 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
 
     @Override
     public final String toString() {
-      return getClass().getSimpleName()
-          + "{numberOfThreads=" + numberOfThreads
-          + ", numberOfSamples=" + numberOfSamples
-          + ", orderTicksByTime=" + orderTicksByTime
-          + ", tickToRateRatio=" + tickToRateRatio
-          + ", samplesInterval=" + samplesInterval
-          + ", repeatingInstants=" + repeatingInstants
-          + '}';
+      return getClass().getSimpleName() +
+          "{numberOfThreads=" + numberOfThreads +
+          ", numberOfSamples=" + numberOfSamples +
+          ", orderTicksByTime=" + orderTicksByTime +
+          ", tickToRateRatio=" + tickToRateRatio +
+          ", samplesInterval=" + samplesInterval +
+          ", repeatingInstants=" + repeatingInstants +
+          '}';
     }
   }
 

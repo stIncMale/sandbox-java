@@ -15,7 +15,7 @@ public interface RateListener<E extends RateMeasuredEvent> {
    * This method must never be called concurrently, and implementations of {@link RateMeasuringExecutorService} must not call the method concurrently.
    * <p>
    * Any {@link RuntimeException} thrown from this method causes the
-   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled execution}
+   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled execution}
    * for which the {@code event} was generated to terminate abnormally
    * (i.e. cause method {@linkplain ScheduledFuture#get()} to throw {@link ExecutionException}
    * which provides the thrown exception via {@link ExecutionException#getCause()}).
@@ -26,7 +26,7 @@ public interface RateListener<E extends RateMeasuredEvent> {
    * stay unchanged within an invocation of this method. Data extracted from the event can, however, be transferred anywhere if that data is either
    * primitive or immutable.
    *
-   * @return true if the {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled execution}
+   * @return true if the {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled execution}
    * for which the event was generated must continue; otherwise it will be {@linkplain ScheduledFuture#cancel(boolean) cancelled}.
    *
    * @throws RateFailedException May be thrown if the {@linkplain RateMeasuredEvent#getTargetRate() target rate} is not respected.

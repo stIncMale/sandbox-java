@@ -14,10 +14,10 @@ public class RateMeasuredEvent {
 
   /**
    * @param targetRate The target rate of completion of the
-   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled task}.
    * Must not be {@code null}.
    * @param completionRate The current completion rate of the
-   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled task}.
    * Must not be {@code null}.
    */
   public RateMeasuredEvent(final Rate targetRate, final RateMeterReading completionRate) {
@@ -29,7 +29,7 @@ public class RateMeasuredEvent {
 
   /**
    * @return The target rate of completion of the
-   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled task}.
    */
   public final Rate getTargetRate() {
     return targetRate;
@@ -37,7 +37,7 @@ public class RateMeasuredEvent {
 
   /**
    * @return The current completion rate of the
-   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+   * {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduledTaskConfig) scheduled task}.
    */
   public final RateMeterReading getCompletionRate() {
     return completionRate;
