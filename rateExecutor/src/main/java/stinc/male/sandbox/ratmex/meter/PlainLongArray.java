@@ -4,10 +4,10 @@ import javax.annotation.concurrent.NotThreadSafe;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 
 @NotThreadSafe
-final class SequentialLongArray implements LongArray {
+final class PlainLongArray implements LongArray {//TODO make public (add docs) because abstract classes are also marked TODO make public
   final long[] array;
 
-  SequentialLongArray(final int length) {
+  PlainLongArray(final int length) {
     checkArgument(length > 0, "length", "Must be positive");
     this.array = new long[length];
   }

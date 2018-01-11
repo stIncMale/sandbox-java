@@ -11,6 +11,13 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 /**
  * A configuration of a {@linkplain SubmitterWorkerRateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, SubmitterWorkerScheduleConfig) scheduled task}
  * for {@link SubmitterWorkerRateMeasuringExecutorService}.
+ * <p>
+ * The default values:
+ * <ul>
+ * <li>The default values from {@link ScheduleConfig}</li>
+ * <li>{@link #getSubmitterRateMeterSupplier()} - TODO</li>
+ * <li>{@link #getWorkerRateMeterSupplier()} - TODO</li>
+ * </ul>
  *
  * @param <E> A type of container with data provided to {@link RateListener} by {@link RateMeasuringExecutorService}.
  * @param <SRS> A type that represents {@linkplain RateMeter#stats() statistics} of submitter {@link RateMeter}.
@@ -38,14 +45,9 @@ public class SubmitterWorkerScheduleConfig<E extends RateMeasuredEvent, SRS, WRS
     return new Builder<>();
   }
 
-  public static final <E extends RateMeasuredEvent, SRS, WRS> Builder<E, SRS, WRS> newSubmitterWorkerScheduleConfigBuilder(
-      final ScheduleConfig<E> config) {
-    return new Builder<>(config);
-  }
-
   @Override
   public Builder<E, SRS, WRS> toBuilder() {
-    return new Builder<>(this);
+    return new Builder<E, SRS, WRS>().set(this);
   }
 
   /**
@@ -71,32 +73,14 @@ public class SubmitterWorkerScheduleConfig<E extends RateMeasuredEvent, SRS, WRS
       //TODO
     }
 
-    protected Builder(final SubmitterWorkerScheduleConfig<E, SRS, WRS> config) {
-      this();
+    /**
+     * @param config Must not be null.
+     */
+    public final Builder<E, SRS, WRS> set(final SubmitterWorkerScheduleConfig<E, SRS, WRS> config) {
       checkNotNull(config, "config");
+      set((ScheduleConfig<E>)config);
       submitterRateMeterSupplier = config.getSubmitterRateMeterSupplier();
       workerRateMeterSupplier = config.getWorkerRateMeterSupplier();
-    }
-
-    /**
-     * @param config Must not be null.
-     */
-    protected Builder(final ScheduleConfig<E> config) {
-      super(config);
-      checkNotNull(config, "config");
-      set(config);
-    }
-
-    /**
-     * @param config Must not be null.
-     */
-    public final Builder<E, SRS, WRS> set(final ScheduleConfig<E> config) {
-      checkNotNull(config, "config");
-      duration = config.getDuration()
-          .orElse(null);
-      initialDelay = config.getInitialDelay();
-      rateListener = config.getRateListener()
-          .orElse(null);
       return this;
     }
 

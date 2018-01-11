@@ -5,10 +5,10 @@ import javax.annotation.concurrent.ThreadSafe;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 
 @ThreadSafe
-final class ConcurrentLongArray implements LongArray {
+final class AtomikLongArray implements LongArray {//TODO mention in doc why spell Atomik (because of conflict with JDK AtomicLongArray)
   final AtomicLongArray array;
 
-  ConcurrentLongArray(final int length) {
+  AtomikLongArray(final int length) {
     checkArgument(length > 0, "length", "Must be positive");
     this.array = new AtomicLongArray(length);
   }

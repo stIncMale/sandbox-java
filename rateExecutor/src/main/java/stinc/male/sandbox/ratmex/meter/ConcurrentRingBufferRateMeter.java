@@ -7,7 +7,8 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * This thread-safe implementation uses a ring buffer to store and access a samples history.
+ * This thread-safe implementation uses a concurrent ring buffer with the underlying {@link AtomikLongArray}
+ * to store and access a samples history.
  * <p>
  * There are two modes:
  * <ul>
@@ -47,7 +48,7 @@ public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateM
   private final DefaultConcurrentRingBufferRateMeterStats stats;
 
   /**
-   * @return A default configuration.
+   * @return A default configuration, which is the default {@link ConcurrentRateMeterConfig}.
    */
   public static final ConcurrentRateMeterConfig defaultConfig() {
     return defaultConfig;
@@ -60,7 +61,7 @@ public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateM
    * @param config An additional {@linkplain #getConfig() configuration}. Must not be null.
    */
   public ConcurrentRingBufferRateMeter(final long startNanos, final Duration samplesInterval, final ConcurrentRateMeterConfig config) {
-    super(startNanos, samplesInterval, config, ConcurrentLongArray::new, false);
+    super(startNanos, samplesInterval, config, AtomikLongArray::new, false);
     stats = config.isCollectStats() ? new DefaultConcurrentRingBufferRateMeterStats() : null;
   }
 

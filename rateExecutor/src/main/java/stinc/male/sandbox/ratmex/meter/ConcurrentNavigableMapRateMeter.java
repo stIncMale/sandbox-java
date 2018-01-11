@@ -7,7 +7,8 @@ import javax.annotation.concurrent.ThreadSafe;
 import stinc.male.sandbox.ratmex.NanosComparator;
 
 /**
- * This thread-safe implementation uses {@link NavigableMap} to store and access a samples history.
+ * This thread-safe implementation uses a concurrent {@link NavigableMap} (currently {@link ConcurrentSkipListMap})
+ * to store and access a samples history.
  * <p>
  * <i>Advantages</i><br>
  * <ul>
@@ -31,7 +32,7 @@ public final class ConcurrentNavigableMapRateMeter extends AbstractNavigableMapR
       .build();
 
   /**
-   * @return A default configuration.
+   * @return A default configuration, which is the default {@link ConcurrentRateMeterConfig}.
    */
   public static final ConcurrentRateMeterConfig defaultConfig() {
     return defaultConfig;

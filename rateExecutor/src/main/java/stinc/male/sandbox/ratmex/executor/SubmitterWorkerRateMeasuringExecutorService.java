@@ -151,6 +151,7 @@ public class SubmitterWorkerRateMeasuringExecutorService
     this.shutdownSubmitterAndWorker = shutdownSubmitterAndWorker;
   }
 
+  //TODO specify the default config
   @Override
   public ScheduledFuture<?> scheduleAtFixedRate(final Runnable task, final Rate targetRate) throws RejectedExecutionException {
     checkNotNull(task, "task");

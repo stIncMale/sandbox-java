@@ -11,6 +11,13 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 
 /**
  * A configuration that can be used to create {@link AbstractRateMeter}.
+ * <p>
+ * The default values:
+ * <ul>
+ * <li>{@link #getTicksCounterSupplier()} - {@link LongTicksCounter}{@code ::}{@link LongTicksCounter#LongTicksCounter(long) new}</li>
+ * <li>{@link #getTimeSensitivity()} - {@link Optional}{@code .}{@linkplain Optional#empty() empty()}</li>
+ * <li>{@link #getHistoryLength()} - 2</li>
+ * </ul>
  */
 @Immutable
 public class RateMeterConfig {
@@ -44,15 +51,13 @@ public class RateMeterConfig {
   }
 
   public Builder toBuilder() {
-    return new Builder(this);
+    return new Builder().set(this);
   }
 
   /**
    * Specifies a supplier which must be used by {@link AbstractRateMeter} to create ticks counters.
    * Note that if {@link AbstractRateMeter} is used concurrently, then the supplier must provide a thread-safe {@link TicksCounter}.
    * If this constraint is violated, then the behavior is unspecified.
-   *
-   * @return {@link LongAdderTicksCounter}{@code ::}{@link LongAdderTicksCounter#LongAdderTicksCounter(long) new} by default.
    */
   public final Function<Long, ? extends TicksCounter> getTicksCounterSupplier() {
     return ticksCounterSupplier;
@@ -62,8 +67,6 @@ public class RateMeterConfig {
    * An {@linkplain Optional#empty() empty} time sensitivity means that {@link AbstractRateMeter}
    * will automatically use {@linkplain RateMeter#getSamplesInterval() samples interval} / 20 as the time sensitivity,
    * which in turn means that the samples interval must be a multiple of 20.
-   *
-   * @return An {@linkplain Optional#empty() empty} {@link Optional} by default.
    *
    * @see RateMeter#getTimeSensitivity()
    */
@@ -85,8 +88,6 @@ public class RateMeterConfig {
    * for example the performance of {@link NavigableMapRateMeter}, {@link ConcurrentNavigableMapRateMeter}
    * degrades as the length of the history grows,
    * while {@link RingBufferRateMeter} and {@link ConcurrentRingBufferRateMeter} can tolerate an arbitrary long history.
-   *
-   * @return 30 by default.
    */
   public final int getHistoryLength() {
     return historyLength;
@@ -109,20 +110,21 @@ public class RateMeterConfig {
     protected int historyLength;
 
     protected Builder() {
-      ticksCounterSupplier = LongAdderTicksCounter::new;
+      ticksCounterSupplier = LongTicksCounter::new;
       timeSensitivity = null;
-      historyLength = 30;
+      historyLength = 2;
     }
 
     /**
      * @param config Must not be null.
      */
-    protected Builder(final RateMeterConfig config) {
+    public final Builder set(final RateMeterConfig config) {
       checkNotNull(config, "config");
       ticksCounterSupplier = config.getTicksCounterSupplier();
       timeSensitivity = config.getTimeSensitivity()
           .orElse(null);
       historyLength = config.getHistoryLength();
+      return this;
     }
 
     /**

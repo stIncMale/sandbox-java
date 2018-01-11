@@ -11,11 +11,18 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 
 /**
  * A configuration of a {@linkplain RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig) scheduled task}.
+ * <p>
+ * The default values:
+ * <ul>
+ * <li>{@link #getInitialDelay()} - {@link Duration#ZERO}</li>
+ * <li>{@link #getDuration()} - {@link Optional}{@code .}{@linkplain Optional#empty() empty()}</li>
+ * <li>{@link #getRateListener()} - TODO specify default which should extend DefaultRateListener</li>
+ * </ul>
  *
  * @param <E> A type of container with data provided to {@link RateListener} by {@link RateMeasuringExecutorService}.
  */
 @Immutable
-public class ScheduleConfig<E extends RateMeasuredEvent> {//TODO move defaults to config class spec; Classes (RateMeter, Executor) must specify configs they use
+public class ScheduleConfig<E extends RateMeasuredEvent> {
   private final Duration initialDelay;
   @Nullable
   private final Duration duration;
@@ -46,13 +53,11 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {//TODO move defaults t
   }
 
   public Builder<E> toBuilder() {
-    return new Builder<>(this);
+    return new Builder<E>().set(this);
   }
 
   /**
    * Specifies the time to delay the first execution of a scheduled task.
-   *
-   * @return {@link Duration#ZERO} by default.
    */
   public final Duration getInitialDelay() {
     return initialDelay;
@@ -65,8 +70,6 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {//TODO move defaults t
    * An {@linkplain Optional#empty() empty} duration means that the task will be repeatedly executed
    * until one of the exceptional completions specified by
    * {@link RateMeasuringExecutorService#scheduleAtFixedRate(Runnable, Rate, ScheduleConfig)} occur.
-   *
-   * @return An {@linkplain Optional#empty() empty} {@link Optional} by default.
    */
   public final Optional<Duration> getDuration() {
     return Optional.ofNullable(duration);
@@ -75,8 +78,6 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {//TODO move defaults t
   /**
    * A listener allowing monitoring the rate and reacting if there are deviations from the
    * {@linkplain RateMeasuredEvent#getTargetRate() target rate}.
-   *
-   * @return TODO specify default which should extend
    */
   public final Optional<RateListener<? super E>> getRateListener() {
     return Optional.ofNullable(rateListener);
@@ -108,13 +109,14 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {//TODO move defaults t
     /**
      * @param config Must not be null.
      */
-    protected Builder(final ScheduleConfig<? super E> config) {
+    public final Builder<E> set(final ScheduleConfig<E> config) {
       checkNotNull(config, "config");
       initialDelay = config.getInitialDelay();
       duration = config.getDuration()
           .orElse(null);
       rateListener = config.getRateListener()
           .orElse(null);
+      return this;
     }
 
     /**
@@ -122,7 +124,7 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {//TODO move defaults t
      *
      * @see ScheduleConfig#getInitialDelay()
      */
-    public final ScheduleConfig.Builder<E> setInitialDelay(final Duration initialDelay) {
+    public final Builder<E> setInitialDelay(final Duration initialDelay) {
       checkDuration(initialDelay, "initialDelay");
       this.initialDelay = initialDelay;
       return this;
@@ -131,7 +133,7 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {//TODO move defaults t
     /**
      * @see ScheduleConfig#getDuration()
      */
-    public final ScheduleConfig.Builder<E> setDuration(@Nullable final Duration duration) {
+    public final Builder<E> setDuration(@Nullable final Duration duration) {
       if (duration != null) {
         checkArgument(!duration.isZero(), "duration", "Must not be zero");
         checkArgument(!duration.isNegative(), "duration", "Must not be negative");
@@ -143,7 +145,7 @@ public class ScheduleConfig<E extends RateMeasuredEvent> {//TODO move defaults t
     /**
      * @see ScheduleConfig#getRateListener()
      */
-    public final ScheduleConfig.Builder<E> setRateListener(@Nullable final RateListener<? super E> rateListener) {
+    public final Builder<E> setRateListener(@Nullable final RateListener<? super E> rateListener) {
       this.rateListener = rateListener;
       return this;
     }

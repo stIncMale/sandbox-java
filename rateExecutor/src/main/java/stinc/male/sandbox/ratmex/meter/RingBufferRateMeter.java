@@ -5,7 +5,8 @@ import java.util.Optional;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
- * This implementation uses a ring buffer to store and access a samples history.
+ * This implementation is not thread-safe and uses a sequential ring buffer with the underlying {@link PlainLongArray}
+ * to store and access a samples history.
  * <p>
  * <i>Advantages</i><br>
  * <ul>
@@ -26,17 +27,14 @@ import javax.annotation.concurrent.NotThreadSafe;
  */
 @NotThreadSafe
 public final class RingBufferRateMeter extends AbstractRingBufferRateMeter<Void, ConcurrentRateMeterConfig> {
-  private static final ConcurrentRateMeterConfig defaultConfig;
-
-  static {
-    final ConcurrentRateMeterConfig.Builder defaultConfigBuilder = ConcurrentRateMeterConfig.newBuilder();
-    defaultConfigBuilder.setTicksCounterSupplier(LongTicksCounter::new)
-        .setHistoryLength(2);
-    defaultConfig = defaultConfigBuilder.build();
-  }
+  private static final ConcurrentRateMeterConfig defaultConfig =
+      ((ConcurrentRateMeterConfig.Builder)ConcurrentRateMeterConfig.newBuilder()
+          .set(RateMeterConfig.newBuilder()
+              .build()))//set back RateMeterConfig defaults because we are using ConcurrentRateMeterConfig for a sequential case
+          .build();
 
   /**
-   * @return A default configuration.
+   * @return A default configuration, which is the default {@link RateMeterConfig}.
    */
   public static final RateMeterConfig defaultConfig() {
     return defaultConfig;
@@ -49,8 +47,8 @@ public final class RingBufferRateMeter extends AbstractRingBufferRateMeter<Void,
    * @param config An additional {@linkplain #getConfig() configuration}. Must not be null.
    */
   public RingBufferRateMeter(final long startNanos, final Duration samplesInterval, final RateMeterConfig config) {
-    this(startNanos, samplesInterval, ConcurrentRateMeterConfig.newBuilder(defaultConfig)
-        .set(config)
+    this(startNanos, samplesInterval, ((ConcurrentRateMeterConfig.Builder)defaultConfig().toBuilder()
+        .set(config))
         .build());
   }
 
@@ -63,7 +61,7 @@ public final class RingBufferRateMeter extends AbstractRingBufferRateMeter<Void,
   }
 
   private RingBufferRateMeter(final long startNanos, final Duration samplesInterval, final ConcurrentRateMeterConfig config) {
-    super(startNanos, samplesInterval, config, SequentialLongArray::new, true);
+    super(startNanos, samplesInterval, config, PlainLongArray::new, true);
   }
 
   /**

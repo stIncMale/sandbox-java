@@ -12,6 +12,18 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 /**
  * A configuration that can be used to create concurrent implementations of {@link AbstractRateMeter},
  * e.g. {@link ConcurrentNavigableMapRateMeter}, {@link ConcurrentRingBufferRateMeter}.
+ * <p>
+ * The default values:
+ * <ul>
+ * <li>The default values from {@link RateMeterConfig} except for {@link #getHistoryLength()}, {@link #getTicksCounterSupplier()}</li>
+ * <li>{@link #getTicksCounterSupplier()} - {@link LongAdderTicksCounter}{@code ::}{@link LongAdderTicksCounter#LongAdderTicksCounter(long) new}</li>
+ * <li>{@link #getHistoryLength()} - 30</li>
+ * <li>{@link #getMaxTicksCountAttempts()} - 6</li>
+ * <li>{@link #isStrictTick()} - true</li>
+ * <li>{@link #isCollectStats()} - false</li>
+ * <li>{@link #getWaitStrategySupplier()} - {@link ParkWaitStrategy}{@code ::}{@link ParkWaitStrategy#defaultInstance() defaultInstance}</li>
+ * <li>{@link #getLockStrategySupplier()} - {@link StampedLockStrategy}{@code ::}{@link StampedLockStrategy#StampedLockStrategy new}</li>
+ * </ul>
  */
 @Immutable
 public class ConcurrentRateMeterConfig extends RateMeterConfig {
@@ -58,13 +70,9 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
     return new Builder();
   }
 
-  public static Builder newBuilder(final RateMeterConfig config) {
-    return new Builder(config);
-  }
-
   @Override
   public Builder toBuilder() {
-    return new Builder(this);
+    return new Builder().set(this);
   }
 
   /**
@@ -75,8 +83,6 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
    * Implementations may allow a race condition (for performance reasons) while counting ticks.
    * When running out of the number of attempts such implementations may choose to fall over to an approach that excludes the race
    * and allows to eventually count the ticks.
-   *
-   * @return 6 by default.
    */
   public final int getMaxTicksCountAttempts() {
     return maxTicksCountAttempts;
@@ -86,8 +92,6 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
    * Specifies if {@link ConcurrentRingBufferRateMeter} (or any other {@link RateMeter} which explicitly says it does this)
    * must guarantee a strict behavior of {@link RateMeter#tick(long, long)} method.
    *
-   * @return true by default.
-   *
    * @see ConcurrentRateMeterStats#failedAccuracyEventsCountForTick()
    */
   public final boolean isStrictTick() {
@@ -96,8 +100,6 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
 
   /**
    * This configuration parameter specifies if a {@link RateMeter} which can collect {@link RateMeter#stats() stats} must do so.
-   *
-   * @return false by default.
    */
   public final boolean isCollectStats() {
     return collectStats;
@@ -105,8 +107,6 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
 
   /**
    * Specifies which {@link WaitStrategy} must be used by a thread-safe implementation {@link RateMeter} (if it at all uses it).
-   *
-   * @return {@link ParkWaitStrategy}{@code ::}{@link ParkWaitStrategy#defaultInstance() defaultInstance} by default.
    */
   public final Supplier<? extends WaitStrategy> getWaitStrategySupplier() {
     return waitStrategySupplier;
@@ -114,8 +114,6 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
 
   /**
    * Specifies which {@link LockStrategy} must be used by a thread-safe implementation {@link RateMeter} (if it at all uses it).
-   *
-   * @return {@link StampedLockStrategy}{@code ::}{@link StampedLockStrategy#StampedLockStrategy new} by default.
    */
   public final Supplier<? extends LockStrategy> getLockStrategySupplier() {
     return lockStrategySupplier;
@@ -144,6 +142,8 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
     protected Supplier<? extends LockStrategy> lockStrategySupplier;
 
     protected Builder() {
+      ticksCounterSupplier = LongAdderTicksCounter::new;
+      historyLength = 30;
       maxTicksCountAttempts = 6;
       strictTick = true;
       collectStats = false;
@@ -154,33 +154,14 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
     /**
      * @param config Must not be null.
      */
-    protected Builder(final ConcurrentRateMeterConfig config) {
-      super(config);
+    public final Builder set(final ConcurrentRateMeterConfig config) {
+      checkNotNull(config, "config");
+      set((RateMeterConfig)config);
       maxTicksCountAttempts = config.getMaxTicksCountAttempts();
       strictTick = config.isStrictTick();
       collectStats = config.isCollectStats();
       waitStrategySupplier = config.getWaitStrategySupplier();
       lockStrategySupplier = config.getLockStrategySupplier();
-    }
-
-    /**
-     * @param config Must not be null.
-     */
-    protected Builder(final RateMeterConfig config) {
-      this();
-      checkNotNull(config, "config");
-      set(config);
-    }
-
-    /**
-     * @param config Must not be null.
-     */
-    public final Builder set(final RateMeterConfig config) {
-      checkNotNull(config, "config");
-      ticksCounterSupplier = config.getTicksCounterSupplier();
-      historyLength = config.getHistoryLength();
-      timeSensitivity = config.getTimeSensitivity()
-          .orElse(null);
       return this;
     }
 
