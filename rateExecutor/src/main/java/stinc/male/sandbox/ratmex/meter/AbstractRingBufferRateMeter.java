@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import stinc.male.sandbox.ratmex.NanosComparator;
 import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
+import static java.lang.Math.min;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
@@ -82,7 +83,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
       }
       atomicSamplesWindowShiftSteps = new AtomicLong();
       samplesWindowShiftSteps = 0;
-      atomicCompletedSamplesWindowShiftSteps = new AtomicLong();
+      atomicCompletedSamplesWindowShiftSteps = new AtomicLong();//TODO make simple volatile?
       completedSamplesWindowShiftStepsWaitStrategy = config.getWaitStrategySupplier()
           .get();
     }
@@ -270,23 +271,20 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
               //numberOfSteps is by how many steps we have moved the samples window
               final long numberOfSteps = targetSamplesWindowShiftSteps - samplesWindowShiftSteps;
               waitForCompletedWindowShiftSteps(samplesWindowShiftSteps);//"serializing waiting condition"
-              /*We are going to reset some or all samples because we need to reuse them (this is a ring buffer).
-                Note that no other threads can concurrently reset samples because they are waiting on the "serializing waiting condition",
-                which can be found above.*/
-              if (numberOfSteps < samplesHistory.length()) {//reset some (not all) samples
-                for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
-                    i < numberOfSteps && i < samplesHistory.length();
-                    idx = nextSamplesWindowIdx(idx), i++) {
-                  tickResetSample(idx, idx == targetIdx ? count : 0);
-                }
-              } else {//reset all samples
-                for (int idx = 0; idx < samplesHistory.length(); idx++) {
-                  tickResetSample(idx, idx == targetIdx ? count : 0);
-                }
+              /*We are going to reset some (or all) samples because we need to reuse them (this is a ring buffer).
+                Note that no other threads can concurrently reset samples because they are waiting on the "serializing waiting condition" above.*/
+              final int numberOfResetIterations = (int)min(numberOfSteps, samplesHistory.length());//it's safe to cast to int
+              for (int idx = nextSamplesWindowIdx(rightSamplesWindowIdx(samplesWindowShiftSteps)), i = 0;
+                  i < numberOfResetIterations;
+                  idx = nextSamplesWindowIdx(idx), i++) {
+                tickResetSample(idx, idx == targetIdx ? count : 0);
+                final long newCompletedSamplesWindowShiftSteps = targetSamplesWindowShiftSteps - numberOfResetIterations + 1 + i;
+                assert (numberOfSteps <= samplesHistory.length() &&
+                    newCompletedSamplesWindowShiftSteps == atomicCompletedSamplesWindowShiftSteps.get() + 1) ||
+                    (numberOfSteps > samplesHistory.length());
+                atomicCompletedSamplesWindowShiftSteps.set(newCompletedSamplesWindowShiftSteps);//complete current single step
               }
-              long completedSamplesWindowShiftSteps = atomicCompletedSamplesWindowShiftSteps.get();
-              assert samplesWindowShiftSteps == completedSamplesWindowShiftSteps;
-              atomicCompletedSamplesWindowShiftSteps.set(targetSamplesWindowShiftSteps);//complete steps up to the targetSamplesWindowShiftSteps
+              assert targetSamplesWindowShiftSteps == atomicCompletedSamplesWindowShiftSteps.get();
             } else {
               waitForCompletedWindowShiftSteps(targetSamplesWindowShiftSteps);
               tickAccumulateSample(targetIdx, count, targetSamplesWindowShiftSteps);
@@ -543,7 +541,22 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
     return result;
   }
 
-  private final long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {
+  /**
+   * <pre>{@code
+   *                                                |<---------samplesWindowShiftSteps------------->|
+   *                                                |                                               |
+   *                                                |               leftSamplesWindowIdx  rightSamplesWindowIdx
+   *                            |<--samplesWindow-->|                           |                   |                    idx
+   * ...|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2...
+   *        (-------------------(-------------------]       |                   |                   |
+   *        |                                       |       (-------------------(-------------------]
+   *        |<--samplesHistory, historyLength==2--->|                                               |
+   *               samplesHistory.length()==10      |                                               |                    t
+   * -----------------------------------------------|-----------------------------------------------|------------------->
+   *                                            startNanos                               rightSamplesWindowBoundary
+   * }</pre>
+   */
+  private final long rightSamplesWindowBoundary(final long samplesWindowShiftSteps) {//TODO min historyLength == 3 ?
     return getStartNanos() + samplesWindowShiftSteps * samplesWindowStepNanos;
   }
 

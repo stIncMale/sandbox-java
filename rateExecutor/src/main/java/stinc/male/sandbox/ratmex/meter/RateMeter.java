@@ -27,7 +27,8 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * <p>
  * <i>Samples window</i><br>
  * A samples window is a half-closed time interval
- * ({@linkplain #rightSamplesWindowBoundary() rightmostScoredInstant} - {@linkplain #getSamplesInterval() samplesInterval}; rightmostScoredInstant]
+ * ({@linkplain #rightSamplesWindowBoundary() rightmostRegisteredInstant} - {@linkplain #getSamplesInterval() samplesInterval};
+ * {@linkplain #rightSamplesWindowBoundary() rightmostRegisteredInstant}]
  * (comparison according to {@link System#nanoTime()}).
  * Samples window can only be moved to the right and the only way to do this is to call {@link #tick(long, long)}.
  * <p>
@@ -40,21 +41,19 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * <p>
  * For example if samplesInterval is 30ns,<br>
  * startNanos is 10ns,<br>
- * and the only scored ticks are<br>
+ * and the only registered ticks are<br>
  * (25ns, 1) (this is tNanos, not tNanos - startNanos),<br>
  * (30ns, 1),<br>
  * (50ns, 8),<br>
  * (60ns, -2),<br>
  * then the current rate is<br>
  * (8 - 2) / samplesInterval = 6samplesInterval<sup>-1</sup> = 6 / 30ns = 0.2ns<sup>-1</sup>.
- * <pre>
- *              25ns      50ns
- *                    |                        |                                                 t
- * ----|---------|----1----1---------|---------8--------(-2)------|---------|---------|---------&gt;
- *     |                   |                             |
- * startNanos        30ns                     60ns
- *                         (--------samples window-------]
- * </pre>
+ * <pre>{@code
+ *       10ns           25ns 30ns                50ns      60ns                                           t
+ * --|----|----|----|----1----1----|----|----|----8----|---(-2)--|----|----|----|----|----|----|----|---->
+ *        |                   |                             |
+ *    startNanos              (--------samples window-------]
+ * }</pre>
  * <p>
  * <b>Allowed values</b><br>
  * samplesInterval (in nanos) \u2208 [1, {@link Long#MAX_VALUE} / (historyLength + 1) - 1],<br>
@@ -107,11 +106,11 @@ public interface RateMeter<S> {
   Duration getSamplesInterval();
 
   /**
-   * A time sensitivity which affects the behaviour of {@link RateMeter#tick(long, long)} method in a way that allows scoring the specified sample
-   * at an instant that differs from the specified one not more than by the time sensitivity, which may be observed via
-   * {@link #rightSamplesWindowBoundary()}.
+   * A time sensitivity which affects the behaviour of {@link RateMeter#tick(long, long)} method in a way that allows registering a sample
+   * at an instant that differs from the specified one not more than by the time sensitivity.
    * <p>
-   * This method can be considered as an important implementation detail leaked through {@link RateMeter}'s
+   * This behavior may be observed via {@link #rightSamplesWindowBoundary()}.
+   * Hence this method can be considered as an important implementation detail leaked through {@link RateMeter}'s
    * <a href="https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/">leaky abstraction</a>.
    * <p>
    * <b>Implementation considerations</b><br>
@@ -130,7 +129,7 @@ public interface RateMeter<S> {
    * At the very beginning this is equal to {@link #getStartNanos()}.
    * This border can be moved to the right by the {@link #tick(long, long)} method.
    *
-   * @return The rightmost {@linkplain #tick(long, long) scored} instant.
+   * @return The rightmost {@linkplain #tick(long, long) registered} instant.
    */
   long rightSamplesWindowBoundary();
 
@@ -161,15 +160,15 @@ public interface RateMeter<S> {
   long ticksTotalCount();
 
   /**
-   * Scores a sample of {@code count} ticks at {@code tNanos} instant.
+   * Registers a sample of {@code count} ticks at {@code tNanos} instant.
    * If {@code tNanos} is greater than current {@link #rightSamplesWindowBoundary()}
    * then this method moves the samples window such that its right boundary is at {@code tNanos}.
    *
    * @param count Number of ticks. May be negative, zero, or positive.
    * If zero then the method does nothing,
-   * otherwise adds {@code count} to the currently scored number of ticks at the specified instant,
-   * or just remembers {@code count} ticks if no ticks were scored at the specified instant.
-   * @param tNanos An instant (a pair (startNanos, elapsedNanos)) at which {@code count} ticks need to be scored.
+   * otherwise adds {@code count} to the currently registered number of ticks at the specified instant,
+   * or just remembers {@code count} ticks if no ticks were registered at the specified instant.
+   * @param tNanos An instant (a pair (startNanos, elapsedNanos)) at which {@code count} ticks need to be registered.
    */
   void tick(final long count, final long tNanos);
 

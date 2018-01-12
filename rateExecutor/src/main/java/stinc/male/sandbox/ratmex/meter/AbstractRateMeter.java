@@ -122,7 +122,7 @@ public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements
   }
 
   /**
-   * This method should be used to check {@code tNanos} argument in methods such as {@link #rate(long)}, etc.
+   * This method should be used to check {@code tNanos} argument in methods such as {@link #rate(long)}, {@link #tick(long, long)} etc.
    *
    * @param tNanos A checked argument.
    * @param safeParamName A parameter name that will be used as is without any checks.
