@@ -2,7 +2,6 @@ package stinc.male.sandbox.ratmex.executor;
 
 import java.time.Duration;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
