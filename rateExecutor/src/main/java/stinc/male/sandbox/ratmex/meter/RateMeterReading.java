@@ -129,7 +129,7 @@ public final class RateMeterReading {
 
   /**
    * @return A flag that specifies whether a {@link RateMeter} was able to provide an accurate reading,
-   * or it failed and returned average or approximate rate (see {@link RateMeter}).
+   * or returned an average or an approximate rate (see {@link RateMeter#rate(long)}).
    */
   public final boolean isAccurate() {
     return accurate;

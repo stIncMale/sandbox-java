@@ -9,11 +9,11 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.conve
 import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTNanos;
 
 /**
- * A utility that measures rate of ticks.
+ * A utility that measures a rate of ticks by counting ticks in a moving time interval.
  * <p>
  * <b>Glossary</b><br>
  * <i>Tick</i><br>
- * A tick is any event which is registered with {@link #tick(long, long)} method.
+ * A tick is any event which is registered via {@link #tick(long, long)} method.
  * <p>
  * <i>Instant</i><br>
  * {@link RateMeter} treats instants as the time (number of nanoseconds) elapsed since the {@linkplain #getStartNanos() start}.
@@ -23,7 +23,7 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * All nanosecond values are compared as specified by {@link System#nanoTime()}.
  * <p>
  * <i>Sample</i><br>
- * A sample is a pair (tNanos, ticksCount), where ticksCount \u2208 [{@link Long#MIN_VALUE}; {@link Long#MAX_VALUE}].
+ * A sample is a pair (tNanos, ticksCount).
  * <p>
  * <i>Samples window</i><br>
  * A samples window is a half-closed time interval
@@ -31,12 +31,21 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * {@linkplain #rightSamplesWindowBoundary() rightmostRegisteredInstant}]
  * (comparison according to {@link System#nanoTime()}).
  * Samples window can only be moved to the right and the only way to do this is to call {@link #tick(long, long)}.
+ * <pre>{@code
+ *                                        (-------movedSamplesWindow----]
+ *                                        |                             |
+ *   (--------samplesWindow--------]      |<------samplesInterval------>|                                              t
+ * --|-----------------------------|------|-----------------------------|--------------------------------------------->
+ *                                 |                                    |
+ *                             startNanos                             tNanos
+ *                                 |<-----------elapsedNanos----------->|
+ * }</pre>
  * <p>
  * <i>Current ticks</i><br>
  * Current ticks are those registered inside the current samples window.
  * <p>
  * <i>Rate</i><br>
- * A rate (or more precisely an instant, or current rate) is calculated based on current ticks
+ * A rate (a.k.a. instant rate, current rate) is calculated based on current ticks
  * and by default is measured in samplesInterval<sup>-1</sup>, hence current rate value always equals to the current ticks count.
  * <p>
  * For example if samplesInterval is 30ns,<br>
@@ -49,19 +58,46 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * then the current rate is<br>
  * (8 - 2) / samplesInterval = 6samplesInterval<sup>-1</sup> = 6 / 30ns = 0.2ns<sup>-1</sup>.
  * <pre>{@code
- *       10ns           25ns 30ns                50ns      60ns                                           t
- * --|----|----|----|----1----1----|----|----|----8----|---(-2)--|----|----|----|----|----|----|----|---->
- *        |                   |                             |
- *    startNanos              (--------samples window-------]
+ *       10ns           25ns 30ns                50ns      60ns                                                        t
+ * --|----|----|----|----1----1----|----|----|----8----|---(-2)--|----|----|----|----|----|----|----|----|----|----|-->
+ *        |                   (--------samplesWindow--------]
+ *    startNanos
+ * }</pre>
+ * <p>
+ * <i>Samples history</i><br>
+ * A half-closed interval which is equal to the union of adjacent samples windows. Samples history includes samples registered inside it.
+ * The length of a samples history is always a multiple of the length of a samples window (i.e. {@linkplain #getSamplesInterval() samplesInterval}).
+ * <pre>{@code
+ *                  (-----------------------------*--------samplesWindow--------]
+ *                                                |                             |
+ *                             leftNanos is not included in samplesWindow       |
+ *                                 but is included in samplesHistory            |
+ *                                                |                             |                                      t
+ * -----------------|-----------------------------|-----------------------------|------------------------------------->
+ *                  |                         leftNanos                         |
+ *                  |                                                           |
+ *                  |<-------------samplesHistory, historyLength==2------------>|
+ * }</pre>
+ * <p>
+ * <i>Safe samples history</i><br>
+ * A part of samples history that includes everything except for the leftmost samples window.
+ * It is possible to calculate the rate for any instant inside the safe samples history, or ahead (to the right) of it.
+ * The minimal allowed length of samples history is 2samplesInterval
+ * because this gives the minimal possible safe samples history with length equal to samplesInterval.
+ * <pre>{@code
+ *                  (-----------------------------*-----------------------------*--------samplesWindow--------]        t
+ * -----------------|-----------------------------|------------------------------------------------------------------->
+ *                  |                             |                                                           |
+ *                  |                             |<--------------------safeSamplesHistory------------------->|
+ *                  |                                                                                         |
+ *                  |<------------------------- safeSamplesHistory, historyLength==3------------------------->|
  * }</pre>
  * <p>
  * <b>Allowed values</b><br>
+ * ticksCount \u2208 [{@link Long#MIN_VALUE}; {@link Long#MAX_VALUE}],<br>
  * samplesInterval (in nanos) \u2208 [1, {@link Long#MAX_VALUE} / (historyLength + 1) - 1],<br>
  * tNanos \u2208 [startNanos, startNanos - (historyLength + 1) * samplesInterval + {@link Long#MAX_VALUE}]
- * (comparison according to {@link System#nanoTime()}),
- * where historyLength is the length of samples history maintained by the {@link RateMeter} measured in samplesInterval units.
- * Note that the specification of {@link RateMeter#rate(long)} implies that any {@link RateMeter}
- * must maintain samples history for at least 2samplesInterval.
+ * (comparison according to {@link System#nanoTime()}).
  * <p>
  * <b>API notes</b><br>
  * This interface is designed to allow garbage-free implementations and usage scenarios.
@@ -89,6 +125,7 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  *
  * @param <S> A type that represents {@linkplain #stats() statistics}.
  */
+//TODO implement compile-time assertions as per https://stackoverflow.com/questions/4624919/performance-drag-of-java-assertions-when-disabled
 public interface RateMeter<S> {
   /**
    * @return A starting point that is used to calculate elapsed nanoseconds.
@@ -281,9 +318,7 @@ public interface RateMeter<S> {
   /**
    * Calculates rate of ticks (measured in samplesInterval<sup>-1</sup>)
    * as if {@code tNanos} were the right boundary of the samples window,
-   * if {@code tNanos} is ahead of or within the samples history
-   * (i.e. in the most conservative case ahead of {@link #rightSamplesWindowBoundary()} - {@link #getSamplesInterval()},
-   * but an implementation may maintain samples history longer than 2samplesInterval, thus relaxing this boundary),
+   * if {@code tNanos} is ahead of or within the safe samples history;
    * otherwise returns {@link #rateAverage()}.
    *
    * @param tNanos An effective (imaginary) right boundary of the samples window.

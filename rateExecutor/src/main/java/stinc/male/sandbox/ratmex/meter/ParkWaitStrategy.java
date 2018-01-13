@@ -65,7 +65,7 @@ public final class ParkWaitStrategy implements WaitStrategy {
         do {
           Thread.onSpinWait();
           final long delayNanos = rnd.nextLong(minDelayNanos, maxDelayNanos);
-          LockSupport.parkNanos(rnd.nextLong(delayNanos));
+          LockSupport.parkNanos(condition, rnd.nextLong(delayNanos));
           if (Thread.interrupted()) {
             interrupted = true;
           }
