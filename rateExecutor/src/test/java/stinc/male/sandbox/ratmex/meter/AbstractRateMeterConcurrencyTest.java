@@ -25,6 +25,7 @@ import stinc.male.sandbox.ratmex.meter.RateMeterConfig.Builder;
 import stinc.male.sandbox.ratmex.TestTag;
 import static java.time.Duration.ofNanos;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
 @Tag(TestTag.CONCURRENCY)
@@ -101,9 +102,16 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
           }
         });
     assertEquals(tickGenerator.rightmostTNanos(), rm.rightSamplesWindowBoundary(), format("Iteration#%s, %s", iterationIdx, tp));
-    assertEquals(tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount(), format("Iteration#%s, %s", iterationIdx, tp));
     assertEquals(tickGenerator.totalCount(), rm.ticksTotalCount(), format("Iteration#%s, %s", iterationIdx, tp));
     final RateMeterReading reading = new RateMeterReading();
+    assertTrue(rm.ticksCount(reading)
+        .isAccurate(), format("Iteration#%s, %s", iterationIdx, tp));
+    assertEquals(
+        tickGenerator.countRightmost(tp.samplesInterval.toNanos()),
+        rm.ticksCount(reading)
+            .getValueLong(),
+        format("Iteration#%s, %s", iterationIdx, tp));
+    assertEquals(tickGenerator.countRightmost(tp.samplesInterval.toNanos()), rm.ticksCount(), format("Iteration#%s, %s", iterationIdx, tp));
     assertEquals(rm.ticksCount(reading)
         .getTNanos(), rm.rightSamplesWindowBoundary(), format("Iteration#%s, %s", iterationIdx, tp));
     assertEquals(rm.ticksCount(reading)

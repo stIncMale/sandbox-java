@@ -126,6 +126,7 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * @param <S> A type that represents {@linkplain #stats() statistics}.
  */
 //TODO implement compile-time assertions as per https://stackoverflow.com/questions/4624919/performance-drag-of-java-assertions-when-disabled
+//TODO create resettable RateMeter which aggregates and recreated RateMeter's
 public interface RateMeter<S> {
   /**
    * @return A starting point that is used to calculate elapsed nanoseconds.

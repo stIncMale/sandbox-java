@@ -365,12 +365,12 @@ public abstract class AbstractRateMeterUnitTest<B extends Builder, C extends Rat
       final boolean accurate,
       final boolean rounded,
       final RateMeterReading reading) {
-    assertDoubleEquals(expectedValue, reading.getValueDouble());
     assertEquals(expectedTNanos, reading.getTNanos());
     if (accurate) {
       assertTrue(reading.isAccurate());
     } else {
       assertFalse(reading.isAccurate());
     }
+    assertDoubleEquals(expectedValue, reading.getValueDouble());
   }
 }

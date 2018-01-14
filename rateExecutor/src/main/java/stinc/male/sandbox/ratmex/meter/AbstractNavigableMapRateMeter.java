@@ -303,13 +303,13 @@ abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig
    * The reading is not {@linkplain RateMeterReading#isAccurate() accurate} in cases when the method returns {@link #rateAverage()}.
    */
   @Override
-  public final RateMeterReading rate(final long tNanos, final RateMeterReading reading) {
+  public final RateMeterReading rate(final long tNanos, final RateMeterReading reading) {//TODO use safe history concept
     checkArgument(tNanos, "tNanos");
     checkNotNull(reading, "reading");
     reading.setStartNanos(getStartNanos())
         .setTNanos(tNanos)
         .setUnit(getSamplesInterval());
-    reading.setAccurate(true);
+    reading.setAccurate(true);//TODO use chaining
     final boolean readingDone;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
     final long rightNanos = rightSamplesWindowBoundary();
