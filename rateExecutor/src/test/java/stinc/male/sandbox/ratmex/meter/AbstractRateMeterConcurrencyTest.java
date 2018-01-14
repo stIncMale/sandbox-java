@@ -85,7 +85,7 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
     final TickGenerator tickGenerator = new TickGenerator(
         startNanos,
         startNanos + (long)(rnd.nextDouble(0, 500) * tp.samplesInterval.toNanos()),
-        tp.repeatingInstants,
+        tp.sameSamplesForAllTickGenerators,
         tp.numberOfSamples,
         tp.numberOfThreads);
     final Collection<TickGenerator> tickGenerators = tickGenerator.split();
@@ -124,7 +124,7 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
     final boolean orderTicksByTime;
     final int tickToRateRatio;
     final Duration samplesInterval;
-    final boolean repeatingInstants;
+    final boolean sameSamplesForAllTickGenerators;
 
     TestParams(
         final int numberOfThreads,
@@ -132,13 +132,13 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
         final boolean orderTicksByTime,
         final int tickToRateRatio,
         final Duration samplesInterval,
-        final boolean repeatingInstants) {
+        final boolean sameSamplesForAllTickGenerators) {
       this.numberOfThreads = numberOfThreads;
       this.numberOfSamples = numberOfSamples;
       this.orderTicksByTime = orderTicksByTime;
       this.tickToRateRatio = tickToRateRatio;
       this.samplesInterval = samplesInterval;
-      this.repeatingInstants = repeatingInstants;
+      this.sameSamplesForAllTickGenerators = sameSamplesForAllTickGenerators;
     }
 
     @Override
@@ -149,20 +149,20 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
           ", orderTicksByTime=" + orderTicksByTime +
           ", tickToRateRatio=" + tickToRateRatio +
           ", samplesInterval=" + samplesInterval +
-          ", repeatingInstants=" + repeatingInstants +
+          ", sameSamplesForAllTickGenerators=" + sameSamplesForAllTickGenerators +
           '}';
     }
   }
 
   private final class TickGenerator {
     private final NavigableMap<Long, Long> samples;
-    private final boolean repeatingInstants;
+    private final boolean sameSamplesForAllTickGenerators;
     private final int splitN;
 
     TickGenerator(
         final long startNanos,
         final long maxTNanosInclusive,
-        final boolean repeatingInstants,
+        final boolean sameSamplesForAllTickGenerators,
         final int numberOfSamples,
         final int splitN) {
       final ThreadLocalRandom rnd = ThreadLocalRandom.current();
@@ -173,13 +173,13 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
         final long count = rnd.nextLong(-3, 4);
         samples.put(tNanos, count);
       }
-      this.repeatingInstants = repeatingInstants;
+      this.sameSamplesForAllTickGenerators = sameSamplesForAllTickGenerators;
       this.splitN = splitN;
     }
 
     TickGenerator(final NavigableMap<Long, Long> samples) {
       this.samples = samples;
-      repeatingInstants = false;
+      sameSamplesForAllTickGenerators = false;
       splitN = -1;
     }
 
@@ -228,7 +228,7 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
 
     final Collection<TickGenerator> split() {
       final List<NavigableMap<Long, Long>> splitSamples = new ArrayList<>(splitN);
-      if (repeatingInstants) {
+      if (sameSamplesForAllTickGenerators) {
         for (int i = 0; i < splitN; i++) {
           splitSamples.add(new TreeMap<>(samples));
         }
@@ -255,14 +255,14 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
           .values()
           .stream()
           .mapToLong(Long::longValue)
-          .sum() * (repeatingInstants ? splitN : 1);
+          .sum() * (sameSamplesForAllTickGenerators ? splitN : 1);
     }
 
     final long totalCount() {
       return samples.values()
           .stream()
           .mapToLong(Long::longValue)
-          .sum() * (repeatingInstants ? splitN : 1);
+          .sum() * (sameSamplesForAllTickGenerators ? splitN : 1);
     }
 
     final long rightmostTNanos() {

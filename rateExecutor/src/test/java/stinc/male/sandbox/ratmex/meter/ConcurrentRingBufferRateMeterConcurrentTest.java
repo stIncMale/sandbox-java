@@ -12,7 +12,6 @@ public final class ConcurrentRingBufferRateMeterConcurrentTest extends AbstractR
             .toBuilder()
             .setHistoryLength(2),
         ConcurrentRingBufferRateMeter::new,
-        Math.max(2, Runtime.getRuntime()
-            .availableProcessors()));
+        2);
   }
 }
