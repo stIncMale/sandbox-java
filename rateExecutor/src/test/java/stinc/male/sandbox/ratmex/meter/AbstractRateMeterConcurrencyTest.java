@@ -72,7 +72,7 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
 
   private final void doTest(final int iterationIdx, final TestParams tp, final ExecutorService ex) {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    final long startNanos = rnd.nextLong();
+    final long startNanos = rnd.nextLong((long)(11.3d * Integer.MIN_VALUE), (long)(11.3d * Integer.MAX_VALUE));
     @SuppressWarnings("unchecked")
     final C rateMeterConfig = (C)getRateMeterConfigBuilderSupplier()
         .get()

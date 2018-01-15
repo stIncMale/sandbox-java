@@ -13,6 +13,12 @@ import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull
 import static stinc.male.sandbox.ratmex.internal.util.Util.format;
 
 //TODO make public, methods not final, document
+/*This class uses concurrent ring buffer with two cursors:
+  a write cursor (atomicSamplesWindowShiftSteps) and a read cursor (completedSamplesWindowShiftSteps).
+  The idea behind using two cursors is simple:
+  - writes must be performed based on the write cursor;
+  - externally visible reads must be performed based on the read cursor, but must then be validated based on the write cursor.
+  Such an approach allows performing writes without blocking reads.*/
 abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfig>
     extends AbstractRateMeter<S, C> {
   private final boolean sequential;
@@ -26,9 +32,9 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
   @Nullable
   private final AtomicLong atomicSamplesWindowShiftSteps;//write cursor; samplesWindowShiftSteps for a concurrent implementation
   private long samplesWindowShiftSteps;//for a sequential implementation
-  private volatile long completedSamplesWindowShiftSteps;//read cursor; for a concurrent implementation
+  private volatile long completedSamplesWindowShiftSteps;//read cursor; we don't need an analogous field for a sequential implementation
   @Nullable
-  private final WaitStrategy completedSamplesWindowShiftStepsWaitStrategy;//we don't need an analogous field for a sequential implementation
+  private final WaitStrategy waitStrategy;//we don't need an analogous field for a sequential implementation
 
   /**
    * @param startNanos A {@linkplain #getStartNanos() starting point} that is used to calculate elapsed time in nanoseconds (tNanos).
@@ -71,7 +77,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
       atomicSamplesWindowShiftSteps = null;
       samplesWindowShiftSteps = 0;
       completedSamplesWindowShiftSteps = 0;
-      completedSamplesWindowShiftStepsWaitStrategy = null;
+      waitStrategy = null;
     } else {
       ticksCountLock = config.getLockStrategySupplier()
           .get();
@@ -84,7 +90,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
       atomicSamplesWindowShiftSteps = new AtomicLong();
       samplesWindowShiftSteps = 0;
       completedSamplesWindowShiftSteps = 0;
-      completedSamplesWindowShiftStepsWaitStrategy = config.getWaitStrategySupplier()
+      waitStrategy = config.getWaitStrategySupplier()
           .get();
     }
   }
@@ -113,7 +119,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
     } else {
       assert atomicSamplesWindowShiftSteps != null;
       assert ticksCountLock != null;
-      long ticksCountReadLockStamp = 0;
+      long ticksCountSharedLockStamp = 0;
       try {
         long completedShiftSteps = completedSamplesWindowShiftSteps;
         final long shiftSteps = atomicSamplesWindowShiftSteps.get();
@@ -137,21 +143,21 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
               there is a race condition which still may lead to the samples history being moved,
               though the likelihood of such situation is now much less. Hence we still can exceed maxTicksCountAttempts,
               but eventually we are guaranteed to succeed in a final number of attempts*/
-            if (ticksCountReadLockStamp == 0 && readIteration >= maxTicksCountAttempts / 2) {
+            if (ticksCountSharedLockStamp == 0 && readIteration >= maxTicksCountAttempts / 2) {
               //we have spent half of the read attempts, let us fall over to lock approach
               if (trySharedLockAttempts > 0) {
                 trySharedLockAttempts--;
-                ticksCountReadLockStamp = ticksCountLock.trySharedLock();
+                ticksCountSharedLockStamp = ticksCountLock.trySharedLock();
               } else {
-                ticksCountReadLockStamp = ticksCountLock.sharedLock();
+                ticksCountSharedLockStamp = ticksCountLock.sharedLock();
               }
             }
           }
           readIteration = addExact(readIteration, 1);
         }
       } finally {
-        if (ticksCountReadLockStamp != 0) {
-          ticksCountLock.unlockShared(ticksCountReadLockStamp);
+        if (ticksCountSharedLockStamp != 0) {
+          ticksCountLock.unlockShared(ticksCountSharedLockStamp);
         }
       }
     }
@@ -179,7 +185,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
     } else {
       assert atomicSamplesWindowShiftSteps != null;
       assert ticksCountLock != null;
-      long ticksCountReadLockStamp = 0;
+      long ticksCountSharedLockStamp = 0;
       try {
         long completedShiftSteps = completedSamplesWindowShiftSteps;
         final long shiftSteps = atomicSamplesWindowShiftSteps.get();
@@ -205,21 +211,21 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
               there is a race condition which still may lead to the samples history being moved,
               though the likelihood of such situation is now much less. Hence we still can exceed maxTicksCountAttempts,
               but eventually we are guaranteed to succeed in a final number of attempts*/
-            if (ticksCountReadLockStamp == 0 && readIteration >= maxTicksCountAttempts / 2) {
+            if (ticksCountSharedLockStamp == 0 && readIteration >= maxTicksCountAttempts / 2) {
               //we have spent half of the read attempts, let us fall over to lock approach
               if (trySharedLockAttempts > 0) {
                 trySharedLockAttempts--;
-                ticksCountReadLockStamp = ticksCountLock.trySharedLock();
+                ticksCountSharedLockStamp = ticksCountLock.trySharedLock();
               } else {
-                ticksCountReadLockStamp = ticksCountLock.sharedLock();
+                ticksCountSharedLockStamp = ticksCountLock.sharedLock();
               }
             }
           }
           readIteration = addExact(readIteration, 1);
         }
       } finally {
-        if (ticksCountReadLockStamp != 0) {
-          ticksCountLock.unlockShared(ticksCountReadLockStamp);
+        if (ticksCountSharedLockStamp != 0) {
+          ticksCountLock.unlockShared(ticksCountSharedLockStamp);
         }
       }
     }
@@ -259,19 +265,15 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
         } else {
           assert ticksCountLock != null;
           boolean moved = false;
-          long ticksCountWriteLockStamp = 0;
-          while (shiftSteps < targetShiftSteps) {//move the samples window if we need to
-            if (ticksCountWriteLockStamp == 0 && ticksCountLock.isSharedLocked()) {
-              ticksCountWriteLockStamp = ticksCountLock.lock();
-            }
-            //TODO introduce another atomicPreSamplesWindowShiftSteps and not lock for each try to move samples window
-            final long ticksResetWriteLockStamp = ticksAccumulateLock == null ? 0 : ticksAccumulateLock.lock();
+          final long ticksCountExclusiveLockStamp = ticksCountLock.isSharedLocked() ? ticksCountLock.lock() : 0;
+          while (shiftSteps < targetShiftSteps) {//try moving the samples window
+            final long ticksAccumulateExclusiveLockStamp = ticksAccumulateLock == null ? 0 : ticksAccumulateLock.lock();
             try {
               //the only place where we change atomicSamplesWindowShiftSteps
               moved = atomicSamplesWindowShiftSteps.compareAndSet(shiftSteps, targetShiftSteps);
             } finally {
-              if (ticksResetWriteLockStamp != 0) {
-                ticksAccumulateLock.unlock(ticksResetWriteLockStamp);
+              if (ticksAccumulateExclusiveLockStamp != 0) {
+                ticksAccumulateLock.unlock(ticksAccumulateExclusiveLockStamp);
               }
             }
             if (moved) {
@@ -311,8 +313,8 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
               tickAccumulateSample(targetIdx, count, targetShiftSteps);
             }
           } finally {
-            if (ticksCountWriteLockStamp != 0) {
-              ticksCountLock.unlock(ticksCountWriteLockStamp);
+            if (ticksCountExclusiveLockStamp != 0) {
+              ticksCountLock.unlock(ticksCountExclusiveLockStamp);
             }
           }
         }
@@ -514,8 +516,8 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
 
   private final void waitForCompletedWindowShiftSteps(final long samplesWindowShiftSteps) {
     if (!sequential) {
-      assert completedSamplesWindowShiftStepsWaitStrategy != null;
-      completedSamplesWindowShiftStepsWaitStrategy.await(() -> samplesWindowShiftSteps <= completedSamplesWindowShiftSteps);
+      assert waitStrategy != null;
+      waitStrategy.await(() -> samplesWindowShiftSteps <= completedSamplesWindowShiftSteps);
     }
   }
 
