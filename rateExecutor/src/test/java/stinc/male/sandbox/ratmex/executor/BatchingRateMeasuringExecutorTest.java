@@ -35,6 +35,7 @@ import stinc.male.sandbox.ratmex.meter.RingBufferRateMeter;
 import stinc.male.sandbox.ratmex.meter.StampedLockStrategy;
 import static java.lang.Math.round;
 import static java.time.Duration.of;
+import static stinc.male.sandbox.ratmex.internal.util.Constants.EXCLUDE_ASSERTIONS_FROM_BYTECODE;
 
 public final class BatchingRateMeasuringExecutorTest {
   public BatchingRateMeasuringExecutorTest() {
@@ -73,7 +74,7 @@ public final class BatchingRateMeasuringExecutorTest {
       if (remainder == 0) {
         execute(ex, baseBatch, batchesCount);
       } else {//we need to evenly spread out the remainder
-        assert remainder < batchesCount;
+        assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || remainder < batchesCount;
         final Runnable extendedBatch = batch(task, batchSize + 1);
         final boolean baseFirst = ThreadLocalRandom.current()
             .nextBoolean();

@@ -118,7 +118,6 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  *
  * @param <S> A type that represents {@linkplain #stats() statistics}.
  */
-//TODO implement compile-time assertions as per https://stackoverflow.com/questions/4624919/performance-drag-of-java-assertions-when-disabled
 //TODO create resettable RateMeter which aggregates and recreated RateMeter's
 //TODO change license to Apache 2.0
 //TODO create a RatMeX class with static default builder methods to simplify usage of the library

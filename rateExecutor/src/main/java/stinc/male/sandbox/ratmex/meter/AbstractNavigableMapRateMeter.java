@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 import stinc.male.sandbox.ratmex.NanosComparator;
 import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
+import static stinc.male.sandbox.ratmex.internal.util.Constants.EXCLUDE_ASSERTIONS_FROM_BYTECODE;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratmex.internal.util.Utils.format;
 
@@ -104,7 +105,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMete
       final long leftNanos = rightNanos - samplesIntervalNanos;
       value = count(leftNanos, rightNanos);
     } else {
-      assert ticksCountLock != null;
+      assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || ticksCountLock != null;
       long ticksCountReadLockStamp = 0;
       try {
         int readIteration = 0;
@@ -161,7 +162,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMete
       reading.setValue(count(leftNanos, rightNanos));
       readingDone = true;
     } else {
-      assert ticksCountLock != null;
+      assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || ticksCountLock != null;
       long ticksCountReadLockStamp = 0;
       try {
         int readIteration = 0;
@@ -200,7 +201,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMete
         }
       }
     }
-    assert readingDone;
+    assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || readingDone;
     reading.setStartNanos(getStartNanos())
         .setTNanos(rightNanos)
         .setUnit(getSamplesInterval());
@@ -220,7 +221,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMete
         if (sequential) {
           ticksCountWriteLockStamp = 0;
         } else {
-          assert ticksCountLock != null;
+          assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || ticksCountLock != null;
           /*We acquire the write lock only when see the read lock acquired by tickCount method,
             which acquires the read lock to prevent concurrently running tick methods from moving the samples window too far.
             There is a race condition which still may lead to the samples window being moved,
@@ -237,7 +238,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMete
             @Nullable
             final Entry<Long, TicksCounter> existingEntry = samplesHistory.floorEntry(tNanos);
             if (existingEntry != null && (tNanos - existingEntry.getKey()) <= timeSensitivityNanos) {
-              assert tNanos - existingEntry.getKey() >= 0;
+              assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || tNanos - existingEntry.getKey() >= 0;
               existingSample = existingEntry.getValue();
             } else {
               final TicksCounter newSample = getConfig().getTicksCounterSupplier()
@@ -317,7 +318,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMete
         }
       }
     }
-    assert readingDone;
+    assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || readingDone;
     return value;
   }
 
@@ -376,7 +377,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMete
         }
       }
     }
-    assert readingDone;
+    assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || readingDone;
     return reading;
   }
 
@@ -411,7 +412,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMete
   }
 
   private final void clean(final long rightSamplesWindowBoundary) {
-    assert sequential || atomicCleanInProgress != null;
+    assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || sequential || atomicCleanInProgress != null;
     if (sequential || atomicCleanInProgress.compareAndSet(false, true)) {
       try {
         if (sequential) {

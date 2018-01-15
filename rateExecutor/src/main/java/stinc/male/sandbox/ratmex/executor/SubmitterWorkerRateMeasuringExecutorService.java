@@ -25,6 +25,7 @@ import stinc.male.sandbox.ratmex.meter.ConcurrentRingBufferRateMeter;
 import stinc.male.sandbox.ratmex.meter.RateMeter;
 import stinc.male.sandbox.ratmex.meter.RingBufferRateMeter;
 import static stinc.male.sandbox.ratmex.executor.DefaultRateListener.defaultRateListenerInstance;
+import static stinc.male.sandbox.ratmex.internal.util.Constants.EXCLUDE_ASSERTIONS_FROM_BYTECODE;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 
@@ -168,7 +169,7 @@ public class SubmitterWorkerRateMeasuringExecutorService
       final boolean shutdownSubmitterAndWorker) {
     checkNotNull(submitter, "submitter");
     checkArgument(workerThreadsCount >= -1, "workerThreadsCount", "Must be greater than or equal to -1");
-    assert (worker == null && workerThreadsCount == 0) || worker != null;
+    assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || (worker == null && workerThreadsCount == 0) || worker != null;
     this.submitter = submitter;
     this.worker = worker;
     this.workerThreadsCount = workerThreadsCount;
@@ -421,10 +422,10 @@ public class SubmitterWorkerRateMeasuringExecutorService
    * This method must only be called for {@code executor} that was constructed by {@link SubmitterWorkerRateMeasuringExecutorService}.
    */
   private static final void prestartAllThreads(final ExecutorService executor, final int threadsCount) {
-    assert executor instanceof ThreadPoolExecutor;
+    assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || executor instanceof ThreadPoolExecutor;
     final ThreadPoolExecutor ex = (ThreadPoolExecutor)executor;
-    assert ex.getMaximumPoolSize() == ex.getCorePoolSize();
-    assert ex.getCorePoolSize() == threadsCount;
+    assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || ex.getMaximumPoolSize() == ex.getCorePoolSize();
+    assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || ex.getCorePoolSize() == threadsCount;
     ex.prestartAllCoreThreads();
   }
 

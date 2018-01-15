@@ -2,6 +2,7 @@ package stinc.male.sandbox.ratmex.meter;
 
 import java.util.concurrent.locks.StampedLock;
 import javax.annotation.concurrent.ThreadSafe;
+import static stinc.male.sandbox.ratmex.internal.util.Constants.EXCLUDE_ASSERTIONS_FROM_BYTECODE;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 
 /**
@@ -23,7 +24,7 @@ public final class StampedLockStrategy implements LockStrategy {
   @Override
   public final long sharedLock() {
     final long result = stampedLock.readLock();
-    assert result != 0;
+    assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || result != 0;
     return result;
   }
 
@@ -46,7 +47,7 @@ public final class StampedLockStrategy implements LockStrategy {
   @Override
   public final long lock() {
     final long result = stampedLock.writeLock();
-    assert result != 0;
+    assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || result != 0;
     return result;
   }
 
