@@ -7,7 +7,7 @@ import stinc.male.sandbox.ratmex.meter.RateMeterReading;
 import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.checkUnit;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkArgument;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
-import static stinc.male.sandbox.ratmex.internal.util.Util.format;
+import static stinc.male.sandbox.ratmex.internal.util.Utils.format;
 
 /**
  * A representation of a rate.

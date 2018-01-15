@@ -26,7 +26,7 @@ import stinc.male.sandbox.ratmex.TestTag;
 import static java.time.Duration.ofNanos;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static stinc.male.sandbox.ratmex.internal.util.Util.format;
+import static stinc.male.sandbox.ratmex.internal.util.Utils.format;
 
 @Tag(TestTag.CONCURRENCY)
 public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C extends RateMeterConfig> extends AbstractRateMeterTest<B, C> {

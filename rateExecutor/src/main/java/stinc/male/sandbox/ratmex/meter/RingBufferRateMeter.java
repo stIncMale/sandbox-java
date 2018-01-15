@@ -5,25 +5,8 @@ import java.util.Optional;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
- * This implementation is not thread-safe and uses a sequential ring buffer with the underlying {@link PlainLongArray}
- * to store and access a samples history.
- * <p>
- * <i>Advantages</i><br>
- * <ul>
- * <li>Unlike {@link NavigableMapRateMeter}, this implementation does not produces garbage.</li>
- * <li>Unlike {@link NavigableMapRateMeter}, this implementation can tolerate
- * {@link RateMeterConfig#getHistoryLength() long samples history}.</li>
- * <li>Unlike {@link NavigableMapRateMeter}, this implementation takes advantage of memory locality of data.</li>
- * </ul>
- * <p>
- * <i>Disadvantages</i><br>
- * <ul>
- * <li>Unlike {@link NavigableMapRateMeter}, this implementation can not tolerate a large ratio of
- * {@link RateMeter#getSamplesInterval()} and {@link RateMeter#getTimeSensitivity()}.
- * The reason for this is that a ring buffer requires all objects representing samples to always exist,
- * and if the number of such objects (which is the same as the aforementioned ratio) is large,
- * it can have a substantial negative effect on performance.</li>
- * </ul>
+ * A not thread-safe implementation of {@link AbstractRingBufferRateMeter},
+ * which uses {@link PlainLongArray} implementation of {@link LongArray} (this might be changed in the future).
  */
 @NotThreadSafe
 public final class RingBufferRateMeter extends AbstractRingBufferRateMeter<Void, ConcurrentRateMeterConfig> {

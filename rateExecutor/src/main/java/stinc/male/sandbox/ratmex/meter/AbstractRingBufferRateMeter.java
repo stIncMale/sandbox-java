@@ -2,6 +2,7 @@ package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import stinc.male.sandbox.ratmex.NanosComparator;
@@ -10,16 +11,45 @@ import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static java.lang.Math.addExact;
 import static java.lang.Math.min;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
-import static stinc.male.sandbox.ratmex.internal.util.Util.format;
+import static stinc.male.sandbox.ratmex.internal.util.Utils.format;
 
-//TODO make public, methods not final, document
+/**
+ * This is an almost complete implementation of {@link AbstractRateMeter}
+ * which only requires a correct parameters to be provided to the
+ * {@linkplain #AbstractRingBufferRateMeter(long, Duration, ConcurrentRateMeterConfig, Function, boolean) constructor}.
+ * Depending on the arguments the constructed object can be either sequential, or concurrent.
+ * <p>
+ * This implementation of {@link RateMeter} uses a ring buffer with the underlying {@link LongArray}
+ * to store and access a samples history.
+ * <p>
+ * <i>Advantages</i><br>
+ * <ul>
+ * <li>Unlike {@link AbstractNavigableMapRateMeter}, this implementation does not produces garbage,
+ * unless customizable tools supplied to the constructor produce garbage
+ * (e.g. {@link StampedLockStrategy} produces garbage because {@link StampedLock} does).</li>
+ * <li>Unlike {@link AbstractNavigableMapRateMeter}, this implementation takes advantage of memory locality of data
+ * stored in samples history.</li>
+ * </ul>
+ * <p>
+ * <i>Disadvantages</i><br>
+ * <ul>
+ * <li>Unlike {@link AbstractNavigableMapRateMeter}, this implementation can not tolerate a large ratio of
+ * {@link #getSamplesInterval()} to {@link #getTimeSensitivity()}.
+ * The reason for this is that a ring buffer requires all objects representing samples to always exist,
+ * and if the number of such objects (which is the same as the aforementioned ratio) is large,
+ * then it can have a substantial negative effect on the performance.</li>
+ * </ul>
+ *
+ * @param <C> A type of the {@linkplain #getConfig() configuration}.
+ * @param <S> A type that represents {@linkplain #stats() statistics}.
+ */
 /*This class uses concurrent ring buffer with two cursors:
   a write cursor (atomicSamplesWindowShiftSteps) and a read cursor (completedSamplesWindowShiftSteps).
   The idea behind using two cursors is simple:
   - writes must be performed based on the write cursor;
   - externally visible reads must be performed based on the read cursor, but must then be validated based on the write cursor.
   Such an approach allows performing writes without blocking reads.*/
-abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfig>
+public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfig>
     extends AbstractRateMeter<S, C> {
   private final boolean sequential;
   private final LongArray samplesHistory;//the length of this array is multiple of the historyLength
@@ -46,7 +76,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
    * @param sequential Specifies whether the {@link RateMeter} must be thread-safe (will be used concurrently, so the value is false),
    * or not (will be used sequentially, so the value is true).
    */
-  AbstractRingBufferRateMeter(
+  protected AbstractRingBufferRateMeter(
       final long startNanos,
       final Duration samplesInterval,
       final C config,
@@ -478,12 +508,12 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
 
   /**
    * This method is called by {@link #tick(long, long)} not more than once per invocation of {@link #tick(long, long)}
-   * when it fails to correctly register ticks.
-   * Such a failure can only happen if this object is not thread-safe
+   * when there is a chance that it might have failed to correctly register ticks.
+   * Such a failure can only happen if this object is being used concurrently
    * (see {@link #AbstractRingBufferRateMeter(long, Duration, ConcurrentRateMeterConfig, Function, boolean)})
    * and {@link ConcurrentRateMeterConfig#isStrictTick()} is false.
    */
-  protected void registerFailedAccuracyEventForTick() {
+  protected void registerIncorrectlyRegisteredTicksEvent() {
   }
 
   private final void tickAccumulateSample(final int targetIdx, final long count, final long targetSamplesWindowShiftSteps) {
@@ -496,7 +526,7 @@ abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMeterConfi
         final long shiftSteps = atomicSamplesWindowShiftSteps.get();
         if (targetSamplesWindowShiftSteps <= shiftSteps - samplesHistory.length()) {
           //we could have registered (but it is not necessary) ticks at an incorrect instant because samples history have been moved too far
-          registerFailedAccuracyEventForTick();
+          registerIncorrectlyRegisteredTicksEvent();
         }
       } else {
         final long ticksResetSharedLockStamp = ticksAccumulateLock.sharedLock();

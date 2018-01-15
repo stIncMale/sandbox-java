@@ -8,13 +8,13 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.check
 import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTNanos;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
 import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.convertRate;
-import static stinc.male.sandbox.ratmex.internal.util.Util.format;
+import static stinc.male.sandbox.ratmex.internal.util.Utils.format;
 
 /**
  * A generic implementation of a {@linkplain Configurable configurable} {@link RateMeter}.
  *
- * @param <C> A type of the {@linkplain #getConfig() configuration}.
  * @param <S> A type that represents {@linkplain #stats() statistics}.
+ * @param <C> A type of the {@linkplain #getConfig() configuration}.
  */
 public abstract class AbstractRateMeter<S, C extends RateMeterConfig> implements RateMeter<S>, Configurable<C> {
   private final TicksCounter ticksTotal;

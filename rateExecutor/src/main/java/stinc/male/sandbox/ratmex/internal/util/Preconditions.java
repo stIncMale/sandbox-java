@@ -2,7 +2,7 @@ package stinc.male.sandbox.ratmex.internal.util;
 
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import static stinc.male.sandbox.ratmex.internal.util.Util.format;
+import static stinc.male.sandbox.ratmex.internal.util.Utils.format;
 
 public final class Preconditions {
   public static final <T> T checkNotNull(

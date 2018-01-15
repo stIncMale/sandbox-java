@@ -44,7 +44,7 @@ public class DefaultSubmitterWorkerRateListener<E extends SubmitterWorkerRateMea
           .getValueDouble());
     }
     if (e.getWorkerRateMeterStats()
-        .map(ConcurrentRateMeterStats::failedAccuracyEventsCountForTick)
+        .map(ConcurrentRateMeterStats::incorrectlyRegisteredTicksEventsCount)
         .orElse(0L) > 0) {
       throw new RuntimeException("Worker rate meter railed to accurately register ticks. " +
           "Consider increasing the samples history length, " +

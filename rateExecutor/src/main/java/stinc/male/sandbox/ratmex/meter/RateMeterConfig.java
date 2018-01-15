@@ -84,9 +84,7 @@ public class RateMeterConfig {
    * must maintain samples history for at least 2{@linkplain RateMeter#getSamplesInterval() samplesInterval}.
    * <p>
    * The longer history a {@link RateMeter} maintains, the less likely a measurement can be {@linkplain RateMeterReading#isAccurate() inaccurate},
-   * but the more memory it occupies. This might also negatively affect performance;
-   * for example the performance of {@link AbstractNavigableMapRateMeter} degrades as the length of the history grows,
-   * while {@link AbstractRingBufferRateMeter} can tolerate an arbitrary long history.
+   * but the more memory it occupies. Long history may also negatively affect the performance of a {@link RateMeter}.
    */
   public final int getHistoryLength() {
     return historyLength;

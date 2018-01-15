@@ -3,7 +3,8 @@ package stinc.male.sandbox.ratmex.meter;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * A lock abstraction which allows implementations with different semantics from a simple lock to a two-phase (read/write, shared/exclusive) lock.
+ * A lock abstraction which allows implementations with different semantics,
+ * e.g. a simple lock or a two-phase (read/write, shared/exclusive) lock.
  */
 @ThreadSafe
 public interface LockStrategy {

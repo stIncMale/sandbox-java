@@ -2,7 +2,7 @@ package stinc.male.sandbox.ratmex.executor;
 
 import javax.annotation.Nullable;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
-import static stinc.male.sandbox.ratmex.internal.util.Util.format;
+import static stinc.male.sandbox.ratmex.internal.util.Utils.format;
 
 /**
  * See {@link RateListener#onMeasurement(RateMeasuredEvent)}.

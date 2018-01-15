@@ -722,7 +722,7 @@ public class RateMeterPerformanceTest {
     @TearDown(Level.Trial)
     public final void tearDown() {
       concurrentRingBufferRateMeter.stats()
-          .ifPresent(stats -> assertEquals(0, stats.failedAccuracyEventsCountForTick(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL));
+          .ifPresent(stats -> assertEquals(0, stats.incorrectlyRegisteredTicksEventsCount(), ACCEPTABLE_FAILED_ACCURACY_EVENTS_COUNT_PER_TRIAL));
     }
   }
 

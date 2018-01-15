@@ -5,25 +5,25 @@ import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
 final class DefaultConcurrentRingBufferRateMeterStats implements ConcurrentRateMeterStats {
-  private final LongAdder failedAccuracyEventsCountForTick;
+  private final LongAdder incorrectlyRegisteredTicksEventsCounter;
 
   DefaultConcurrentRingBufferRateMeterStats() {
-    failedAccuracyEventsCountForTick = new LongAdder();
+    incorrectlyRegisteredTicksEventsCounter = new LongAdder();
   }
 
   @Override
-  public final long failedAccuracyEventsCountForTick() {
-    return failedAccuracyEventsCountForTick.sum();
+  public final long incorrectlyRegisteredTicksEventsCount() {
+    return incorrectlyRegisteredTicksEventsCounter.sum();
   }
 
-  public final void registerFailedAccuracyEventForTick() {
-    failedAccuracyEventsCountForTick.increment();
+  public final void registerIncorrectlyRegisteredTicksEvent() {
+    incorrectlyRegisteredTicksEventsCounter.increment();
   }
 
   @Override
   public final String toString() {
     return getClass().getSimpleName() +
-        "{failedAccuracyEventsCountForTick=" + failedAccuracyEventsCountForTick +
+        "{incorrectlyRegisteredTicksEventsCounter=" + incorrectlyRegisteredTicksEventsCounter +
         '}';
   }
 }

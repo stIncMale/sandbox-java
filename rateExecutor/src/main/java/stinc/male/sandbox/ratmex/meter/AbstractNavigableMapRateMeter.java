@@ -11,10 +11,33 @@ import stinc.male.sandbox.ratmex.NanosComparator;
 import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static stinc.male.sandbox.ratmex.internal.util.Preconditions.checkNotNull;
-import static stinc.male.sandbox.ratmex.internal.util.Util.format;
+import static stinc.male.sandbox.ratmex.internal.util.Utils.format;
 
-//TODO make public, methods not final, document; provide subclass access to samples history
-abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig> extends AbstractRateMeter<Void, C> {
+/**
+ * This is an almost complete implementation of {@link AbstractRateMeter}
+ * which only requires a correct parameters to be provided to the
+ * {@linkplain #AbstractNavigableMapRateMeter(long, Duration, ConcurrentRateMeterConfig, Supplier, boolean) constructor}.
+ * Depending on the arguments the constructed object can be either sequential, or concurrent.
+ * <p>
+ * This implementation of {@link RateMeter} uses a {@link NavigableMap} to store and access a samples history.
+ * <p>
+ * <i>Advantages</i><br>
+ * <ul>
+ * <li>Unlike {@link AbstractRingBufferRateMeter}, this implementation tolerates a large ratio of
+ * {@link #getSamplesInterval()} to {@link #getTimeSensitivity()}.
+ * The reason for this is that it only creates objects representing samples when necessary,
+ * hence potentially reduces the number of samples that must be added up to count the {@linkplain #ticksCount() current ticks}.</li>
+ * </ul>
+ * <p>
+ * <i>Disadvantages</i><br>
+ * <ul>
+ * <li>Unlike {@link AbstractRingBufferRateMeter}, this implementation produces garbage.</li>
+ * <li>Unlike {@link AbstractRingBufferRateMeter}, this implementation does not benefit from the idea of memory locality of data.</li>
+ * </ul>
+ *
+ * @param <C> A type of the {@linkplain #getConfig() configuration}.
+ */
+public abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig> extends AbstractRateMeter<Void, C> {
   private final boolean sequential;
   private final NavigableMap<Long, TicksCounter> samplesHistory;
   private final int maxTicksCountAttempts;
@@ -36,7 +59,7 @@ abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMeterConfig
    * @param sequential Specifies whether the {@link RateMeter} must be thread-safe (will be used concurrently, so the value is false),
    * or not (will be used sequentially, so the value is true).
    */
-  public AbstractNavigableMapRateMeter(
+  protected AbstractNavigableMapRateMeter(
       final long startNanos,
       final Duration samplesInterval,
       final C config,

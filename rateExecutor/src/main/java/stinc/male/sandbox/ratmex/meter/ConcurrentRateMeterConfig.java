@@ -92,7 +92,7 @@ public class ConcurrentRateMeterConfig extends RateMeterConfig {
    * Specifies if {@link ConcurrentRingBufferRateMeter} (or any other {@link RateMeter} which explicitly says it does this)
    * must guarantee a strict behavior of {@link RateMeter#tick(long, long)} method.
    *
-   * @see ConcurrentRateMeterStats#failedAccuracyEventsCountForTick()
+   * @see ConcurrentRateMeterStats#incorrectlyRegisteredTicksEventsCount()
    */
   public final boolean isStrictTick() {
     return strictTick;

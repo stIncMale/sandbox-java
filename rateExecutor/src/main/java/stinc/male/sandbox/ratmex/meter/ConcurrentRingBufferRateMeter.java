@@ -7,36 +7,16 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * This thread-safe implementation uses a concurrent ring buffer with the underlying {@link AtomikLongArray}
- * to store and access a samples history.
+ * A thread-safe implementation of {@link AbstractRingBufferRateMeter},
+ * which uses {@link AtomikLongArray} implementation of {@link LongArray} (this might be changed in the future).
  * <p>
  * There are two modes:
  * <ul>
  * <li>strict (default) - {@link ConcurrentRateMeterConfig#isStrictTick()} is true.</li>
- * <li>relaxed - {@link ConcurrentRateMeterConfig#isStrictTick()} is false.
+ * <li>relaxed (recommended) - {@link ConcurrentRateMeterConfig#isStrictTick()} is false.
  * Displays much better performance in terms of both throughput and latency,
- * and does not {@linkplain ConcurrentRateMeterStats#failedAccuracyEventsCountForTick() fail to correctly register} ticks
- * with {@link #tick(long, long)} in reasonable practical situations in spite of allowing such incorrectness in theory.
- * This is a recommended mode.</li>
- * </ul>
- * <p>
- * <i>Advantages</i><br>
- * <ul>
- * <li>Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation does not produces garbage,
- * unless customizable tools that are being used by the implementation produce garbage
- * (e.g. {@link StampedLockStrategy} produces garbage because {@link StampedLock} does).</li>
- * <li>Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation can tolerate
- * {@link RateMeterConfig#getHistoryLength() long samples history}.</li>
- * <li>Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation takes advantage of memory locality of data.</li>
- * </ul>
- * <p>
- * <i>Disadvantages</i><br>
- * <ul>
- * <li>Unlike {@link ConcurrentNavigableMapRateMeter}, this implementation can not tolerate a large ratio of
- * {@link RateMeter#getSamplesInterval()} and {@link RateMeter#getTimeSensitivity()}.
- * The reason for this is that a ring buffer requires all objects representing samples to always exist,
- * and if the number of such objects (which is the same as the aforementioned ratio) is large,
- * it can have a substantial negative effect on performance.</li>
+ * and does not {@linkplain ConcurrentRateMeterStats#incorrectlyRegisteredTicksEventsCount() fail to correctly register} ticks
+ * with {@link #tick(long, long)} in reasonable practical situations in spite of allowing such incorrectness in theory.</li>
  * </ul>
  */
 @ThreadSafe
@@ -82,9 +62,9 @@ public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateM
   }
 
   @Override
-  protected final void registerFailedAccuracyEventForTick() {
+  protected final void registerIncorrectlyRegisteredTicksEvent() {
     if (stats != null) {
-      stats.registerFailedAccuracyEventForTick();
+      stats.registerIncorrectlyRegisteredTicksEvent();
     }
   }
 }

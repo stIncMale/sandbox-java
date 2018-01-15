@@ -7,23 +7,16 @@ import javax.annotation.concurrent.ThreadSafe;
 import stinc.male.sandbox.ratmex.NanosComparator;
 
 /**
- * This thread-safe implementation uses a concurrent {@link NavigableMap} (currently {@link ConcurrentSkipListMap})
- * to store and access a samples history.
+ * A thread-safe implementation of {@link AbstractNavigableMapRateMeter},
+ * which uses {@link ConcurrentSkipListMap} implementation of {@link NavigableMap} (this might be changed in the future).
  * <p>
- * <i>Advantages</i><br>
+ * There are two modes:
  * <ul>
- * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation tolerates a large ratio of
- * {@link RateMeter#getSamplesInterval()} and {@link RateMeter#getTimeSensitivity()}.
- * The reason for this is that it only creates objects representing samples when it is necessary,
- * hence potentially reducing the number of samples that must be added up to count the {@linkplain #ticksCount() current ticks}.</li>
- * </ul>
- * <p>
- * <i>Disadvantages</i><br>
- * <ul>
- * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation produces garbage.</li>
- * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation displays performance
- * that diminishes with growth of {@link RateMeterConfig#getHistoryLength() samples history length}.</li>
- * <li>Unlike {@link ConcurrentRingBufferRateMeter}, this implementation does not benefit from the idea of of memory locality of data.</li>
+ * <li>strict (default) - {@link ConcurrentRateMeterConfig#isStrictTick()} is true.</li>
+ * <li>relaxed (recommended) - {@link ConcurrentRateMeterConfig#isStrictTick()} is false.
+ * Displays much better performance in terms of both throughput and latency,
+ * and does not {@linkplain ConcurrentRateMeterStats#incorrectlyRegisteredTicksEventsCount() fail to correctly register} ticks
+ * with {@link #tick(long, long)} in reasonable practical situations in spite of allowing such incorrectness in theory.</li>
  * </ul>
  */
 @ThreadSafe

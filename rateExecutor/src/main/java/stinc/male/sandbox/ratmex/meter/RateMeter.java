@@ -105,28 +105,23 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * they do not create {@link RateMeterReading} objects, thus allowing a user to reuse the same {@link RateMeterReading}.
  * <p>
  * <b>Implementation notes</b><br>
- * The obvious difficulty in concurrent implementation of this interface is the fact that samples window
- * may be moved by a thread running {@link #tick(long, long)} method, while some other thread
- * tries to count ticks (e.g. {@link #ticksCount()}) or to register new samples.
- * And because it is impossible to always store all the registered samples,
- * some samples history may be lost while it is still needed, causing some results to be inaccurate.
- * <p>
- * There may be a bunch of challenges like the one mentioned above. Different implementations may
- * conform different correctness conditions (a.k.a. consistency models)
+ * Different implementations may conform to different correctness conditions (a.k.a. consistency models)
  * and provide different guarantees on the accuracy.
  * Implementations with weaker guarantees may display better performance because they
  * can sacrifice accuracy for the sake of performance and yet may produce sufficiently accurate results in practice.
  * Implementations are recommended to aim for accuracy on the best-effort basis,
- * but all methods which have analogs with {@link RateMeterReading} parameters are allowed to produce approximate results.
- * An implementation should report detected inaccuracies via {@link #stats()} and {@link RateMeterReading}.
+ * but all methods which have analogs with {@link RateMeterReading} parameters
+ * are allowed to produce {@link RateMeterReading#isAccurate() approximate} results.
  * <p>
- * Implementations may not internally use nanosecond {@linkplain #getTimeSensitivity time sensitivity} (resolution, accuracy, granularity). In
- * fact, there is no sense in using resolution better than the resolution of the timer that is used by a user of {@link RateMeter}.
+ * Implementations may not internally use nanosecond {@linkplain #getTimeSensitivity time sensitivity} (resolution, accuracy, granularity).
+ * In fact, there is no sense in using resolution better than the resolution of the timer that is used by a user of {@link RateMeter}.
  *
  * @param <S> A type that represents {@linkplain #stats() statistics}.
  */
 //TODO implement compile-time assertions as per https://stackoverflow.com/questions/4624919/performance-drag-of-java-assertions-when-disabled
 //TODO create resettable RateMeter which aggregates and recreated RateMeter's
+//TODO change license to Apache 2.0
+//TODO create a RatMeX class with static default builder methods to simplify usage of the library
 public interface RateMeter<S> {
   /**
    * @return A starting point that is used to calculate elapsed nanoseconds.
