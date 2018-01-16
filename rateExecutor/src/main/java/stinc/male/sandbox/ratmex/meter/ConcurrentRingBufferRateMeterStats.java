@@ -4,10 +4,10 @@ import java.util.concurrent.atomic.LongAdder;
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
-final class DefaultConcurrentRingBufferRateMeterStats implements ConcurrentRateMeterStats {
+final class ConcurrentRingBufferRateMeterStats implements ConcurrentRateMeterStats {
   private final LongAdder incorrectlyRegisteredTicksEventsCounter;
 
-  DefaultConcurrentRingBufferRateMeterStats() {
+  ConcurrentRingBufferRateMeterStats() {
     incorrectlyRegisteredTicksEventsCounter = new LongAdder();
   }
 

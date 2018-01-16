@@ -39,7 +39,7 @@ public class RateMeterPerformanceTest {
   private static final Supplier<ChainedOptionsBuilder> jmhOptionsBuilderSupplier = () -> {
     final ChainedOptionsBuilder result = new OptionsBuilder()
         .jvmArgsPrepend(JAVA_SERVER ? "-server" : "-client")
-        .jvmArgsPrepend(JAVA_ASSERTIONS ? "-enableassertions" : "-disableassertions")//TODO remove this flag from maven in performance project
+        .jvmArgsAppend(JAVA_ASSERTIONS ? "-enableassertions" : "-disableassertions")
         .syncIterations(true)
         .shouldFailOnError(true)
         .shouldDoGC(true)
@@ -138,12 +138,34 @@ public class RateMeterPerformanceTest {
   }
 
   @Test
+  public void serial_latency_navigableMapRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*serial_.*navigableMapRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
   public void serial_latency_concurrentNavigableMapRateMeter() throws RunnerException {
     new Runner(jmhOptionsBuilderSupplier.get()
         .mode(Mode.AverageTime)
         .timeUnit(TimeUnit.NANOSECONDS)
         .include(getClass().getName() + ".*serial_tick_concurrentNavigableMapRateMeter")
         .include(getClass().getName() + ".*serial_tick\\$1rate\\$10_concurrentNavigableMapRateMeter")
+        .threads(1)
+        .build())
+        .run();
+  }
+
+  @Test
+  public void serial_latency_ringBufferRateMeter() throws RunnerException {
+    new Runner(jmhOptionsBuilderSupplier.get()
+        .mode(Mode.AverageTime)
+        .timeUnit(TimeUnit.NANOSECONDS)
+        .include(getClass().getName() + ".*serial_.*ringBufferRateMeter")
         .threads(1)
         .build())
         .run();
@@ -160,6 +182,17 @@ public class RateMeterPerformanceTest {
         .build())
         .run();
   }
+
+//  @Test
+//  public void serial_latency_simpleRateMeter() throws RunnerException {TODO implement
+//    new Runner(jmhOptionsBuilderSupplier.get()
+//        .mode(Mode.AverageTime)
+//        .timeUnit(TimeUnit.NANOSECONDS)
+//        .include(getClass().getName() + ".*serial_.*simpleRateMeter")
+//        .threads(1)
+//        .build())
+//        .run();
+//  }
 
   @Test
   public void serial_latency_concurrentSimpleRateMeter() throws RunnerException {

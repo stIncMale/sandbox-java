@@ -2,7 +2,6 @@ package stinc.male.sandbox.ratmex.meter;
 
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.locks.StampedLock;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -26,7 +25,7 @@ public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateM
       .build();
 
   @Nullable
-  private final DefaultConcurrentRingBufferRateMeterStats stats;
+  private final ConcurrentRingBufferRateMeterStats stats;
 
   /**
    * @return A default configuration, which is the default {@link ConcurrentRateMeterConfig}.
@@ -43,7 +42,7 @@ public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateM
    */
   public ConcurrentRingBufferRateMeter(final long startNanos, final Duration samplesInterval, final ConcurrentRateMeterConfig config) {
     super(startNanos, samplesInterval, config, AtomikLongArray::new, false);
-    stats = config.isCollectStats() ? new DefaultConcurrentRingBufferRateMeterStats() : null;
+    stats = config.isCollectStats() ? new ConcurrentRingBufferRateMeterStats() : null;
   }
 
   /**
