@@ -6,7 +6,6 @@ import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
 import java.util.function.LongConsumer;
 import javax.annotation.Nullable;
-import stinc.male.sandbox.ratmex.NanosComparator;
 import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
 import stinc.male.sandbox.ratmex.internal.util.Preconditions;
 import static java.lang.Math.addExact;
@@ -156,7 +155,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
       long ticksCountSharedLockStamp = 0;
       try {
         final int samplesHistoryLength = samplesHistory.length();
-        long completedShiftSteps = completedSamplesWindowShiftSteps;
+        long completedShiftSteps = completedSamplesWindowShiftSteps;//must be read before atomicSamplesWindowShiftSteps
         final long shiftSteps = atomicSamplesWindowShiftSteps.get();
         assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || completedShiftSteps <= shiftSteps;
         int readIteration = 0;
@@ -172,7 +171,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
             value = count;
             break;
           } else {//the samples history has been moved too far
-            completedShiftSteps = completedSamplesWindowShiftSteps;
+            completedShiftSteps = completedSamplesWindowShiftSteps;//reread completedSamplesWindowShiftSteps
             /*We acquire the read lock to prevent concurrently running tick methods from moving the samples history too far.
               However since tick method acquires the write lock not always, but only when sees the read lock acquired,
               there is a race condition which still may lead to the samples history being moved,
@@ -222,7 +221,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
       long ticksCountSharedLockStamp = 0;
       try {
         final int samplesHistoryLength = samplesHistory.length();
-        long completedShiftSteps = completedSamplesWindowShiftSteps;
+        long completedShiftSteps = completedSamplesWindowShiftSteps;//must be read before atomicSamplesWindowShiftSteps
         final long shiftSteps = atomicSamplesWindowShiftSteps.get();
         assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || completedShiftSteps <= shiftSteps;
         int readIteration = 0;
@@ -240,7 +239,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
             readingDone = true;
             break;
           } else {//the samples history has been moved too far
-            completedShiftSteps = completedSamplesWindowShiftSteps;
+            completedShiftSteps = completedSamplesWindowShiftSteps;//reread completedSamplesWindowShiftSteps
             /*We acquire the read lock to prevent concurrently running tick methods from moving the samples history too far.
               However since tick method acquires the write lock not always, but only when sees the read lock acquired,
               there is a race condition which still may lead to the samples history being moved,
@@ -360,22 +359,16 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
   @Override
   public final double rateAverage(final long tNanos) {
     checkArgument(tNanos, "tNanos");
-    final long shiftSteps;
-    if (sequential) {
-      shiftSteps = samplesWindowShiftSteps;
-    } else {
-      assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || atomicSamplesWindowShiftSteps != null;
-      shiftSteps = atomicSamplesWindowShiftSteps.get();
-    }
-    final long rightNanos = rightSamplesWindowBoundary(shiftSteps);
-    final long effectiveRightNanos;
-    if (NanosComparator.compare(tNanos, rightNanos) <= 0) {//tNanos is within or behind the samples window
-      //TODO replace NanosComparator.compare with NanosComparator.max/min everywhere, not only here
-      effectiveRightNanos = rightNanos;
+    final long targetShiftSteps = samplesWindowShiftSteps(tNanos);
+    final long completedShiftSteps = sequential ? samplesWindowShiftSteps : completedSamplesWindowShiftSteps;
+    final long rightNanos = rightSamplesWindowBoundary(completedShiftSteps);
+    final long measuredTNanos;
+    if (targetShiftSteps <= completedShiftSteps) {//tNanos is within or behind the samples history
+      measuredTNanos = rightSamplesWindowBoundary(completedShiftSteps);
     } else {//tNanos is ahead of the samples window
-      effectiveRightNanos = tNanos;
+      measuredTNanos = tNanos;
     }
-    return ConversionsAndChecks.rateAverage(effectiveRightNanos, getSamplesIntervalNanos(), getStartNanos(), ticksTotalCount());
+    return ConversionsAndChecks.rateAverage(measuredTNanos, getSamplesIntervalNanos(), getStartNanos(), ticksTotalCount());
   }
 
   /*The implementation of this method is an exact copy of rate(long, RateMeterReading) except for lines related to RateMeterReading.
@@ -393,7 +386,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
       shiftSteps = completedShiftSteps;
     } else {
       assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || atomicSamplesWindowShiftSteps != null;
-      completedShiftSteps = completedSamplesWindowShiftSteps;
+      completedShiftSteps = completedSamplesWindowShiftSteps;//must be read before atomicSamplesWindowShiftSteps
       shiftSteps = atomicSamplesWindowShiftSteps.get();
     }
     assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || completedShiftSteps <= shiftSteps;
@@ -401,9 +394,9 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
     final int cellsInSafeSamplesHistory = samplesHistoryLength - cellsInSamplesWindow;
     final long minSafeShiftSteps = shiftSteps - cellsInSafeSamplesHistory;//shiftSteps, not completedShiftSteps, it's important
     if (targetShiftSteps < minSafeShiftSteps) {//tNanos is behind the safe samples history, so return average over all samples
-      final long measuredTNanos = rightSamplesWindowBoundary(shiftSteps);
+      final long measuredTNanos = rightSamplesWindowBoundary(completedShiftSteps);
       value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
-          measuredTNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
+              measuredTNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
     } else {//tNanos is within or ahead of the safe samples history
       final long countFromShiftSteps = targetShiftSteps - cellsInSamplesWindow + 1;
       if (completedShiftSteps < countFromShiftSteps) {
@@ -413,20 +406,20 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
         assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || shiftSteps - samplesHistoryLength + 1 <= countFromShiftSteps;
         final long countToShiftSteps = min(completedShiftSteps, targetShiftSteps);
         assert EXCLUDE_ASSERTIONS_FROM_BYTECODE ||
-            countFromShiftSteps <= countToShiftSteps && (countToShiftSteps - countFromShiftSteps + 1) <= cellsInSafeSamplesHistory;
+                countFromShiftSteps <= countToShiftSteps && (countToShiftSteps - countFromShiftSteps + 1) <= cellsInSafeSamplesHistory;
         final int numberOfCellsToCount = (int)(countToShiftSteps - countFromShiftSteps) + 1;
         final long count = count(samplesHistoryIdx(countFromShiftSteps), numberOfCellsToCount);
         if (sequential) {
           value = count;
         } else {//check whether safe samples history has been moved too far while we were counting
           final long newShiftSteps
-              = atomicSamplesWindowShiftSteps.get();//atomicSamplesWindowShiftSteps, not completedSamplesWindowShiftSteps, it's important
+                  = atomicSamplesWindowShiftSteps.get();//atomicSamplesWindowShiftSteps, not completedSamplesWindowShiftSteps, it's important
           final long minShiftSteps = newShiftSteps - samplesHistoryLength + 1;
           if (countFromShiftSteps < minShiftSteps) {
             //the safe samples history has been moved too far, so return average over all samples
-            final long measuredTNanos = rightSamplesWindowBoundary(shiftSteps);
+            final long measuredTNanos = rightSamplesWindowBoundary(completedSamplesWindowShiftSteps);
             value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
-                measuredTNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
+                    measuredTNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
           } else {
             value = count;
           }
@@ -458,7 +451,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
       shiftSteps = completedShiftSteps;
     } else {
       assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || atomicSamplesWindowShiftSteps != null;
-      completedShiftSteps = completedSamplesWindowShiftSteps;
+      completedShiftSteps = completedSamplesWindowShiftSteps;//must be read before atomicSamplesWindowShiftSteps
       shiftSteps = atomicSamplesWindowShiftSteps.get();
     }
     assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || completedShiftSteps <= shiftSteps;
@@ -466,7 +459,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
     final int cellsInSafeSamplesHistory = samplesHistoryLength - cellsInSamplesWindow;
     final long minSafeShiftSteps = shiftSteps - cellsInSafeSamplesHistory;//shiftSteps, not completedShiftSteps, it's important
     if (targetShiftSteps < minSafeShiftSteps) {//tNanos is behind the safe samples history, so return average over all samples
-      final long measuredTNanos = rightSamplesWindowBoundary(shiftSteps);
+      final long measuredTNanos = rightSamplesWindowBoundary(completedShiftSteps);
       final double value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
           measuredTNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
       reading.setTNanos(measuredTNanos)
@@ -495,7 +488,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
           final long minShiftSteps = newShiftSteps - samplesHistoryLength + 1;
           if (countFromShiftSteps < minShiftSteps) {
             //the safe samples history has been moved too far, so return average over all samples
-            final long measuredTNanos = rightSamplesWindowBoundary(shiftSteps);
+            final long measuredTNanos = rightSamplesWindowBoundary(completedSamplesWindowShiftSteps);
             final double value = ConversionsAndChecks.rateAverage(//this is the same as rateAverage()
                 measuredTNanos, samplesIntervalNanos, getStartNanos(), ticksTotalCount());
             reading.setTNanos(measuredTNanos)
