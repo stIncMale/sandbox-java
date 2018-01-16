@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
+import java.util.function.LongConsumer;
 import javax.annotation.Nullable;
 import stinc.male.sandbox.ratmex.NanosComparator;
 import stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks;
@@ -55,6 +56,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
   private final boolean sequential;
   private final LongArray samplesHistory;//the length of this array is multiple of the historyLength
   private final long samplesWindowStepNanos;//essentially timeSensitivityNanos
+  private final int cellsInSamplesWindow;
   private final int maxTicksCountAttempts;
   @Nullable
   private final LockStrategy ticksCountLock;//we don't need an analogous field for a sequential implementation
@@ -98,6 +100,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
             getSamplesIntervalNanos(), getTimeSensitivityNanos()));
     samplesWindowStepNanos = getSamplesIntervalNanos() / samplesIntervalArrayLength;
     samplesHistory = samplesHistorySupplier.apply(config.getHistoryLength() * samplesIntervalArrayLength);
+    cellsInSamplesWindow = samplesHistory.length() / getConfig().getHistoryLength();
     assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || samplesWindowStepNanos == getTimeSensitivityNanos();
     assert EXCLUDE_ASSERTIONS_FROM_BYTECODE ||
         getSamplesIntervalNanos() * config.getHistoryLength() == samplesHistory.length() * samplesWindowStepNanos;
@@ -143,7 +146,6 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
   @Override
   public final long ticksCount() {
     final long value;
-    final int cellsInSamplesWindow = samplesHistory.length() / getConfig().getHistoryLength();
     if (sequential) {
       final long shiftSteps = samplesWindowShiftSteps;
       final long countFromShiftSteps = shiftSteps - cellsInSamplesWindow + 1;
@@ -153,6 +155,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
       assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || ticksCountLock != null;
       long ticksCountSharedLockStamp = 0;
       try {
+        final int samplesHistoryLength = samplesHistory.length();
         long completedShiftSteps = completedSamplesWindowShiftSteps;
         final long shiftSteps = atomicSamplesWindowShiftSteps.get();
         assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || completedShiftSteps <= shiftSteps;
@@ -164,7 +167,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
           final long count = count(samplesHistoryIdx(countFromShiftSteps), cellsInSamplesWindow);
           final long newShiftSteps
               = atomicSamplesWindowShiftSteps.get();//atomicSamplesWindowShiftSteps, not completedSamplesWindowShiftSteps, it's important
-          final long minShiftSteps = newShiftSteps - samplesHistory.length() + 1;
+          final long minShiftSteps = newShiftSteps - samplesHistoryLength + 1;
           if (minShiftSteps <= countFromShiftSteps) {//the samples history may has been moved while we were counting, but the count is still correct
             value = count;
             break;
@@ -207,7 +210,6 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
         .setUnit(getSamplesInterval())
         .setAccurate(true);
     final boolean readingDone;
-    final int cellsInSamplesWindow = samplesHistory.length() / getConfig().getHistoryLength();
     if (sequential) {
       final long shiftSteps = samplesWindowShiftSteps;
       final long countFromShiftSteps = shiftSteps - cellsInSamplesWindow + 1;
@@ -219,6 +221,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
       assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || ticksCountLock != null;
       long ticksCountSharedLockStamp = 0;
       try {
+        final int samplesHistoryLength = samplesHistory.length();
         long completedShiftSteps = completedSamplesWindowShiftSteps;
         final long shiftSteps = atomicSamplesWindowShiftSteps.get();
         assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || completedShiftSteps <= shiftSteps;
@@ -230,7 +233,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
           final long count = count(samplesHistoryIdx(countFromShiftSteps), cellsInSamplesWindow);
           final long newShiftSteps
               = atomicSamplesWindowShiftSteps.get();//atomicSamplesWindowShiftSteps, not completedSamplesWindowShiftSteps, it's important
-          final long minShiftSteps = newShiftSteps - samplesHistory.length() + 1;
+          final long minShiftSteps = newShiftSteps - samplesHistoryLength + 1;
           if (minShiftSteps <= countFromShiftSteps) {//the samples history may has been moved while we were counting, but the count is still correct
             reading.setTNanos(rightSamplesWindowBoundary(targetShiftSteps))
                 .setValue(count);
@@ -265,12 +268,12 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
     return reading;
   }
 
-  //TODO create an experimental analogous method and test how many times it can move the window per second
   //TODO compare single/multi thread for very short samples window; for various history lengths
   @Override
   public final void tick(final long count, final long tNanos) {
     checkArgument(tNanos, "tNanos");
     if (count != 0) {
+      final int samplesHistoryLength = samplesHistory.length();
       final long targetShiftSteps = samplesWindowShiftSteps(tNanos);
       long shiftSteps;
       if (sequential) {
@@ -279,20 +282,21 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
         assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || atomicSamplesWindowShiftSteps != null;
         shiftSteps = atomicSamplesWindowShiftSteps.get();
       }
-      if (shiftSteps - samplesHistory.length() < targetShiftSteps) {//tNanos is ahead of or within the samples history
+      if (shiftSteps - samplesHistoryLength < targetShiftSteps) {//tNanos is ahead of or within the samples history
         if (sequential) {
           if (shiftSteps < targetShiftSteps) {//we need to move the samples window
             final int targetIdx = samplesHistoryIdx(targetShiftSteps);
             samplesWindowShiftSteps = targetShiftSteps;
             final long numberOfSteps = targetShiftSteps - shiftSteps;//numberOfSteps is by how many steps we have moved the samples window
-            final int numberOfResetIterations = (int)min(numberOfSteps, samplesHistory.length());//it's safe to cast to int
-            for (int i = 0, idx = nextSamplesHistoryIdx(samplesHistoryIdx(shiftSteps));//TODO refactor with two for cycles
-                i < numberOfResetIterations;
-                i++, idx = nextSamplesHistoryIdx(idx)) {//reset moved samples
-              samplesHistory.set(idx, idx == targetIdx ? count : 0);
+            if (numberOfSteps < samplesHistoryLength) {
+              reset(shiftSteps + 1,
+                      (int)numberOfSteps,//it's safe to cast to int
+                      targetIdx, count, null);
+            } else {
+              resetAll(targetIdx, count);
             }
           } else {
-            tickAccumulateSample(targetShiftSteps, count);
+            add(targetShiftSteps, count);
           }
         } else {
           assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || ticksCountLock != null;
@@ -323,27 +327,24 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
               waitStrategy.await(() -> waitForCompletedWindowShiftSteps <= completedSamplesWindowShiftSteps);//"serializing waiting condition"
               /*We are going to reset some (or all) samples because we need to reuse them (this is a ring buffer).
                 Note that no other threads can concurrently reset samples because they are waiting on the "serializing waiting condition" above.*/
-              if (numberOfSteps <= samplesHistory.length()) {//samples history is shifting step by step
-                for (int i = 0, idx = nextSamplesHistoryIdx(samplesHistoryIdx(shiftSteps));
-                    i < (int)numberOfSteps;//it's safe to cast to int
-                    i++, idx = nextSamplesHistoryIdx(idx)) {
-                  samplesHistory.set(idx, idx == targetIdx ? count : 0);
-                  final long newCompletedShiftSteps = shiftSteps + 1 + i;
-                  assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || newCompletedShiftSteps == completedSamplesWindowShiftSteps + 1;
-                  //this and the below else block are the only places where we change completedSamplesWindowShiftSteps
-                  completedSamplesWindowShiftSteps = newCompletedShiftSteps;//complete current step (actually just increment)
-                }
-              } else {//samples history is shifting with a single leap
-                for (int idx = 0; idx < samplesHistory.length(); idx++) {
-                  samplesHistory.set(idx, idx == targetIdx ? count : 0);
-                }
+              if (numberOfSteps <= samplesHistoryLength) {//samples history is shifting step by step
+                reset(shiftSteps + 1,
+                        (int)numberOfSteps,//it's safe to cast to int
+                        targetIdx, count,
+                        (newCompletedShiftSteps) -> {
+                          assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || newCompletedShiftSteps == completedSamplesWindowShiftSteps + 1;
+                          //this and the below else block are the only places where we change completedSamplesWindowShiftSteps
+                          completedSamplesWindowShiftSteps = newCompletedShiftSteps;//complete current step (actually just increment)
+                        });
+              } else {//shift samples history with a single leap
+                resetAll(targetIdx, count);
                 assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || shiftSteps == completedSamplesWindowShiftSteps;
                 //this and the above if block are the only places where we change completedSamplesWindowShiftSteps
                 completedSamplesWindowShiftSteps = targetShiftSteps;//complete all steps at once (leap)
               }
             } else {
               waitStrategy.await(() -> targetShiftSteps <= completedSamplesWindowShiftSteps);
-              tickAccumulateSample(targetShiftSteps, count);
+              add(targetShiftSteps, count);
             }
           } finally {
             if (ticksCountExclusiveLockStamp != 0) {
@@ -384,6 +385,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
     checkArgument(tNanos, "tNanos");
     final double value;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
+    final int samplesHistoryLength = samplesHistory.length();
     final long completedShiftSteps;
     final long shiftSteps;
     if (sequential) {
@@ -396,8 +398,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
     }
     assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || completedShiftSteps <= shiftSteps;
     final long targetShiftSteps = samplesWindowShiftSteps(tNanos);
-    final int cellsInSamplesWindow = samplesHistory.length() / getConfig().getHistoryLength();
-    final int cellsInSafeSamplesHistory = samplesHistory.length() - cellsInSamplesWindow;
+    final int cellsInSafeSamplesHistory = samplesHistoryLength - cellsInSamplesWindow;
     final long minSafeShiftSteps = shiftSteps - cellsInSafeSamplesHistory;//shiftSteps, not completedShiftSteps, it's important
     if (targetShiftSteps < minSafeShiftSteps) {//tNanos is behind the safe samples history, so return average over all samples
       final long measuredTNanos = rightSamplesWindowBoundary(shiftSteps);
@@ -409,7 +410,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
         //tNanos is way too ahead of the completed part of the safe samples history and there are no samples for the requested tNanos
         value = 0;
       } else {
-        assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || shiftSteps - samplesHistory.length() + 1 <= countFromShiftSteps;
+        assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || shiftSteps - samplesHistoryLength + 1 <= countFromShiftSteps;
         final long countToShiftSteps = min(completedShiftSteps, targetShiftSteps);
         assert EXCLUDE_ASSERTIONS_FROM_BYTECODE ||
             countFromShiftSteps <= countToShiftSteps && (countToShiftSteps - countFromShiftSteps + 1) <= cellsInSafeSamplesHistory;
@@ -420,7 +421,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
         } else {//check whether safe samples history has been moved too far while we were counting
           final long newShiftSteps
               = atomicSamplesWindowShiftSteps.get();//atomicSamplesWindowShiftSteps, not completedSamplesWindowShiftSteps, it's important
-          final long minShiftSteps = newShiftSteps - samplesHistory.length() + 1;
+          final long minShiftSteps = newShiftSteps - samplesHistoryLength + 1;
           if (countFromShiftSteps < minShiftSteps) {
             //the safe samples history has been moved too far, so return average over all samples
             final long measuredTNanos = rightSamplesWindowBoundary(shiftSteps);
@@ -449,6 +450,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
         .setTNanos(tNanos);
     final boolean readingDone;
     final long samplesIntervalNanos = getSamplesIntervalNanos();
+    final int samplesHistoryLength = samplesHistory.length();
     final long completedShiftSteps;
     final long shiftSteps;
     if (sequential) {
@@ -461,8 +463,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
     }
     assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || completedShiftSteps <= shiftSteps;
     final long targetShiftSteps = samplesWindowShiftSteps(tNanos);
-    final int cellsInSamplesWindow = samplesHistory.length() / getConfig().getHistoryLength();
-    final int cellsInSafeSamplesHistory = samplesHistory.length() - cellsInSamplesWindow;
+    final int cellsInSafeSamplesHistory = samplesHistoryLength - cellsInSamplesWindow;
     final long minSafeShiftSteps = shiftSteps - cellsInSafeSamplesHistory;//shiftSteps, not completedShiftSteps, it's important
     if (targetShiftSteps < minSafeShiftSteps) {//tNanos is behind the safe samples history, so return average over all samples
       final long measuredTNanos = rightSamplesWindowBoundary(shiftSteps);
@@ -479,7 +480,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
         reading.setValue(0);
         readingDone = true;
       } else {
-        assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || shiftSteps - samplesHistory.length() + 1 <= countFromShiftSteps;
+        assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || shiftSteps - samplesHistoryLength + 1 <= countFromShiftSteps;
         final long countToShiftSteps = min(completedShiftSteps, targetShiftSteps);
         assert EXCLUDE_ASSERTIONS_FROM_BYTECODE ||
             countFromShiftSteps <= countToShiftSteps && (countToShiftSteps - countFromShiftSteps + 1) <= cellsInSafeSamplesHistory;
@@ -491,7 +492,7 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
         } else {//check whether safe samples history has been moved too far while we were counting
           final long newShiftSteps
               = atomicSamplesWindowShiftSteps.get();//atomicSamplesWindowShiftSteps, not completedSamplesWindowShiftSteps, it's important
-          final long minShiftSteps = newShiftSteps - samplesHistory.length() + 1;
+          final long minShiftSteps = newShiftSteps - samplesHistoryLength + 1;
           if (countFromShiftSteps < minShiftSteps) {
             //the safe samples history has been moved too far, so return average over all samples
             final long measuredTNanos = rightSamplesWindowBoundary(shiftSteps);
@@ -522,16 +523,17 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
   protected void registerIncorrectlyRegisteredTicksEvent() {
   }
 
-  private final void tickAccumulateSample(final long targetSamplesWindowShiftSteps, final long count) {
+  private final void add(final long targetSamplesWindowShiftSteps, final long delta) {
     final int targetIdx = samplesHistoryIdx(targetSamplesWindowShiftSteps);
+    final int samplesHistoryLength = samplesHistory.length();
     if (sequential) {
-      samplesHistory.add(targetIdx, count);
+      samplesHistory.add(targetIdx, delta);
     } else {
       assert EXCLUDE_ASSERTIONS_FROM_BYTECODE || atomicSamplesWindowShiftSteps != null;
       if (ticksAccumulateLock == null) {//not strict mode, no locking
-        samplesHistory.add(targetIdx, count);
+        samplesHistory.add(targetIdx, delta);
         final long shiftSteps = atomicSamplesWindowShiftSteps.get();
-        if (targetSamplesWindowShiftSteps <= shiftSteps - samplesHistory.length()) {
+        if (targetSamplesWindowShiftSteps <= shiftSteps - samplesHistoryLength) {
           //we could have registered (but it is not necessary) ticks at an incorrect instant because samples history have been moved too far
           registerIncorrectlyRegisteredTicksEvent();
         }
@@ -539,8 +541,8 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
         final long ticksResetSharedLockStamp = ticksAccumulateLock.sharedLock();
         try {
           final long shiftSteps = atomicSamplesWindowShiftSteps.get();
-          if (shiftSteps - samplesHistory.length() < targetSamplesWindowShiftSteps) {
-            samplesHistory.add(targetIdx, count);
+          if (shiftSteps - samplesHistoryLength < targetSamplesWindowShiftSteps) {
+            samplesHistory.add(targetIdx, delta);
           } else {
             //samples history have been moved too far, it would have been incorrect to perform the requested registration of ticks
           }
@@ -548,6 +550,50 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
           ticksAccumulateLock.unlockShared(ticksResetSharedLockStamp);
         }
       }
+    }
+  }
+
+  private final void reset(
+          final long fromInclusiveSamplesWindowShiftSteps,
+          final int numberOfCellsToReset,
+          final int targetIdx,
+          final long count,
+          @Nullable final LongConsumer postCellResetActionConsumingNewCompletedShiftSteps) {
+    long newCompletedShiftSteps = fromInclusiveSamplesWindowShiftSteps;
+    final int fromInclusiveIdx = samplesHistoryIdx(fromInclusiveSamplesWindowShiftSteps);
+    final int samplesHistoryLength = samplesHistory.length();
+    final int numberOfCellsOnTheRightIncludingFrom = samplesHistoryLength - fromInclusiveIdx;
+    if (numberOfCellsToReset <= numberOfCellsOnTheRightIncludingFrom) {
+      for (int idx = fromInclusiveIdx; idx < fromInclusiveIdx + numberOfCellsToReset; idx++) {
+        samplesHistory.set(idx, idx == targetIdx ? count : 0);
+        if (postCellResetActionConsumingNewCompletedShiftSteps != null) {
+          postCellResetActionConsumingNewCompletedShiftSteps.accept(newCompletedShiftSteps);
+          newCompletedShiftSteps++;
+        }
+      }
+    } else {//numberOfCellsToReset > numberOfCellsOnTheRightIncludingFrom
+      for (int idx = fromInclusiveIdx; idx < samplesHistoryLength; idx++) {
+        samplesHistory.set(idx, idx == targetIdx ? count : 0);
+        if (postCellResetActionConsumingNewCompletedShiftSteps != null) {
+          postCellResetActionConsumingNewCompletedShiftSteps.accept(newCompletedShiftSteps);
+          newCompletedShiftSteps++;
+        }
+      }
+      final int numberOfNotResetCells = numberOfCellsToReset - numberOfCellsOnTheRightIncludingFrom;
+      for (int idx = 0; idx < numberOfNotResetCells; idx++) {
+        samplesHistory.set(idx, idx == targetIdx ? count : 0);
+        if (postCellResetActionConsumingNewCompletedShiftSteps != null) {
+          postCellResetActionConsumingNewCompletedShiftSteps.accept(newCompletedShiftSteps);
+          newCompletedShiftSteps++;
+        }
+      }
+    }
+  }
+
+  private final void resetAll(final int targetIdx, final long count) {
+    final int samplesHistoryLength = samplesHistory.length();
+    for (int idx = 0; idx < samplesHistoryLength; idx++) {
+      samplesHistory.set(idx, idx == targetIdx ? count : 0);
     }
   }
 
@@ -602,11 +648,8 @@ public abstract class AbstractRingBufferRateMeter<S, C extends ConcurrentRateMet
   }
 
   private final int samplesHistoryIdx(final long samplesWindowShiftSteps) {
+    final int samplesHistoryLength = samplesHistory.length();
     //the result can not be greater than samples.length, which is int, so it is a safe cast to int
-    return (int)((samplesWindowShiftSteps + samplesHistory.length() - 1) % samplesHistory.length());
-  }
-
-  private final int nextSamplesHistoryIdx(final int idx) {
-    return (idx + 1) % samplesHistory.length();
+    return (int)((samplesWindowShiftSteps + samplesHistoryLength - 1) % samplesHistoryLength);
   }
 }

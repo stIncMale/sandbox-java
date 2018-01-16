@@ -19,6 +19,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * with {@link #tick(long, long)} in reasonable practical situations in spite of allowing such incorrectness in theory.</li>
  * </ul>
  */
+//TODO check how much garbage this implementation generates
 @ThreadSafe
 public final class ConcurrentRingBufferRateMeter extends AbstractRingBufferRateMeter<ConcurrentRateMeterStats, ConcurrentRateMeterConfig> {
   private static final ConcurrentRateMeterConfig defaultConfig = ConcurrentRateMeterConfig.newBuilder()

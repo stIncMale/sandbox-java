@@ -268,6 +268,7 @@ public abstract class AbstractNavigableMapRateMeter<C extends ConcurrentRateMete
     long rightNanos = rightSamplesWindowBoundary();
     final long effectiveRightNanos;
     if (NanosComparator.compare(tNanos, rightNanos) <= 0) {//tNanos is within or behind the samples window
+      //TODO replace NanosComparator.compare with NanosComparator.max/min everywhere, not only here
       effectiveRightNanos = rightNanos;
     } else {//tNanos is ahead of the samples window
       effectiveRightNanos = tNanos;
