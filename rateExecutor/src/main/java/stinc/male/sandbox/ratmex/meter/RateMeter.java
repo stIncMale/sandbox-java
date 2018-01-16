@@ -119,7 +119,6 @@ import static stinc.male.sandbox.ratmex.internal.util.ConversionsAndChecks.maxTN
  * @param <S> A type that represents {@linkplain #stats() statistics}.
  */
 //TODO create resettable RateMeter which aggregates and recreated RateMeter's
-//TODO change license to Apache 2.0
 //TODO create a RatMeX class with static default builder methods to simplify usage of the library
 public interface RateMeter<S> {
   /**

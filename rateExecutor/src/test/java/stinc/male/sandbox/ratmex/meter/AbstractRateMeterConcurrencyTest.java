@@ -44,8 +44,8 @@ public abstract class AbstractRateMeterConcurrencyTest<B extends Builder, C exte
   @Test
   public final void test() {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    final int numberOfTestIterations = 15_000;
-    final int minNumberOfSamples = numberOfThreads == 1 ? 100 : 2500;
+    final int numberOfTestIterations = 30_000;
+    final int minNumberOfSamples = 300;
     final int maxNumberOfSamples = 2 * minNumberOfSamples;
     for (int i = 1; i <= numberOfTestIterations; i++) {
       final Duration samplesInterval = i == 1 ? ofNanos(1) : ofNanos(rnd.nextInt(1, 400));

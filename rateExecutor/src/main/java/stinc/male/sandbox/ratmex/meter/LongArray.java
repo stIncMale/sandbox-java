@@ -1,13 +1,11 @@
 package stinc.male.sandbox.ratmex.meter;
 
-import java.util.Arrays;
-
 /**
  * An array abstraction which allows implementations with different semantics.
  */
 public interface LongArray {
   /**
-   * @return The length of this array.
+   * @return The length of this array. The length can never be changed once this object is constructed.
    */
   int length();
 
@@ -23,6 +21,7 @@ public interface LongArray {
    * Gets the current value at position {@code idx}.
    *
    * @param idx The index.
+   *
    * @return The current value.
    */
   long get(int idx);
