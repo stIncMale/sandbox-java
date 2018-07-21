@@ -15,7 +15,7 @@
     <groupId>stinc.male.sandbox</groupId>
     <artifactId>sandbox-versions</artifactId>
     <version>0.0.0-SNAPSHOT</version>
-    <relativePath>versions.xml</relativePath>
+    <relativePath>version.xml</relativePath>
   </parent>
   <build>
     <pluginManagement>
@@ -60,11 +60,10 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
-            <parallel>${sandbox.maven-surefire-plugin.parallel}</parallel>
-            <threadCount>5</threadCount>
+            <parallel/>
+            <useUnlimitedThreads>false</useUnlimitedThreads>
+            <threadCount>1</threadCount>
             <properties>
-              <includeTags>${sandbox.maven-surefire-plugin.includeTags}</includeTags><!-- TODO will not work until https://github.com/junit-team/junit5/issues/809#issuecomment-352654645 -->
-              <excludeTags>${sandbox.maven-surefire-plugin.excludeTags}</excludeTags>
               <argLine>-enableassertions</argLine>
             </properties>
           </configuration>
@@ -72,7 +71,7 @@
             <dependency>
               <groupId>org.junit.platform</groupId>
               <artifactId>junit-platform-surefire-provider</artifactId>
-              <version>1.1.0-M1</version>
+              <version>1.2.0</version>
             </dependency>
             <dependency>
               <groupId>org.junit.jupiter</groupId>
@@ -81,174 +80,16 @@
             </dependency>
           </dependencies>
         </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-assembly-plugin</artifactId>
-          <configuration>
-            <descriptors>
-              <descriptor>assembly.xml</descriptor>
-            </descriptors>
-          </configuration>
-          <executions>
-            <execution>
-              <id>make-assembly</id>
-              <phase>package</phase>
-              <goals>
-                <goal>single</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-antrun-plugin</artifactId>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>build-helper-maven-plugin</artifactId>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <configuration>
-            <detectJavaApiLink>false</detectJavaApiLink>
-            <doctitle>Sandbox ${project.version} Java Source Code Documentation</doctitle>
-            <author>false</author>
-            <show>protected</show>
-            <linksource>false</linksource>
-            <bottom><![CDATA[<p>]]></bottom>
-            <charset>${sandbox.charset}</charset>
-            <docencoding>${sandbox.charset}</docencoding>
-            <encoding>${sandbox.charset}</encoding>
-            <header>
-              <![CDATA[
-								<a href="${sandbox.url}">Sandbox</a>
-								<br></br>
-								Java Source Code Documentation
-							]]>
-            </header>
-            <footer>
-              <![CDATA[Licensed under <a href="${sandbox.licenseUrl}">${sandbox.licenseName}</a>]]>
-            </footer>
-            <locale>en</locale>
-            <windowtitle>Sandbox Java Source Code Documentation</windowtitle>
-            <groups>
-              <group>
-                <title>All</title>
-                <packages>
-                  stinc.male.sandbox:stinc.male.sandbox.*
-                </packages>
-              </group>
-            </groups>
-            <links><!-- TODO reconfigure -->
-              <link>https://docs.oracle.com/javase/9/docs/api</link>
-              <link>https://javaee.github.io/javaee-spec/javadocs</link>
-              <link>https://www.javadoc.io/doc/com.google.code.findbugs/jsr305/3.0.2</link>
-              <link>https://google.github.io/guava/releases/snapshot-jre/api/docs</link>
-            </links>
-            <validateLinks>true</validateLinks>
-            <includeDependencySources>false</includeDependencySources>
-            <includeTransitiveDependencySources>false</includeTransitiveDependencySources>
-            <serialwarn>true</serialwarn>
-            <additionalparam>-Xdoclint:all -Xdoclint:-missing</additionalparam>
-          </configuration>
-          <executions>
-            <execution>
-              <id>attach-aggregated-javadocs</id>
-              <phase>package</phase>
-              <goals>
-                <goal>aggregate-jar</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>attach-sources</id>
-              <phase>verify</phase>
-              <goals>
-                <goal>jar-no-fork</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
       </plugins>
     </pluginManagement>
-    <defaultGoal>install</defaultGoal>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-      </plugin>
-    </plugins>
+    <defaultGoal>package</defaultGoal>
   </build>
   <profiles>
     <profile>
       <id>default</id>
-      <properties>
-        <maven.test.skip>true</maven.test.skip>
-      </properties>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
-    </profile>
-    <profile>
-      <id>unitTest</id>
-      <properties>
-        <maven.test.skip>false</maven.test.skip>
-        <sandbox.maven-surefire-plugin.parallel>all</sandbox.maven-surefire-plugin.parallel>
-        <sandbox.maven-surefire-plugin.includeTags/>
-        <sandbox.maven-surefire-plugin.excludeTags>performance, concurrency</sandbox.maven-surefire-plugin.excludeTags>
-      </properties>
-    </profile>
-    <profile>
-      <id>performanceTest</id>
-      <properties>
-        <maven.test.skip>false</maven.test.skip>
-        <sandbox.maven-surefire-plugin.parallel/>
-        <sandbox.maven-surefire-plugin.includeTags>performance</sandbox.maven-surefire-plugin.includeTags>
-        <sandbox.maven-surefire-plugin.excludeTags>concurrency</sandbox.maven-surefire-plugin.excludeTags>
-      </properties>
-    </profile>
-    <profile>
-      <id>concurrencyTest</id>
-      <properties>
-        <maven.test.skip>false</maven.test.skip>
-        <sandbox.maven-surefire-plugin.parallel/>
-        <sandbox.maven-surefire-plugin.includeTags>concurrency</sandbox.maven-surefire-plugin.includeTags>
-        <sandbox.maven-surefire-plugin.excludeTags>performance</sandbox.maven-surefire-plugin.excludeTags>
-      </properties>
-    </profile>
-    <profile>
-      <id>assembly</id>
-      <properties>
-        <maven.test.skip>true</maven.test.skip>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-assembly-plugin</artifactId>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>doc</id>
-      <properties>
-        <maven.test.skip>true</maven.test.skip>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-          </plugin>
-        </plugins>
-      </build>
     </profile>
   </profiles>
 </project>
