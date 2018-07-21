@@ -12,10 +12,13 @@ Run the following command in order to install common Maven POM artifacts your lo
 mvn clean install -f root.xml && mvn clean install -f version.xml && mvn clean install -f build.xml
 ```
 
-Use the following command from inside any sub-project (e.g. `exercises`, or `examples`) in order to build it or run tests/benchmarks 
+Use one of the following commands from inside any sub-project (e.g. `exercises`, or `examples`) in order to build it or run tests/benchmarks 
 ```
-mvn clean package` or `mvn clean test
-``` 
+mvn clean package
+```
+```
+mvn clean test
+```
 
 ---
 
