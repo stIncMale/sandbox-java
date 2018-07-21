@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <description>
+    Benchmarks.
+  </description>
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>sandbox-benchmarks</artifactId>
+  <packaging>jar</packaging>
+  <name>sandbox-benchmarks</name>
+  <url>${sandbox.url}</url>
+  <parent>
+    <groupId>stinc.male.sandbox</groupId>
+    <artifactId>sandbox-build</artifactId>
+    <version>0.0.0-SNAPSHOT</version>
+    <relativePath>../build.xml</relativePath>
+  </parent>
+  <dependencies>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-generator-annprocess</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
