@@ -1,105 +1,104 @@
 package stincmale.sandbox.benchmarks;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ThreadLocalRandom;
 
 class Test {//TODO check on ARM (try running on Android)
-  static final int NUMBER_OF_EXPERIMENTS = 50_000;
-  static final int NUMBER_OF_READS = 5000;
+  static final int NUMBER_OF_EXPERIMENTS = 100_000_000;
 
   final State state = new State();
-  final CyclicBarrier cb = new CyclicBarrier(2);
 
-  public static void main(String... args) throws BrokenBarrierException, InterruptedException {
+  public static void main(String... args) throws InterruptedException {
     System.out.println();
-    System.out.println("start");
-    new Test().t1();
-    System.out.println("end");
+    System.out.println("t1 start");
+    int v = new Test().t1();
+    System.out.println("t1 end " + v);
   }
 
-  void t1() throws BrokenBarrierException, InterruptedException {
-    Thread t2 = new Thread(this::t2);
+  int t1() throws InterruptedException {
+    state.v = 1;
+    Thread t2 = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        t(2);
+      }
+    });
+    Thread t3 = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        t(3);
+      }
+    });
+    Thread t4 = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        t(4);
+      }
+    });
     t2.start();
+    t3.start();
+    t4.start();
     for (int experimentI = 0; experimentI < NUMBER_OF_EXPERIMENTS; experimentI++) {
-      state.v = state.v == null
-          ? new Integer(1)
-          : new Integer(state.v.v + 1);
-      cb.await();
+      state.v = state.v + 1;
+      tryReschedule(experimentI);
     }
     t2.join();
+    t3.join();
+    t4.join();
+    return state.v;
   }
 
-  void t2() {
-    Collection<Integer> reads = new ArrayList<>();
+  void t(int i) {
+    System.out.println("t" + i + " start");
+    try {
+      System.out.println("t" + i + " end " + Test.this.t());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    }
+  }
+
+  long t() throws InterruptedException {
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    int prev = state.v;
+    long s = 0;
     for (int experimentI = 0; experimentI < NUMBER_OF_EXPERIMENTS; experimentI++) {
-      experiment(reads);
-      try {
-        cb.await();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        break;
-      } catch (BrokenBarrierException e) {
-        throw new RuntimeException(e);
+      int rndv = rnd.nextInt(100);
+      if (rndv > 0) {
+        int v = read(state, prev, rndv);
+        if (v < prev) {
+          System.out.println("bingo " + prev + ' ' + v);
+          System.exit(0);
+        }
+        prev = v;
+        s += v;
+      }
+      tryReschedule(experimentI);
+    }
+    return s;
+  }
+
+  int read(State s, int prev, int rndv) {
+    if (rndv > 1) {
+      return s.v;
+    } else {
+      int k = rndv;//consume rndv in a way that generates huge amount of bytecode
+      if (k > 0) {
+        return s.v;
+      } else {
+        return Math.max(s.v, prev);
       }
     }
   }
 
-  void experiment(Collection<Integer> reads) {
-    reads.clear();
-    for (int readI = 0; readI < NUMBER_OF_READS; readI++) {
-      if (ThreadLocalRandom.current().nextBoolean()) {
-        Thread.yield();
-      }
-      readFromState(state, reads);
-    }
-    analyseAndPrintIfBackForth(reads);
-  }
-
-  void readFromState(State s, Collection<Integer> reads) {
-    reads.add(s.v);
-  }
-
-  void analyseAndPrintIfDifferent(Collection<Integer> reads) {
-    if (reads.stream()
-        .distinct()
-        .mapToInt(any -> 1)
-        .sum() > 1) {
-      System.out.println(reads);
-    }
-  }
-
-  void analyseAndPrintIfBackForth(Collection<Integer> reads) {
-    int backForce = 0;
-    int pv = -1;
-    for (Integer r : reads) {
-      int v = r.v;
-      if (v != pv) {
-        backForce++;
-        pv = r.v;
-      }
-    }
-    if (backForce > 2) {
-      System.out.println(reads);
+  static void tryReschedule(int i) throws InterruptedException {
+    if (i % 10_000 == 0) {
+      Thread.sleep(1);
+    } else if (i % 500 == 0) {
+      Thread.yield();
     }
   }
 
   static class State {
-    Integer v;
-  }
-
-  static class Integer {
     int v;
-
-    Integer(int v) {
-      this.v = v;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(v);
-    }
   }
 }
