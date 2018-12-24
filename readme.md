@@ -1,6 +1,6 @@
 # sandbox
 <p align="right">
-<a href="http://www.oracle.com/technetwork/java/javase/overview/index.html"><img src="https://img.shields.io/badge/Java-11-blue.svg" alt="Java requirement"></a>
+<a href="https://docs.oracle.com/en/java/javase/11/"><img src="https://img.shields.io/badge/Java-11-blue.svg" alt="Java requirement"></a>
 </p>
 
 ## About
