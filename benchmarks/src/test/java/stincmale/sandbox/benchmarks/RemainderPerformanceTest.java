@@ -25,9 +25,7 @@ import stincmale.sandbox.benchmarks.util.JmhOptions;
  */
 @TestInstance(Lifecycle.PER_CLASS)
 public class RemainderPerformanceTest {
-  private static final long denominatorPow2 = BigInteger.valueOf(2)
-      .pow(10)
-      .longValueExact();
+  private static final long denominatorPow2 = BigInteger.valueOf(2).pow(10).longValueExact();
   private static final long bitwiseDenominatorPow2 = denominatorPow2 - 1;
   private static final long denominator = denominatorPow2 - 1;
 

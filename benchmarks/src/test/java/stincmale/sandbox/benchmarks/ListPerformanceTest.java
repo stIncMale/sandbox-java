@@ -2,6 +2,7 @@ package stincmale.sandbox.benchmarks;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
+import static java.util.Arrays.stream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import static java.util.stream.IntStream.range;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -20,8 +22,6 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import stincmale.sandbox.benchmarks.util.JmhOptions;
-import static java.util.Arrays.stream;
-import static java.util.stream.IntStream.range;
 
 /**
  * <pre>{@code
@@ -130,19 +130,19 @@ public class ListPerformanceTest {
       final int[] sizes;
       try {
         sizes = stream(ThreadStateForAdding.class.getDeclaredField("size")
-          .getAnnotation(Param.class)
-          .value())
-          .mapToInt(Integer::parseInt)
-          .toArray();
+            .getAnnotation(Param.class)
+            .value())
+            .mapToInt(Integer::parseInt)
+            .toArray();
       } catch (final NoSuchFieldException e) {
         throw new RuntimeException(e);
       }
       arrayLists = stream(sizes)
-        .mapToObj(size -> new SimpleImmutableEntry<>(size, createList(size, ArrayList::new)))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+          .mapToObj(size -> new SimpleImmutableEntry<>(size, createList(size, ArrayList::new)))
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       linkedLists = stream(sizes)
-        .mapToObj(size -> new SimpleImmutableEntry<>(size, createList(size, LinkedList::new)))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+          .mapToObj(size -> new SimpleImmutableEntry<>(size, createList(size, LinkedList::new)))
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @Param({"5", "50", "500", "5000", "50000"})
@@ -155,8 +155,8 @@ public class ListPerformanceTest {
 
     private static final <L extends List<Object>> L createList(final int size, final Supplier<L> listFactory) {
       return range(0, size)
-        .mapToObj(i -> new Object())
-        .collect(Collectors.toCollection(listFactory));
+          .mapToObj(i -> new Object())
+          .collect(Collectors.toCollection(listFactory));
     }
 
     public enum ListDescriptor {

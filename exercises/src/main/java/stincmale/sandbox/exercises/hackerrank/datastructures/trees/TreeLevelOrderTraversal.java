@@ -17,6 +17,7 @@ public class TreeLevelOrderTraversal {
         int data = in.nextInt();
         root = insert(root, data);
       }
+      assert root != null;
       Solution.levelOrder(root);
     }
   }
@@ -26,10 +27,7 @@ public class TreeLevelOrderTraversal {
       StringBuilder s = new StringBuilder();
       s.append(root.data);
       List<Node> prevLevel = Collections.singletonList(root);
-      while (true) {
-        if (prevLevel.isEmpty()) {
-          break;
-        }
+      while (!prevLevel.isEmpty()) {
         List<Node> level = new ArrayList<>();
         prevLevel.forEach(node -> {
           if (node.left != null) {

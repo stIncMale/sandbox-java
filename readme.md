@@ -1,24 +1,13 @@
 # sandbox
 <p align="right">
-<a href="http://www.oracle.com/technetwork/java/javase/overview/index.html"><img src="https://img.shields.io/badge/Java-9+-blue.svg" alt="Java requirement"></a>
+<a href="http://www.oracle.com/technetwork/java/javase/overview/index.html"><img src="https://img.shields.io/badge/Java-11-blue.svg" alt="Java requirement"></a>
 </p>
 
 ## About
 A repository for examples (e.g. for my [Tech Blog](https://sites.google.com/site/aboutmale/techblog)), temporal, test and research Java projects.
 
-## Usage
-Run the following command in order to install common Maven POM artifacts your local Maven repository  
-```
-mvn clean install -f root.xml && mvn clean install -f version.xml && mvn clean install -f build.xml
-```
-
-Use one of the following commands from inside any sub-project (e.g. `exercises`, or `examples`) in order to build it or run tests/benchmarks 
-```
-mvn clean package
-```
-```
-mvn clean test
-```
+## Contributor Guide
+See [contributing.md](https://github.com/stIncMale/idenator/blob/master/contributing.md).
 
 ---
 

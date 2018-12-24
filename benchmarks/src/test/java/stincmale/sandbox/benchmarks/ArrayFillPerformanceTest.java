@@ -24,10 +24,8 @@ public class ArrayFillPerformanceTest {
   private static final int ARRAY_SIZE = 20_000;
   private static final long[] arrFilledWithZeros = new long[ARRAY_SIZE];
 
-  static {//just to ignore IDE warning regarding arrFilledWithZeros
-    for (int i = 0; i < arrFilledWithZeros.length; i++) {
-      arrFilledWithZeros[i] = 0;
-    }
+  static {//just to ignore IDE warning saying that we never write to arrFilledWithZeros
+    arrFilledWithZeros[0] = 0;
   }
 
   public ArrayFillPerformanceTest() {

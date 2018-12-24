@@ -14,6 +14,7 @@ public class TreeHeightOfABinaryTree {
         int data = in.nextInt();
         root = insert(root, data);
       }
+      assert root != null;
       int height = Solution.height(root);
       System.out.println(height);
     }

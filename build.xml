@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project
-    xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    xmlns = "http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation = "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <description>
-    Contains build settings (plugins, profiles, etc.).
+    Specifies build settings (plugins, profiles, etc.).
   </description>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>sandbox-build</artifactId>
@@ -12,7 +12,7 @@
   <name>sandbox-build</name>
   <url>${sandbox.url}</url>
   <parent>
-    <groupId>stinc.male.sandbox</groupId>
+    <groupId>stincmale.sandbox</groupId>
     <artifactId>sandbox-versions</artifactId>
     <version>0.0.0-SNAPSHOT</version>
     <relativePath>version.xml</relativePath>
@@ -24,9 +24,9 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
-            <source>9</source>
-            <target>9</target>
-            <release>9</release>
+            <source>11</source>
+            <target>11</target>
+            <release>11</release>
             <encoding>${sandbox.charset}</encoding>
             <debug>true</debug>
             <debuglevel>lines,vars,source</debuglevel>
@@ -34,9 +34,6 @@
             <showDeprecation>true</showDeprecation>
             <compilerArgs>
               <arg>-Werror</arg>
-              <!-- TODO Option -Xlint:exports is disabled because of http://bugs.java.com/bugdatabase/view_bug.do?bug_id=JDK-8191112 -->
-              <!--<arg>-Xlint:all,-exports,-try,-processing,-requires-automatic,-requires-transitive-automatic</arg>-->
-              <!--<arg>-Xlint:all,-exports,-processing</arg>-->
               <arg>-Xlint:all,-processing</arg>
             </compilerArgs>
           </configuration>
@@ -60,17 +57,19 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
-            <parallel/>
             <useUnlimitedThreads>false</useUnlimitedThreads>
-            <threadCount>1</threadCount>
-            <properties>
-              <argLine>-enableassertions</argLine>
-            </properties>
+            <enableAssertions>true</enableAssertions>
+            <forkCount>1</forkCount>
+            <reuseForks>true</reuseForks>
+            <argLine>
+              -Xfuture
+              -Xmx1024m
+            </argLine>
           </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
-    <defaultGoal>package</defaultGoal>
+    <defaultGoal>verify</defaultGoal>
   </build>
   <profiles>
     <profile>

@@ -1,5 +1,6 @@
 package stincmale.sandbox.examples.parseappstorereceipt;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,18 +24,17 @@ import org.openmuc.jasn1.ber.types.BerInteger;
 import org.openmuc.jasn1.ber.types.BerOctetString;
 import org.openmuc.jasn1.ber.types.string.BerIA5String;
 import org.openmuc.jasn1.ber.types.string.BerUTF8String;
+import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.ORIGINAL_TRANSACTION_IDENTIFIER;
+import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.PRODUCT_IDENTIFIER;
+import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.PURCHASE_DATE;
+import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.SUBSCRIPTION_EXPIRATION_DATE;
+import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.TRANSACTION_IDENTIFIER;
+import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.ReceiptAttributeType.BUNDLE_IDENTIFIER;
+import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.ReceiptAttributeType.IN_APP_PURCHASE_RECEIPT;
 import stincmale.sandbox.examples.parseappstorereceipt.apple.asn1.receiptmodule.InAppAttribute;
 import stincmale.sandbox.examples.parseappstorereceipt.apple.asn1.receiptmodule.InAppReceipt;
 import stincmale.sandbox.examples.parseappstorereceipt.apple.asn1.receiptmodule.Payload;
 import stincmale.sandbox.examples.parseappstorereceipt.apple.asn1.receiptmodule.ReceiptAttribute;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.PURCHASE_DATE;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.ReceiptAttributeType.BUNDLE_IDENTIFIER;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.ReceiptAttributeType.IN_APP_PURCHASE_RECEIPT;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.ORIGINAL_TRANSACTION_IDENTIFIER;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.PRODUCT_IDENTIFIER;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.SUBSCRIPTION_EXPIRATION_DATE;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.TRANSACTION_IDENTIFIER;
 
 /**
  * Contains utility methods to work with
@@ -76,7 +76,6 @@ public final class AppStoreReceiptUtil {
    * @param receipt A receipt that is described by Apple as a
    * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html">
    * "PKCS #7 container, as defined by RFC 2315, with its payload encoded using ASN.1 (Abstract Syntax Notation One), as defined by ITU-T X.690"</a>.
-   *
    * @return Extracted {@link Payload} which
    * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html">
    * "is composed of a set of receipt attributes"</a>.
@@ -105,7 +104,6 @@ public final class AppStoreReceiptUtil {
    * @param transactionId <a href=
    * "https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The transaction identifier of the item that was purchased</a>.
-   *
    * @return <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The in-app purchase receipt</a>.
    */
@@ -134,7 +132,6 @@ public final class AppStoreReceiptUtil {
    * @param payload See {@link #decodeReceipt(byte[])}.
    * @param productId <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The product identifier of the item that was purchased</a>.
-   *
    * @return <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The in-app purchase receipt</a>.
    */
@@ -154,9 +151,7 @@ public final class AppStoreReceiptUtil {
           return result;
         })
         .filter(inAppReceipt -> productId.equals(getProductId(inAppReceipt)))
-        .sorted(Comparator.comparing(AppStoreReceiptUtil::getPurchaseDate)
-            .reversed())//find the newest one
-        .findFirst();
+        .max(Comparator.comparing(AppStoreReceiptUtil::getPurchaseDate));
   }
 
   /**
@@ -166,7 +161,6 @@ public final class AppStoreReceiptUtil {
    * @param payload See {@link #decodeReceipt(byte[])}.
    * @param productId <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The product identifier of the item that was purchased</a>.
-   *
    * @return <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The in-app purchase receipt</a>.
    */
@@ -186,9 +180,7 @@ public final class AppStoreReceiptUtil {
           return result;
         })
         .filter(inAppReceipt -> productId.equals(getProductId(inAppReceipt)))
-        .sorted(Comparator.comparing(AppStoreReceiptUtil::getSubscriptionExpirationDate)
-            .reversed())//find the newest one
-        .findFirst();
+        .max(Comparator.comparing(AppStoreReceiptUtil::getSubscriptionExpirationDate));
   }
 
   /**
@@ -269,7 +261,6 @@ public final class AppStoreReceiptUtil {
    * The type of the attribute of the in-app purchase receipt</a>.
    * The correspondence between attributes and types is specified
    * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">here</a>.
-   *
    * @return The <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * attribute of the in-app purchase receipt</a>.
    */
@@ -292,7 +283,6 @@ public final class AppStoreReceiptUtil {
    * The type of the attribute of the receipt ({@code payload})</a>.
    * The correspondence between attributes and types is specified
    * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">here</a>.
-   *
    * @return The <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * attribute of the the receipt</a>.
    */
@@ -315,7 +305,6 @@ public final class AppStoreReceiptUtil {
    * The type of the attribute of the receipt ({@code payload})</a>.
    * The correspondence between attributes and types is specified
    * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">here</a>.
-   *
    * @return All matching
    * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * attributes of the receipt</a>.
@@ -431,7 +420,6 @@ public final class AppStoreReceiptUtil {
   }
 
   private AppStoreReceiptUtil() {
-    throw new UnsupportedOperationException("This class is not designed to be instantiated");
   }
 
   /**

@@ -1,24 +1,22 @@
 package stincmale.sandbox.benchmarks.util;
 
+import static java.lang.Boolean.parseBoolean;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import javax.annotation.concurrent.NotThreadSafe;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import static java.lang.Boolean.parseBoolean;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
 @NotThreadSafe
 public final class JmhOptions {
   private static final boolean DRY_RUN = parseBoolean(System.getProperty("stincmale.sandbox.benchmarks.dryRun", "false"));
   private static final boolean JAVA_SERVER = true;
-  private static final boolean JAVA_ASSERTIONS = DRY_RUN;
-  public static final SortedSet<Integer> numbersOfThreads = DRY_RUN
-      ? new TreeSet<>(Arrays.asList(1, 4))
-      : new TreeSet<>(Arrays.asList(1, 2, 4, 16));
+  private static final boolean JAVA_ENABLE_ASSERTIONS = DRY_RUN;
+  private static final boolean JAVA_DISABLE_BIASED_LOCKING = false;
+  private static final boolean JAVA_DISABLE_GC = false;
+
+  private JmhOptions() {
+  }
 
   public static final OptionsBuilder includingClass(final Class<?> klass) {
     final OptionsBuilder result = get();
@@ -28,10 +26,21 @@ public final class JmhOptions {
 
   public static final OptionsBuilder get() {
     final OptionsBuilder result = new OptionsBuilder();
-    result.jvmArgs("-Xms2048m", "-Xmx2048m")
-      .jvmArgsAppend(
-        JAVA_SERVER ? "-server" : "-client",
-        JAVA_ASSERTIONS ? "-enableassertions" : "-disableassertions")
+    final Collection<String> jvmArgs = new ArrayList<>();
+    jvmArgs.add("-Xfuture");
+    jvmArgs.add("-Xshare:off");
+    jvmArgs.add("-Xms2048m");
+    jvmArgs.add("-Xmx2048m");
+    jvmArgs.add(JAVA_SERVER ? "-server" : "-client");
+    jvmArgs.add(JAVA_ENABLE_ASSERTIONS ? "-enableassertions" : "-disableassertions");
+    if (JAVA_DISABLE_BIASED_LOCKING) {
+      jvmArgs.add("-XX:-UseBiasedLocking");
+    }
+    if (JAVA_DISABLE_GC) {
+      jvmArgs.add("-XX:+UnlockExperimentalVMOptions");
+      jvmArgs.add("-XX:+UseEpsilonGC");
+    }
+    result.jvmArgs(jvmArgs.toArray(new String[0]))
         .shouldDoGC(false)
         .syncIterations(true)
         .shouldFailOnError(true)
@@ -51,18 +60,5 @@ public final class JmhOptions {
           .measurementIterations(20);
     }
     return result;
-  }
-
-  public static final OptionsBuilder jvmArgsAppend(final OptionsBuilder ob, final String... append) {
-    final Collection<String> jvmArgsAppend = ob.getJvmArgsAppend()
-        .orElse(Collections.emptyList());
-    final Collection<String> newJvmArgsAppend = new ArrayList<>(jvmArgsAppend);
-    newJvmArgsAppend.addAll(Arrays.asList(append));
-    ob.jvmArgsAppend(newJvmArgsAppend.toArray(new String[newJvmArgsAppend.size()]));
-    return ob;
-  }
-
-  private JmhOptions() {
-    throw new UnsupportedOperationException();
   }
 }

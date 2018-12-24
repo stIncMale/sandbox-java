@@ -33,7 +33,7 @@ public class LargestRectangle {
     int localMaxArea = 0;
     boolean pushNewElement = true;
     int newLeftmostIdx = -1;
-    for (int i = 0; !stack.isEmpty(); i++) {
+    while (!stack.isEmpty()) {
       Element rightmost = stack.peek();
       if (rightmost.h < newElement.h) {
         break;
