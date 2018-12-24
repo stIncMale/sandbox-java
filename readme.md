@@ -7,7 +7,7 @@
 A repository for examples (e.g. for my [Tech Blog](https://sites.google.com/site/aboutmale/techblog)), temporal, test and research Java projects.
 
 ## Contributor Guide
-See [contributing.md](https://github.com/stIncMale/idenator/blob/master/contributing.md).
+See [contributing.md](https://github.com/stIncMale/sandbox/blob/master/contributing.md).
 
 ---
 
