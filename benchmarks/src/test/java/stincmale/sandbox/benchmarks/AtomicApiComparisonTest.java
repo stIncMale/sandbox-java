@@ -17,81 +17,30 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import stincmale.sandbox.benchmarks.util.JmhOptions;
+import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
+import static stincmale.sandbox.benchmarks.util.JmhOptions.includeClass;
+import static stincmale.sandbox.benchmarks.util.JmhOptions.jvmArgsDisableGc;
+import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
-/**
- * <pre>{@code
- * 1 thread
- * Benchmark                                                              Mode  Cnt    Score   Error   Units
- * AtomicApiComparisonTest.atomicLongCompareAndSet                       thrpt   80  110.148 ± 0.211  ops/us
- * AtomicApiComparisonTest.atomicLongFieldUpdaterCompareAndSet           thrpt   80  106.919 ± 0.237  ops/us
- * AtomicApiComparisonTest.varHandleLongCompareAndSet                    thrpt   80  106.765 ± 0.261  ops/us
- *
- * AtomicApiComparisonTest.atomicReferenceLongCompareAndSet              thrpt   80   88.614 ± 0.167  ops/us
- * AtomicApiComparisonTest.atomicReferenceLongFieldUpdaterCompareAndSet  thrpt   80   90.730 ± 0.239  ops/us
- * AtomicApiComparisonTest.varHandleReferenceLongCompareAndSet           thrpt   80   90.823 ± 0.220  ops/us
- *
- * AtomicApiComparisonTest.atomicLongGetAndIncrement                     thrpt   80  139.912 ± 0.273  ops/us
- * AtomicApiComparisonTest.atomicLongFieldUpdaterGetAndIncrement         thrpt   80  139.881 ± 0.275  ops/us
- * AtomicApiComparisonTest.varHandleLongGetAndIncrement                  thrpt   80  106.625 ± 0.385  ops/us
- *
- * 4 threads
- * Benchmark                                                              Mode  Cnt   Score   Error   Units
- * AtomicApiComparisonTest.atomicLongCompareAndSet                       thrpt   80  37.839 ± 0.437  ops/us
- * AtomicApiComparisonTest.atomicLongFieldUpdaterCompareAndSet           thrpt   80  37.350 ± 0.074  ops/us
- * AtomicApiComparisonTest.varHandleLongCompareAndSet                    thrpt   80  37.465 ± 0.109  ops/us
- *
- * AtomicApiComparisonTest.atomicReferenceLongCompareAndSet              thrpt   80  37.550 ± 0.079  ops/us
- * AtomicApiComparisonTest.atomicReferenceLongFieldUpdaterCompareAndSet  thrpt   80  36.902 ± 0.082  ops/us
- * AtomicApiComparisonTest.varHandleReferenceLongCompareAndSet           thrpt   80  36.831 ± 0.114  ops/us
- *
- * AtomicApiComparisonTest.atomicLongGetAndIncrement                     thrpt   80  50.571 ± 0.140  ops/us
- * AtomicApiComparisonTest.atomicLongFieldUpdaterGetAndIncrement         thrpt   80  50.907 ± 0.111  ops/us
- * AtomicApiComparisonTest.varHandleLongGetAndIncrement                  thrpt   80  13.187 ± 0.274  ops/us
- *
- * 32 threads
- * Benchmark                                                              Mode  Cnt   Score   Error   Units
- * AtomicApiComparisonTest.atomicLongCompareAndSet                       thrpt   80  39.057 ± 0.696  ops/us
- * AtomicApiComparisonTest.atomicLongFieldUpdaterCompareAndSet           thrpt   80  39.873 ± 3.347  ops/us
- * AtomicApiComparisonTest.varHandleLongCompareAndSet                    thrpt   80  38.429 ± 0.557  ops/us
- *
- * AtomicApiComparisonTest.atomicReferenceLongCompareAndSet              thrpt   80  38.418 ± 0.516  ops/us
- * AtomicApiComparisonTest.atomicReferenceLongFieldUpdaterCompareAndSet  thrpt   80  37.712 ± 0.439  ops/us
- * AtomicApiComparisonTest.varHandleReferenceLongCompareAndSet           thrpt   80  37.873 ± 0.665  ops/us
- *
- * AtomicApiComparisonTest.atomicLongGetAndIncrement                     thrpt   80  52.157 ± 0.752  ops/us
- * AtomicApiComparisonTest.atomicLongFieldUpdaterGetAndIncrement         thrpt   80  52.212 ± 0.904  ops/us
- * AtomicApiComparisonTest.varHandleLongGetAndIncrement                  thrpt   80  13.091 ± 0.366  ops/us
- * }</pre>
- */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class AtomicApiComparisonTest {
   public AtomicApiComparisonTest() {
   }
 
-  private static final void runThroughputBenchmarks(final int numberOfThreads) throws RunnerException {
-    new Runner(
-        JmhOptions.includingClass(AtomicApiComparisonTest.class)
-            .mode(Mode.Throughput)
-            .timeUnit(TimeUnit.MICROSECONDS)
-            .threads(numberOfThreads)
-            .build())
+  @Test
+  public final void run() throws RunnerException {
+    new Runner(newOptionsBuilder(opts -> opts.forks(20)
+        .warmupTime(milliseconds(100))
+        .warmupIterations(10)
+        .measurementTime(milliseconds(100))
+        .measurementIterations(3))
+        .include(includeClass(getClass()))
+        .jvmArgsAppend(jvmArgsDisableGc())
+        .mode(Mode.Throughput)
+        .timeUnit(TimeUnit.MICROSECONDS)
+        .threads(4)
+        .build())
         .run();
-  }
-
-  @Test
-  public final void throughputThreads1() throws RunnerException {
-    runThroughputBenchmarks(1);
-  }
-
-  @Test
-  public final void throughputThreads4() throws RunnerException {
-    runThroughputBenchmarks(4);
-  }
-
-  @Test
-  public final void throughputThreads32() throws RunnerException {
-    runThroughputBenchmarks(32);
   }
 
   @Benchmark
@@ -148,14 +97,76 @@ public class AtomicApiComparisonTest {
 
   @Benchmark
   public final long varHandleLongGetAndIncrement(final BenchmarkState state) {
-    return getAndIncrement(BenchmarkState.varHandleLong, state);
+    return (long) BenchmarkState.varHandleLong.getAndAdd(state, 1L);
   }
 
-  private static final long getAndIncrement(final VarHandle varHandle, final Object obj) {
+  @Benchmark
+  public final Long atomicReferenceLongGetAndIncrement(final BenchmarkState state) {
+    return state.atomicReferenceLong.getAndAccumulate(1L, (v, acc) -> v + acc);
+  }
+
+  @Benchmark
+  public final long atomicReferenceLongFieldUpdaterGetAndIncrement(final BenchmarkState state) {
+    return BenchmarkState.atomicReferenceLongFieldUpdater.getAndAccumulate(state, 1L, (v, acc) -> v + acc);
+  }
+
+  @Benchmark
+  public final long atomicLongGetAndIncrementManual(final BenchmarkState state) {
+    final AtomicLong atomic = state.atomicLong;
     long v;
     do {
-      v = (long) varHandle.getVolatile(obj);
-    } while (!varHandle.compareAndSet(obj, v, v + 1));
+      v = atomic.get();
+    } while (!atomic.compareAndSet(v, v + 1L));
+    return v;
+  }
+
+  @Benchmark
+  public final long atomicLongFieldUpdaterGetAndIncrementManual(final BenchmarkState state) {
+    final AtomicLongFieldUpdater<BenchmarkState> atomicFieldUpdater = BenchmarkState.atomicLongFieldUpdater;
+    long v;
+    do {
+      v = atomicFieldUpdater.get(state);
+    } while (!atomicFieldUpdater.compareAndSet(state, v, v + 1L));
+    return v;
+  }
+
+  @Benchmark
+  public final long varHandleLongGetAndIncrementManual(final BenchmarkState state) {
+    final VarHandle varHandle = BenchmarkState.varHandleLong;
+    long v;
+    do {
+      v = (long) varHandle.getVolatile(state);
+    } while (!varHandle.compareAndSet(state, v, v + 1L));
+    return v;
+  }
+
+  @Benchmark
+  public final Long atomicReferenceLongGetAndIncrementManual(final BenchmarkState state) {
+    final AtomicReference<Long> atomic = state.atomicReferenceLong;
+    Long v;
+    do {
+      v = atomic.get();
+    } while (!atomic.compareAndSet(v, v + 1L));
+    return v;
+  }
+
+  @Benchmark
+  public final Long atomicReferenceLongFieldUpdaterGetAndIncrementManual(final BenchmarkState state) {
+    final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicFieldUpdater = BenchmarkState.atomicReferenceLongFieldUpdater;
+    Long v;
+    do {
+      v = atomicFieldUpdater.get(state);
+    } while (!atomicFieldUpdater.compareAndSet(state, v, v + 1L));
+    return v;
+  }
+
+  @Benchmark
+  public final Long varHandleReferenceLongGetAndIncrementManual(final BenchmarkState state) {
+    final VarHandle varHandle = BenchmarkState.varHandleReferenceLong;
+    Long v;
+    do {
+      v = (Long) varHandle.getVolatile(state);
+    } while (!varHandle.compareAndSet(state, v, v + 1L));
     return v;
   }
 
@@ -171,7 +182,7 @@ public class AtomicApiComparisonTest {
     private static final VarHandle varHandleReferenceLong;
 
     static {
-      pingLong = 314159;
+      pingLong = 314159L;
       pongLong = -pingLong;
       pingReferenceLong = pingLong;
       pongReferenceLong = pongLong;

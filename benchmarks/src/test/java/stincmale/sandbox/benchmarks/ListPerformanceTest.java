@@ -21,38 +21,10 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import stincmale.sandbox.benchmarks.util.JmhOptions;
+import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
+import static stincmale.sandbox.benchmarks.util.JmhOptions.includeClass;
+import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
-/**
- * <pre>{@code
- * Benchmark                              (listDescriptor)  (size)   Mode  Cnt      Score     Error   Units
- * ListPerformanceTest.add                      ARRAY_LIST       5  thrpt   80  20324.444 ± 283.268  ops/ms
- * ListPerformanceTest.add                      ARRAY_LIST      50  thrpt   80   2306.665 ±  27.666  ops/ms
- * ListPerformanceTest.add                      ARRAY_LIST     500  thrpt   80    268.222 ±   0.986  ops/ms
- * ListPerformanceTest.add                      ARRAY_LIST    5000  thrpt   80     38.454 ±   0.933  ops/ms
- * ListPerformanceTest.add                      ARRAY_LIST   50000  thrpt   80      3.747 ±   0.081  ops/ms
- * ListPerformanceTest.add      ARRAY_LIST_ENSURE_CAPACITY       5  thrpt   80  20716.422 ±  78.477  ops/ms
- * ListPerformanceTest.add      ARRAY_LIST_ENSURE_CAPACITY      50  thrpt   80   2527.994 ±  16.440  ops/ms
- * ListPerformanceTest.add      ARRAY_LIST_ENSURE_CAPACITY     500  thrpt   80    262.597 ±   0.969  ops/ms
- * ListPerformanceTest.add      ARRAY_LIST_ENSURE_CAPACITY    5000  thrpt   80     55.183 ±   0.234  ops/ms
- * ListPerformanceTest.add      ARRAY_LIST_ENSURE_CAPACITY   50000  thrpt   80      5.306 ±   0.019  ops/ms
- * ListPerformanceTest.add                     LINKED_LIST       5  thrpt   80  24355.843 ± 113.264  ops/ms
- * ListPerformanceTest.add                     LINKED_LIST      50  thrpt   80   2830.576 ±  40.668  ops/ms
- * ListPerformanceTest.add                     LINKED_LIST     500  thrpt   80    295.308 ±   6.964  ops/ms
- * ListPerformanceTest.add                     LINKED_LIST    5000  thrpt   80     31.453 ±   0.669  ops/ms
- * ListPerformanceTest.add                     LINKED_LIST   50000  thrpt   80      3.136 ±   0.080  ops/ms
- * ListPerformanceTest.iterate                  ARRAY_LIST       5  thrpt   80  59849.843 ± 192.667  ops/ms
- * ListPerformanceTest.iterate                  ARRAY_LIST      50  thrpt   80  28736.416 ± 277.912  ops/ms
- * ListPerformanceTest.iterate                  ARRAY_LIST     500  thrpt   80   4479.838 ±  36.147  ops/ms
- * ListPerformanceTest.iterate                  ARRAY_LIST    5000  thrpt   80    459.256 ±   2.148  ops/ms
- * ListPerformanceTest.iterate                  ARRAY_LIST   50000  thrpt   80     45.611 ±   0.372  ops/ms
- * ListPerformanceTest.iterate                 LINKED_LIST       5  thrpt   80  60110.623 ± 802.743  ops/ms
- * ListPerformanceTest.iterate                 LINKED_LIST      50  thrpt   80  14248.574 ±  51.953  ops/ms
- * ListPerformanceTest.iterate                 LINKED_LIST     500  thrpt   80   1492.543 ±   7.587  ops/ms
- * ListPerformanceTest.iterate                 LINKED_LIST    5000  thrpt   80     55.632 ±   0.559  ops/ms
- * ListPerformanceTest.iterate                 LINKED_LIST   50000  thrpt   80      5.518 ±   0.055  ops/ms
- * }</pre>
- */
 @TestInstance(Lifecycle.PER_CLASS)
 public class ListPerformanceTest {
   public ListPerformanceTest() {
@@ -60,10 +32,15 @@ public class ListPerformanceTest {
 
   @Test
   public void run() throws RunnerException {
-    new Runner(JmhOptions.includingClass(getClass())
+    new Runner(newOptionsBuilder(opts -> opts.forks(10)
+        .warmupTime(milliseconds(100))
+        .warmupIterations(12)
+        .measurementTime(milliseconds(100))
+        .measurementIterations(3))
+        .include(includeClass(getClass()))
+        .shouldDoGC(true)
         .mode(Mode.Throughput)
         .timeUnit(TimeUnit.MILLISECONDS)
-        .shouldDoGC(true)
         .build())
         .run();
   }

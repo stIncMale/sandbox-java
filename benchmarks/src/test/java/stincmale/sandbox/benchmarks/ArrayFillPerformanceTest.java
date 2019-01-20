@@ -5,27 +5,31 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import stincmale.sandbox.benchmarks.util.JmhOptions;
+import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
+import static stincmale.sandbox.benchmarks.util.JmhOptions.includeClass;
+import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
-/**
- * <pre>{@code
- * Benchmark                                  Mode  Cnt    Score   Error   Units
- * ArrayFillPerformanceTest.forLoop          thrpt   15  236.610 ± 4.036  ops/ms
- * ArrayFillPerformanceTest.systemArrayCopy  thrpt   15  105.536 ± 1.747  ops/ms
- * }</pre>
- */
 @TestInstance(Lifecycle.PER_CLASS)
 public class ArrayFillPerformanceTest {
-  private static final int ARRAY_SIZE = 20_000;
+  private static final int ARRAY_SIZE = 100_000;
   private static final long[] arrFilledWithZeros = new long[ARRAY_SIZE];
+  private static final long[] arrFilledWithOnes = new long[ARRAY_SIZE];
+  private static final long[] arrFilledWithIndices = new long[ARRAY_SIZE];
 
-  static {//just to ignore IDE warning saying that we never write to arrFilledWithZeros
-    arrFilledWithZeros[0] = 0;
+  static {
+    for (int i = 0; i < ARRAY_SIZE; i++) {
+      arrFilledWithZeros[i] = 0;//just to handle it the same way we handle other pre-filled arrays
+      arrFilledWithOnes[i] = 1;
+      arrFilledWithIndices[i] = i;
+    }
   }
 
   public ArrayFillPerformanceTest() {
@@ -33,7 +37,13 @@ public class ArrayFillPerformanceTest {
 
   @Test
   public void run() throws RunnerException {
-    new Runner(JmhOptions.includingClass(getClass())
+    new Runner(newOptionsBuilder(opts -> opts.forks(10)
+        .warmupTime(milliseconds(100))
+        .warmupIterations(5)
+        .measurementTime(milliseconds(100))
+        .measurementIterations(3))
+        .include(includeClass(getClass()))
+        .shouldDoGC(true)
         .mode(Mode.Throughput)
         .timeUnit(TimeUnit.MILLISECONDS)
         .build())
@@ -41,20 +51,51 @@ public class ArrayFillPerformanceTest {
   }
 
   @Benchmark
-  public void forLoop(final ThreadState state) {
+  public void forLoop0(final ThreadState state) {
     for (int i = 0; i < state.arr.length; i++) {
       state.arr[i] = 0;
     }
   }
 
   @Benchmark
-  public void systemArrayCopy(final ThreadState state) {
+  public void systemArrayCopy0(final ThreadState state) {
     System.arraycopy(arrFilledWithZeros, 0, state.arr, 0, state.arr.length);
+  }
+
+  @Benchmark
+  public void forLoop1(final ThreadState state) {
+    for (int i = 0; i < state.arr.length; i++) {
+      state.arr[i] = 1;
+    }
+  }
+
+  @Benchmark
+  public void systemArrayCopy1(final ThreadState state) {
+    System.arraycopy(arrFilledWithOnes, 0, state.arr, 0, state.arr.length);
+  }
+
+  @Benchmark
+  public void forLoopIdx(final ThreadState state) {
+    for (int i = 0; i < state.arr.length; i++) {
+      state.arr[i] = i;
+    }
+  }
+
+  @Benchmark
+  public void systemArrayCopyIdx(final ThreadState state) {
+    System.arraycopy(arrFilledWithIndices, 0, state.arr, 0, state.arr.length);
   }
 
   @State(Scope.Thread)
   public static class ThreadState {
-    private final long[] arr = new long[ARRAY_SIZE];
+    @Param({"10", "100", "1000", "10000", "100000"})//must not be bigger than ARRAY_SIZE
+    private int length;
+    private long[] arr;
+
+    @Setup(Level.Iteration)
+    public final void setup() {
+      arr = new long[length];
+    }
 
     public ThreadState() {
     }

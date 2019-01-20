@@ -27,7 +27,6 @@
             <source>11</source>
             <target>11</target>
             <release>11</release>
-            <encoding>${sandbox.charset}</encoding>
             <debug>true</debug>
             <debuglevel>lines,vars,source</debuglevel>
             <showWarnings>true</showWarnings>

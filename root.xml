@@ -25,9 +25,8 @@
     <url>${sandbox.organizationUrl}</url>
   </organization>
   <properties>
-    <sandbox.charset>UTF-8</sandbox.charset>
-    <project.build.sourceEncoding>${sandbox.charset}</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>${sandbox.charset}</project.reporting.outputEncoding>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
     <sandbox.url>https://github.com/stIncMale/sandbox</sandbox.url>
     <sandbox.licenseName>WTFPL</sandbox.licenseName>
     <sandbox.licenseUrl>http://www.wtfpl.net/</sandbox.licenseUrl>
