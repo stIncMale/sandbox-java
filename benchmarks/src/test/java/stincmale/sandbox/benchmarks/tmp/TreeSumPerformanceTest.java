@@ -102,7 +102,7 @@ public class TreeSumPerformanceTest {
     private Node right;
     private final int value;
 
-    private Node(int value) {
+    private Node(final int value) {
       this.value = value;
     }
   }
