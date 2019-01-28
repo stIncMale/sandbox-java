@@ -504,20 +504,12 @@ public class AtomicApiComparisonTest {
     private static final int FAILURES_WITHOUT_BACKOFF = 0;
     private static final int EXPONENTIAL_BACKOFF_FACTOR = 2;
     private static final int MAX_BACKOFF_NANOS = 10;
-    private static final long PING_LONG;
-    private static final long PONG_LONG;
-    private static final Long PING_REFERENCE_LONG;
-    private static final Long PONG_REFERENCE_LONG;
     private static final AtomicLongFieldUpdater<BenchmarkState> atomicLongFieldUpdater;
     private static final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicReferenceLongFieldUpdater;
     private static final VarHandle varHandleLong;
     private static final VarHandle varHandleReferenceLong;
 
     static {
-      PING_LONG = 314159L;
-      PONG_LONG = -PING_LONG;
-      PING_REFERENCE_LONG = PING_LONG;
-      PONG_REFERENCE_LONG = PONG_LONG;
       atomicLongFieldUpdater = AtomicLongFieldUpdater.newUpdater(BenchmarkState.class, "forAtomicLongFieldUpdater");
       atomicReferenceLongFieldUpdater = AtomicReferenceFieldUpdater.newUpdater(
           BenchmarkState.class, Long.class, "forAtomicReferenceLongFieldUpdater");
@@ -535,30 +527,18 @@ public class AtomicApiComparisonTest {
     private volatile Long forAtomicReferenceLongFieldUpdater;
     private volatile long forVarHandleLong;
     private volatile Long forVarHandleReferenceLong;
-    private long plainLong;
-    private Long plainReferenceLong;
 
     public BenchmarkState() {
     }
 
     @Setup(Level.Trial)
     public final void setup() {
-      atomicLong = new AtomicLong(PING_LONG);
-      atomicReferenceLong = new AtomicReference<>(PING_REFERENCE_LONG);
-      atomicLongFieldUpdater.set(this, PING_LONG);
-      atomicReferenceLongFieldUpdater.set(this, PING_REFERENCE_LONG);
-      varHandleLong.setVolatile(this, PING_LONG);
-      varHandleReferenceLong.setVolatile(this, PING_REFERENCE_LONG);
-      plainLong = PING_LONG;
-      plainReferenceLong = PING_REFERENCE_LONG;
-    }
-
-    private static final long getNextPingOrPong(final long pingOrPong) {
-      return pingOrPong == PING_LONG ? PONG_LONG : PING_LONG;
-    }
-
-    private static final Long getNextPingOrPong(final Long pingOrPong) {
-      return pingOrPong.equals(PING_REFERENCE_LONG) ? PONG_REFERENCE_LONG : PING_REFERENCE_LONG;
+      atomicLong = new AtomicLong();
+      atomicReferenceLong = new AtomicReference<>(0L);
+      atomicLongFieldUpdater.set(this, 0L);
+      atomicReferenceLongFieldUpdater.set(this, 0L);
+      varHandleLong.setVolatile(this, 0L);
+      varHandleReferenceLong.setVolatile(this, 0L);
     }
   }
 
