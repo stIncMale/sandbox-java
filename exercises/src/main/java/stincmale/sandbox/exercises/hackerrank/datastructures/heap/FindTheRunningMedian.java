@@ -18,7 +18,7 @@ public class FindTheRunningMedian {
         double median = numbers.size() == 1
             ? numbers.get(0)
             : numbers.size() % 2 == 0
-                ? (double) (numbers.get((numbers.size() - 1) / 2) + numbers.get(1 + (numbers.size() - 1) / 2)) / 2
+                ? (double)(numbers.get((numbers.size() - 1) / 2) + numbers.get(1 + (numbers.size() - 1) / 2)) / 2
                 : numbers.get(numbers.size() / 2);
         if (i < numberOfNumbers - 1) {
           System.out.printf("%.1f\n", median);

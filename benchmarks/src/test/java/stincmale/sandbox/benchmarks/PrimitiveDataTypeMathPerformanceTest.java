@@ -70,7 +70,7 @@ public class PrimitiveDataTypeMathPerformanceTest {
   private static final double[] operandsDouble;
 
   static {
-    final Random rnd = new Random(3141592654L);
+    final Random rnd = new Random(1L);
     operandsInt = new int[NUMBER_OF_VALUES * 2];
     operandsFloat = new float[NUMBER_OF_VALUES * 2];
     operandsLong = new long[NUMBER_OF_VALUES];
@@ -369,7 +369,7 @@ public class PrimitiveDataTypeMathPerformanceTest {
   }
 
   private static final int nextIdx(final int idx, final int step) {
-    return (idx + step) & (NUMBER_OF_VALUES - 1);//nextInt % NUMBER_OF_VALUES
+    return (idx + step) & (NUMBER_OF_VALUES - 1);//(idx + step) % NUMBER_OF_VALUES
   }
 
   private static final int nextIdxIntFloat(final int idx) {
