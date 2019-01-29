@@ -6,7 +6,7 @@
 ## About
 A repository for examples (e.g. for my [Tech Blog](https://sites.google.com/site/aboutmale/techblog)), temporal, test and research Java projects.
 
-## Contributor Guide
+## Contributor Guide (including build/run commands)
 See [contributing.md](https://github.com/stIncMale/sandbox/blob/master/contributing.md).
 
 ---
