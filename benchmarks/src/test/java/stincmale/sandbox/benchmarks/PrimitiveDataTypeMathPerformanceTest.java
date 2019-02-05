@@ -14,13 +14,13 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
-import static stincmale.sandbox.benchmarks.util.JmhOptions.includeClass;
+import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.jvmArgsDisableGc;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
 /**
  * Test environment:
- * [single CPU] 3.4 GHz Intel Core i5 (4 cores),
+ * [single CPU] 3.4 GHz Intel Core i5 (4 cores, 4 hardware threads),
  * [OS] macOS 10.13.6 (17G4015),
  * [JDK] OpenJDK 11.0.1+13 (<a href="https://jdk.java.net/11/">a build from Oracle</a>).
  * <pre>{@code
@@ -123,7 +123,7 @@ public class PrimitiveDataTypeMathPerformanceTest {
         .warmupIterations(10)
         .measurementTime(milliseconds(100))
         .measurementIterations(3))
-        .include(includeClass(getClass()))
+        .include(includeBenchmarks(getClass()))
         .jvmArgsAppend(jvmArgsDisableGc())
         .mode(Mode.AverageTime)
         .timeUnit(TimeUnit.NANOSECONDS)

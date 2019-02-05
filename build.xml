@@ -61,7 +61,6 @@
             <reuseForks>true</reuseForks>
             <argLine>
               -Xfuture
-              -Xmx1024m
             </argLine>
           </configuration>
         </plugin>
