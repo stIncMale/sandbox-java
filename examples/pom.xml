@@ -27,7 +27,7 @@
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.openmuc</groupId>
+      <groupId>com.beanit</groupId>
       <artifactId>jasn1</artifactId>
     </dependency>
     <dependency>

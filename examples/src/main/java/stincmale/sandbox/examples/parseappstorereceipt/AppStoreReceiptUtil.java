@@ -1,5 +1,9 @@
 package stincmale.sandbox.examples.parseappstorereceipt;
 
+import com.beanit.jasn1.ber.types.BerInteger;
+import com.beanit.jasn1.ber.types.BerOctetString;
+import com.beanit.jasn1.ber.types.string.BerIA5String;
+import com.beanit.jasn1.ber.types.string.BerUTF8String;
 import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -20,10 +24,6 @@ import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSTypedData;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.openmuc.jasn1.ber.types.BerInteger;
-import org.openmuc.jasn1.ber.types.BerOctetString;
-import org.openmuc.jasn1.ber.types.string.BerIA5String;
-import org.openmuc.jasn1.ber.types.string.BerUTF8String;
 import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.ORIGINAL_TRANSACTION_IDENTIFIER;
 import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.PRODUCT_IDENTIFIER;
 import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.PURCHASE_DATE;

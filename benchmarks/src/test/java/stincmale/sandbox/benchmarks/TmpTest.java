@@ -12,6 +12,8 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -84,13 +86,13 @@ public class TmpTest {
         .timeout(milliseconds(1000_000))
         .forks(2)
         .warmupTime(milliseconds(1000))
-        .warmupIterations(6)
+        .warmupIterations(0)
         .measurementTime(milliseconds(1000))
-        .measurementIterations(2)
+        .measurementIterations(5)
         .include(includeBenchmarks(TmpTest.class))
         .shouldDoGC(false)
         .mode(Mode.Throughput)
-        .timeUnit(TimeUnit.MILLISECONDS)
+        .timeUnit(TimeUnit.SECONDS)
         .threads(numberOfThreads);
     new Runner(opts.build()).run();
   }
@@ -105,60 +107,87 @@ public class TmpTest {
     runThroughputBenchmarks(32);
   }
 
-  @Benchmark
-  public final long reentrantRwLock(final BenchmarkState s) throws InterruptedException {
-    s.rwLock.readLock().lock();
-    try {
-      if (s.counter.getAndIncrement() < 1000) {
-        return s.counter.get();
-      }
-    } finally {
-      s.rwLock.readLock().unlock();
-    }
-    s.rwLock.writeLock().lock();
-    try {
-      Thread.sleep(10);
-      s.counter.set(0);
-    } finally {
-      s.rwLock.writeLock().unlock();
-    }
-    return s.counter.get();
-  }
+  //  @Benchmark
+  //  public final long reentrantRwLock(final BenchmarkState s) throws InterruptedException {
+  //    s.rwLock.readLock().stampedLock();
+  //    try {
+  //      if (s.counter.getAndIncrement() < 1000) {
+  //        return s.counter.get();
+  //      }
+  //    } finally {
+  //      s.rwLock.readLock().unlock();
+  //    }
+  //    s.rwLock.writeLock().stampedLock();
+  //    try {
+  //      Thread.sleep(10);
+  //      s.counter.set(0);
+  //    } finally {
+  //      s.rwLock.writeLock().unlock();
+  //    }
+  //    return s.counter.get();
+  //  }
 
   @Benchmark
   public final long stampedLock(final BenchmarkState state) throws InterruptedException {
-    long stamp = state.lock.readLock();
+    long counter;
+    boolean writeLock = false;
+    long stamp = state.stampedLock.readLock();
     try {
-      if (state.counter.getAndIncrement() < 1000) {
-        return state.counter.get();
+      for (; ; writeLock = true, stamp = state.stampedLock.writeLock()) {
+        counter = state.counter.incrementAndGet();
+        if (counter < 10) {//counter is fine
+          break;
+        } else {//counter is too big, we may need to reset counter
+          if (writeLock) {
+            //            System.out.println(String.format("tid=%s, counter=%s", Thread.currentThread().getId(), counter));
+            counter = 0;
+            state.counter.set(counter);
+            Thread.sleep(100);
+            break;
+          } else {
+            state.stampedLock.unlockRead(stamp);
+          }
+        }
       }
     } finally {
-      state.lock.unlockRead(stamp);
+      if (writeLock) {
+        state.stampedLock.unlockWrite(stamp);
+      } else {
+        state.stampedLock.unlockRead(stamp);
+      }
     }
-    stamp = state.lock.writeLock();
-    try {
-      Thread.sleep(10);
-      state.counter.set(0);
-    } finally {
-      state.lock.unlockWrite(stamp);
-    }
-    return state.counter.get();
+    state.iterationCounter.getAndIncrement();
+    return counter;
   }
 
   @State(Scope.Benchmark)
   public static class BenchmarkState {
-    private StampedLock lock;
+    private StampedLock stampedLock;
     private ReentrantReadWriteLock rwLock;
     private AtomicLong counter;
+    private AtomicLong iterationCounter;
 
     public BenchmarkState() {
     }
 
     @Setup(Level.Trial)
     public final void setup() {
-      lock = new StampedLock();
+      stampedLock = new StampedLock();
       rwLock = new ReentrantReadWriteLock();
       counter = new AtomicLong();
+    }
+
+    @Setup(Level.Iteration)
+    public final void iterationSetUp() {
+      iterationCounter = new AtomicLong();
+    }
+
+    @TearDown(Level.Iteration)
+    public final void iterationTearDown(final BenchmarkParams benchmarkParams) {
+      final TimeUnit timeUnit = benchmarkParams.getMeasurement().getTime().getTimeUnit();
+      final long measurementTime = benchmarkParams.getMeasurement().getTime().convertTo(benchmarkParams.getTimeUnit());
+      //      final int measurementIterations = benchmarkParams.getMeasurement().getCount();
+      System.out.println(String.format("actualCalculatedThroughput=%s ops/%s", iterationCounter.get() / measurementTime, timeUnit));
     }
   }
 }
