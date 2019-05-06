@@ -1,0 +1,18 @@
+#!/usr/bin/java --source 12
+package stincmale.sandbox.examples.makeappbehaviorconsistent;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+
+final class InShellOutUtf16 {
+  public static final void main(final String... args) throws IOException {
+    final Reader defaultCharsetReader = new InputStreamReader(System.in);
+    final Writer utf16Writer = new OutputStreamWriter(System.out, StandardCharsets.UTF_16);
+    defaultCharsetReader.transferTo(utf16Writer);
+    utf16Writer.flush();
+  }
+}
