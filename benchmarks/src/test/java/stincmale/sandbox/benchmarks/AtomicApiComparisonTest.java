@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import static java.util.concurrent.locks.LockSupport.parkNanos;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
@@ -140,7 +141,7 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
  * AtomicApiComparisonTest.varHandleReferenceLongCompareAndSetBackoff                   thrpt   45  125.939 ±  9.350  ops/us
  * }</pre>
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestInstance(Lifecycle.PER_CLASS)
 public class AtomicApiComparisonTest {
   public AtomicApiComparisonTest() {
   }
