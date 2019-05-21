@@ -3,7 +3,6 @@ package stincmale.sandbox.benchmarks;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.StampedLock;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
@@ -168,7 +167,6 @@ public class TmpTest {
   @State(Scope.Benchmark)
   public static class BenchmarkState {
     private Object monitor;
-    private StampedLock stampedLock;
     private ReentrantReadWriteLock rwLock;
     private LongAdder opsBeginCounter;
     private LongAdder opsEndCounter;
@@ -180,7 +178,6 @@ public class TmpTest {
     @Setup(Level.Iteration)
     public final void setup() {
       monitor = new Object();
-      stampedLock = new StampedLock();
       rwLock = new ReentrantReadWriteLock();
       opsBeginCounter = new LongAdder();
       opsEndCounter = new LongAdder();
