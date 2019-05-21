@@ -21,7 +21,6 @@ public final class JmhOptions {
     result.jvmArgs(
         "-Xfuture",
         "--illegal-access=deny",
-        "-Xshare:off",
         "-Xms4096m",
         "-Xmx4096m",
         javaServer ? "-server" : "-client",
