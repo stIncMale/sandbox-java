@@ -24,7 +24,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 /**
  * This test illustrates the problem with {@link JDBCType#TIMESTAMP} (without timezone) described in
- * <a href="https://sites.google.com/site/aboutmale/techblog/brokentimestamps">JDBC and broken timestamps</a>.
+ * <a href="https://www.kovalenko.link/blog/jdbc-timestamp-pitfalls">Pitfalls with JDBC PreparedStatement.setTimestamp/ResultSet.getTimestamp</a>.
  * <p>
  * You may see that regardless of the {@link TimeZone} craziness going on around,
  * storing and reading data of type {@link JDBCType#TIMESTAMP_WITH_TIMEZONE} never has issues,

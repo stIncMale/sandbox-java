@@ -10,7 +10,6 @@
   <artifactId>sandbox-version</artifactId>
   <packaging>pom</packaging>
   <name>sandbox-version</name>
-  <url>${sandbox.url}</url>
   <parent>
     <groupId>stincmale.sandbox</groupId>
     <artifactId>sandbox-root</artifactId>

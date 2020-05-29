@@ -12,26 +12,24 @@
   <version>0.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>sandbox-root</name>
-  <url>${sandbox.url}</url>
+  <url>https://github.com/stIncMale/sandbox</url>
   <licenses>
     <license>
-      <name>${sandbox.licenseName}</name>
-      <url>${sandbox.licenseUrl}</url>
+      <name>WTFPL</name>
+      <url>http://www.wtfpl.net/</url>
     </license>
   </licenses>
-  <inceptionYear>${sandbox.inceptionYear}</inceptionYear>
-  <organization>
-    <name>${sandbox.organizationName}</name>
-    <url>${sandbox.organizationUrl}</url>
-  </organization>
+  <inceptionYear>2015</inceptionYear>
+  <developers>
+    <developer>
+      <id>stIncMale</id>
+      <name>Valiantsin Kavalenka</name>
+      <email>public.vkovalenko@gmail.com</email>
+      <url>https://www.kovalenko.link</url>
+    </developer>
+  </developers>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
-    <sandbox.url>https://github.com/stIncMale/sandbox</sandbox.url>
-    <sandbox.licenseName>WTFPL</sandbox.licenseName>
-    <sandbox.licenseUrl>http://www.wtfpl.net/</sandbox.licenseUrl>
-    <sandbox.inceptionYear>2015</sandbox.inceptionYear>
-    <sandbox.organizationName>Valiantsin Kavalenka</sandbox.organizationName>
-    <sandbox.organizationUrl>https://sites.google.com/site/aboutmale/</sandbox.organizationUrl>
   </properties>
 </project>

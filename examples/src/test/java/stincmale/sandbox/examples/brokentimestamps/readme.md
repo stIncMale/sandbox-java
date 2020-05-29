@@ -1,1 +1,1 @@
-Contains examples for the post [JDBC and broken timestamps](https://sites.google.com/site/aboutmale/techblog/brokentimestamps).
+Contains examples for the post [Pitfalls with JDBC `PreparedStatement.setTimestamp`/`ResultSet.getTimestamp`](https://www.kovalenko.link/blog/jdbc-timestamp-pitfalls).
