@@ -19,7 +19,7 @@ public final class JmhOptions {
   public static final OptionsBuilder newOptionsBuilder(@Nullable final Consumer<OptionsBuilder> forksWarmupIterationsTuner) {
     final OptionsBuilder result = new OptionsBuilder();
     result.jvmArgs(
-        "-Xfuture",
+        "-Xverify:all",
         "--illegal-access=deny",
         "-Xms4096m",
         "-Xmx4096m",

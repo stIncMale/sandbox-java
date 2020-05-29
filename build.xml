@@ -24,8 +24,8 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
-            <source>12</source>
-            <target>12</target>
+            <source>14</source>
+            <target>14</target>
             <debug>true</debug>
             <debuglevel>lines,vars,source</debuglevel>
             <showWarnings>true</showWarnings>
@@ -60,7 +60,7 @@
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
             <argLine>
-              -Xfuture
+              -Xverify:all
               -Xmx1024m
             </argLine>
           </configuration>

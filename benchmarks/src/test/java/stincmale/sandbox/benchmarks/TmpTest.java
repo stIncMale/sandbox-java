@@ -112,7 +112,7 @@ public class TmpTest {
 
   public final void runThroughputBenchmarks(final int numberOfThreads) throws RunnerException {
     final OptionsBuilder opts = new OptionsBuilder();
-    opts.jvmArgs("-Xfuture", "--illegal-access=deny", "-Xms1024m", "-Xmx1024m")
+    opts.jvmArgs("-Xverify:all", "--illegal-access=deny", "-Xms1024m", "-Xmx1024m")
         .shouldDoGC(false)
         .syncIterations(true)
         .shouldFailOnError(true)
