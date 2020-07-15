@@ -10,7 +10,6 @@
   <artifactId>sandbox-examples</artifactId>
   <packaging>jar</packaging>
   <name>sandbox-examples</name>
-  <url>${sandbox.url}</url>
   <parent>
     <groupId>stincmale.sandbox</groupId>
     <artifactId>sandbox-build</artifactId>
