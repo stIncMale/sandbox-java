@@ -1,9 +1,9 @@
-package stincmale.sandbox.examples.parseappstorereceipt;
+package stincmale.sandbox.examples.decodeappleappstorereceipt;
 
-import com.beanit.jasn1.ber.types.BerInteger;
-import com.beanit.jasn1.ber.types.BerOctetString;
-import com.beanit.jasn1.ber.types.string.BerIA5String;
-import com.beanit.jasn1.ber.types.string.BerUTF8String;
+import com.beanit.asn1bean.ber.types.BerInteger;
+import com.beanit.asn1bean.ber.types.BerOctetString;
+import com.beanit.asn1bean.ber.types.string.BerIA5String;
+import com.beanit.asn1bean.ber.types.string.BerUTF8String;
 import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,22 +24,22 @@ import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSTypedData;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.ORIGINAL_TRANSACTION_IDENTIFIER;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.PRODUCT_IDENTIFIER;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.PURCHASE_DATE;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.SUBSCRIPTION_EXPIRATION_DATE;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.TRANSACTION_IDENTIFIER;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.ReceiptAttributeType.BUNDLE_IDENTIFIER;
-import static stincmale.sandbox.examples.parseappstorereceipt.AppStoreReceiptUtil.ReceiptAttributeType.IN_APP_PURCHASE_RECEIPT;
-import stincmale.sandbox.examples.parseappstorereceipt.apple.asn1.receiptmodule.InAppAttribute;
-import stincmale.sandbox.examples.parseappstorereceipt.apple.asn1.receiptmodule.InAppReceipt;
-import stincmale.sandbox.examples.parseappstorereceipt.apple.asn1.receiptmodule.Payload;
-import stincmale.sandbox.examples.parseappstorereceipt.apple.asn1.receiptmodule.ReceiptAttribute;
+import static stincmale.sandbox.examples.decodeappleappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.ORIGINAL_TRANSACTION_IDENTIFIER;
+import static stincmale.sandbox.examples.decodeappleappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.PRODUCT_IDENTIFIER;
+import static stincmale.sandbox.examples.decodeappleappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.PURCHASE_DATE;
+import static stincmale.sandbox.examples.decodeappleappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.SUBSCRIPTION_EXPIRATION_DATE;
+import static stincmale.sandbox.examples.decodeappleappstorereceipt.AppStoreReceiptUtil.InAppReceiptAttributeType.TRANSACTION_IDENTIFIER;
+import static stincmale.sandbox.examples.decodeappleappstorereceipt.AppStoreReceiptUtil.ReceiptAttributeType.BUNDLE_IDENTIFIER;
+import static stincmale.sandbox.examples.decodeappleappstorereceipt.AppStoreReceiptUtil.ReceiptAttributeType.IN_APP_PURCHASE_RECEIPT;
+import stincmale.sandbox.examples.decodeappleappstorereceipt.asn1.receiptmodule.InAppAttribute;
+import stincmale.sandbox.examples.decodeappleappstorereceipt.asn1.receiptmodule.InAppReceipt;
+import stincmale.sandbox.examples.decodeappleappstorereceipt.asn1.receiptmodule.Payload;
+import stincmale.sandbox.examples.decodeappleappstorereceipt.asn1.receiptmodule.ReceiptAttribute;
 
 /**
  * Contains utility methods to work with
  * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html">
- * receipts issued by App Store</a>.
+ * receipts issued by Apple App Store</a>.
  * <p>
  * Note that upon initialization this class {@linkplain Security#addProvider(Provider) adds} a new {@link BouncyCastleProvider}.
  */
@@ -188,7 +188,7 @@ public final class AppStoreReceiptUtil {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     return getReceiptAttribute(payload, BUNDLE_IDENTIFIER)
         .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
-        .get();
+        .orElseThrow();
   }
 
   /**
@@ -199,7 +199,7 @@ public final class AppStoreReceiptUtil {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
     return getInAppAttribute(inAppReceipt, TRANSACTION_IDENTIFIER)
         .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
-        .get();
+        .orElseThrow();
   }
 
   /**
@@ -210,7 +210,7 @@ public final class AppStoreReceiptUtil {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
     return getInAppAttribute(inAppReceipt, ORIGINAL_TRANSACTION_IDENTIFIER)
         .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
-        .get();
+        .orElseThrow();
   }
 
   /**
@@ -221,7 +221,7 @@ public final class AppStoreReceiptUtil {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
     return getInAppAttribute(inAppReceipt, PRODUCT_IDENTIFIER)
         .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
-        .get();
+        .orElseThrow();
   }
 
   /**
@@ -232,7 +232,7 @@ public final class AppStoreReceiptUtil {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
     return getInAppAttribute(inAppReceipt, PURCHASE_DATE)
         .map(inAppAttribute -> decodeInstant(inAppAttribute.getValue()))
-        .get();
+        .orElseThrow();
   }
 
   /**
@@ -248,7 +248,7 @@ public final class AppStoreReceiptUtil {
               ? Instant.EPOCH
               : result;
         })
-        .get();
+        .orElseThrow();
   }
 
   /**
@@ -444,71 +444,26 @@ public final class AppStoreReceiptUtil {
     }
 
     public static final ReceiptAttributeType of(final int type) {
-      final ReceiptAttributeType result;
-      switch (type) {
-        case 2: {
-          result = BUNDLE_IDENTIFIER;
-          break;
-        }
-        case 3: {
-          result = APP_VERSION;
-          break;
-        }
-        case 4: {
-          result = OPAQUE_VALUE;
-          break;
-        }
-        case 5: {
-          result = SHA1_HASH;
-          break;
-        }
-        case 17: {
-          result = IN_APP_PURCHASE_RECEIPT;
-          break;
-        }
-        case 19: {
-          result = ORIGINAL_APPLICATION_VERSION;
-          break;
-        }
-        case 12: {
-          result = RECEIPT_CREATION_DATE;
-          break;
-        }
-        case 21: {
-          result = RECEIPT_EXPIRATION_DATE;
-          break;
-        }
-        default: {
-          result = UNSUPPORTED;
-          break;
-        }
-      }
-      return result;
+      return switch (type) {
+        case 2 -> BUNDLE_IDENTIFIER;
+        case 3 -> APP_VERSION;
+        case 4 -> OPAQUE_VALUE;
+        case 5 -> SHA1_HASH;
+        case 17 -> IN_APP_PURCHASE_RECEIPT;
+        case 19 -> ORIGINAL_APPLICATION_VERSION;
+        case 12 -> RECEIPT_CREATION_DATE;
+        case 21 -> RECEIPT_EXPIRATION_DATE;
+        default -> UNSUPPORTED;
+      };
     }
 
     private final String asString(final BerOctetString v, final boolean omitUnsupportedAttributes) {
-      final String result;
-      switch (this) {
-        case IN_APP_PURCHASE_RECEIPT: {
-          result = AppStoreReceiptUtil.toString(decodeInAppReceipt(v), omitUnsupportedAttributes);
-          break;
-        }
-        case BUNDLE_IDENTIFIER:
-        case APP_VERSION:
-        case ORIGINAL_APPLICATION_VERSION: {
-          result = decodeAsn1UTF8String(v);
-          break;
-        }
-        case RECEIPT_CREATION_DATE:
-        case RECEIPT_EXPIRATION_DATE: {
-          result = decodeAsn1IA5String(v);
-          break;
-        }
-        default: {
-          result = v.toString();
-        }
-      }
-      return result;
+      return switch (this) {
+        case IN_APP_PURCHASE_RECEIPT -> AppStoreReceiptUtil.toString(decodeInAppReceipt(v), omitUnsupportedAttributes);
+        case BUNDLE_IDENTIFIER, APP_VERSION, ORIGINAL_APPLICATION_VERSION -> decodeAsn1UTF8String(v);
+        case RECEIPT_CREATION_DATE, RECEIPT_EXPIRATION_DATE -> decodeAsn1IA5String(v);
+        default -> v.toString();
+      };
     }
   }
 
@@ -544,78 +499,27 @@ public final class AppStoreReceiptUtil {
     }
 
     public static final InAppReceiptAttributeType of(final int type) {
-      final InAppReceiptAttributeType result;
-      switch (type) {
-        case 1701: {
-          result = QUANTITY;
-          break;
-        }
-        case 1702: {
-          result = PRODUCT_IDENTIFIER;
-          break;
-        }
-        case 1703: {
-          result = TRANSACTION_IDENTIFIER;
-          break;
-        }
-        case 1705: {
-          result = ORIGINAL_TRANSACTION_IDENTIFIER;
-          break;
-        }
-        case 1704: {
-          result = PURCHASE_DATE;
-          break;
-        }
-        case 1706: {
-          result = ORIGINAL_PURCHASE_DATE;
-          break;
-        }
-        case 1708: {
-          result = SUBSCRIPTION_EXPIRATION_DATE;
-          break;
-        }
-        case 1712: {
-          result = CANCELLATION_DATE;
-          break;
-        }
-        case 1711: {
-          result = WEB_ORDER_LINE_ITEM_ID;
-          break;
-        }
-        default: {
-          result = UNSUPPORTED;
-          break;
-        }
-      }
-      return result;
+      return switch (type) {
+        case 1701 -> QUANTITY;
+        case 1702 -> PRODUCT_IDENTIFIER;
+        case 1703 -> TRANSACTION_IDENTIFIER;
+        case 1705 -> ORIGINAL_TRANSACTION_IDENTIFIER;
+        case 1704 -> PURCHASE_DATE;
+        case 1706 -> ORIGINAL_PURCHASE_DATE;
+        case 1708 -> SUBSCRIPTION_EXPIRATION_DATE;
+        case 1712 -> CANCELLATION_DATE;
+        case 1711 -> WEB_ORDER_LINE_ITEM_ID;
+        default -> UNSUPPORTED;
+      };
     }
 
     private final String asString(final BerOctetString v) {
-      final String result;
-      switch (this) {
-        case QUANTITY:
-        case WEB_ORDER_LINE_ITEM_ID: {
-          result = decodeAsn1Integer(v).toString();
-          break;
-        }
-        case PRODUCT_IDENTIFIER:
-        case TRANSACTION_IDENTIFIER:
-        case ORIGINAL_TRANSACTION_IDENTIFIER: {
-          result = decodeAsn1UTF8String(v);
-          break;
-        }
-        case PURCHASE_DATE:
-        case ORIGINAL_PURCHASE_DATE:
-        case SUBSCRIPTION_EXPIRATION_DATE:
-        case CANCELLATION_DATE: {
-          result = decodeAsn1IA5String(v);
-          break;
-        }
-        default: {
-          result = v.toString();
-        }
-      }
-      return result;
+      return switch (this) {
+        case QUANTITY, WEB_ORDER_LINE_ITEM_ID -> decodeAsn1Integer(v).toString();
+        case PRODUCT_IDENTIFIER, TRANSACTION_IDENTIFIER, ORIGINAL_TRANSACTION_IDENTIFIER -> decodeAsn1UTF8String(v);
+        case PURCHASE_DATE, ORIGINAL_PURCHASE_DATE, SUBSCRIPTION_EXPIRATION_DATE, CANCELLATION_DATE -> decodeAsn1IA5String(v);
+        default -> v.toString();
+      };
     }
   }
 }

@@ -28,7 +28,7 @@
     </dependency>
     <dependency>
       <groupId>com.beanit</groupId>
-      <artifactId>jasn1</artifactId>
+      <artifactId>asn1bean</artifactId>
     </dependency>
     <dependency>
       <groupId>org.bouncycastle</groupId>
