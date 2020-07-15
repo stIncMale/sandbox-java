@@ -3,7 +3,7 @@ package stincmale.sandbox.examples.decodeappleappstorereceipt;
 import stincmale.sandbox.examples.decodeappleappstorereceipt.asn1.receiptmodule.InAppReceipt;
 import stincmale.sandbox.examples.decodeappleappstorereceipt.asn1.receiptmodule.Payload;
 
-final class AppStoreReceiptParserExample {
+final class AppStoreReceiptDecoderExample {
   /**
    * A Base64-encoded App Store receipt
    * (https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html).
