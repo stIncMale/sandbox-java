@@ -1,1 +1,1 @@
-Contains examples for the post [Make the behavior of your Java application consistent](https://sites.google.com/site/aboutmale/techblog/makeappbehaviorconsistent).
+Contains examples for the post [Making Java app behavior consistent in different environments](https://www.kovalenko.link/blog/make-app-behavior-consistent).
