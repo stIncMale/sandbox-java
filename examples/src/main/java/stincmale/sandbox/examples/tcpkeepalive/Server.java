@@ -15,26 +15,50 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import jdk.net.ExtendedSocketOptions;
+import java.util.concurrent.atomic.AtomicLong;
+import static jdk.net.ExtendedSocketOptions.TCP_KEEPIDLE;
+import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
 
 /**
- * A TCP server that works according to the following trivial protocol:
+ * A TCP server that implements a trivial protocol mostly compliant with
+ * the echo protocol specified by the <a href="https://www.rfc-editor.org/rfc/rfc862.html">RFC 862</a>.
+ * The specifics of the protocol compared to the echo protocol are:
  * <ol>
- * <li>Each received or sent byte is a single message.</li>
- * <li>When a client is connected, the first message it must send is the {@code hello} message 0x62, which is 0b1100010 or 104 in decimal notation,
- * and represents LATIN SMALL LETTER H
- * in both <a href="https://www.rfc-editor.org/rfc/rfc20">US-ASCII</a>
- * and <a href="https://www.rfc-editor.org/rfc/rfc3629">UTF-8</a>)</li>
- * <li>Any message received after {@code hello} is simply sent back to the client.</li>
- * <li>When a client receives the {@code bye} message 0x62, which is 0b1101000 or 98 in decimal notation,
- * and represents LATIN SMALL LETTER B, it must gracefully terminate
- * (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP CLOSE user command</a>) the connection.
- * In order to receive the {@code bye} message a client must send the {@code bye} message so that the server sends it back.</li>
- * <li>When the server detects that a client has closed the connection, it closes the connection from its side.
- * Because the client closes first, its socket ends up in the <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.2">TIME-WAIT state</a>,
- * while the corresponding socket on the server side ends up in the fictional
- * <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.2">CLOSED state</a>, thus promptly releasing resources.</li>
+ *   <li>
+ *     Each byte is treated as a separate message.
+ *   </li>
+ *   <li>
+ *     The following two bytes have special meaning:
+ *     <ul>
+ *       <li>
+ *         0x68 (0b1101000 or 104 in decimal notation, represents LATIN SMALL LETTER H in both
+ *         <a href="https://www.rfc-editor.org/rfc/rfc20">US-ASCII</a> and <a href="https://www.rfc-editor.org/rfc/rfc3629">UTF-8</a>)
+ *         - {@code hello} message;
+ *       </li>
+ *       <li>
+ *         0x62 (0b1100010 or 98 in decimal notation, represents LATIN SMALL LETTER B)
+ *         - {@code bye} message.
+ *       </li>
+ *     </ul>
+ *   </li>
+ *   <li>
+ *     The first message sent by a client after connecting must be {@code hello}. This is the only part not compliant with the echo protocol.
+ *   </li>
+ *   <li>
+ *     When a client decides to disconnect, it must send the {@code bye} message.
+ *     The server replies by sending the same message back, and upon receiving it the client must gracefully terminate
+ *     (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP CLOSE user command</a>) the connection.
+ *   </li>
+ *   <li>
+ *     When the server detects that a client has closed the connection, it closes its side of the connection.
+ *     Because a well-behaved client initiates the process of closing the connection,
+ *     its socket ends up in the <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.2">TIME-WAIT state</a>,
+ *     while the corresponding socket on the server side ends up in the fictional
+ *     <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.2">CLOSED state</a>, thus promptly releasing resources.
+ *     This way we prevent accumulation of sockets in the TIME-WAIT state on the server side.
+ *   </li>
  * </ol>
  */
 final class Server {
@@ -46,7 +70,7 @@ final class Server {
   public static final void main(final String... args) throws IOException {
     final InetSocketAddress serverSocketAddress = parseCliArgs(args);
     final int acceptTimeoutMillis = 0;//infinitely wait for new incoming connections
-    final ExecutorService ex = Executors.newCachedThreadPool();
+    final ExecutorService executor = Executors.newCachedThreadPool(new NamingThreadFactory("server"));
     log("Starting listening on " + serverSocketAddress);
     try (ServerSocket serverSocket = new ServerSocket()) {
       serverSocket.bind(serverSocketAddress);
@@ -59,7 +83,7 @@ final class Server {
         try {
           log("Accepted a new connection " + clientSocket);
           enableTcpKeepAlive(clientSocket, TCP_KEEP_ALIVE_IDLE_SECONDS);
-          ex.submit(() -> {
+          executor.submit(() -> {
             try {
               serve(clientSocket, SO_READ_TIMEOUT_MILLIS);
             } catch (final Throwable e) {
@@ -110,19 +134,22 @@ final class Server {
 
   private static final void enableTcpKeepAlive(final Socket socket, final int tcpKeepAliveIdleSeconds) throws IOException {
     socket.setKeepAlive(true);
+    final long tcpKeepAliveIdleMillis = TimeUnit.SECONDS.toMillis(tcpKeepAliveIdleSeconds);
     final Set<SocketOption<?>> supportedOptions = socket.supportedOptions();
-    if (supportedOptions.contains(ExtendedSocketOptions.TCP_KEEPIDLE)) {
-      socket.setOption(ExtendedSocketOptions.TCP_KEEPIDLE, tcpKeepAliveIdleSeconds);
+    if (supportedOptions.contains(TCP_KEEPIDLE)) {
+      socket.setOption(TCP_KEEPIDLE, tcpKeepAliveIdleSeconds);
+      log("Set " + TCP_KEEPIDLE + " " + tcpKeepAliveIdleMillis +"ms for " + socket);
     } else {
-      log(ExtendedSocketOptions.TCP_KEEPIDLE + " is not supported");
+      log(TCP_KEEPIDLE + " is not supported for " + socket);
     }
     /* The documentation of TCP_KEEPINTERVAL does not seem to match the actual behavior. At least on Linux,
      * it specifies the interval between all probes but the first one. This actual behavior matches the one specified for TCP_KEEPINTVL
      * (see https://man7.org/linux/man-pages/man7/tcp.7.html).*/
-    if (supportedOptions.contains(ExtendedSocketOptions.TCP_KEEPINTERVAL)) {
-      socket.setOption(ExtendedSocketOptions.TCP_KEEPINTERVAL, tcpKeepAliveIdleSeconds);
+    if (supportedOptions.contains(TCP_KEEPINTERVAL)) {
+      socket.setOption(TCP_KEEPINTERVAL, tcpKeepAliveIdleSeconds);
+      log("Set " + TCP_KEEPINTERVAL + " " + tcpKeepAliveIdleMillis +"ms for " + socket);
     } else {
-      log(ExtendedSocketOptions.TCP_KEEPINTERVAL + " is not supported");
+      log(TCP_KEEPINTERVAL + " is not supported for " + socket);
     }
   }
 
@@ -131,6 +158,7 @@ final class Server {
     boolean clientDisconnected = false;
     try {
       clientSocket.setSoTimeout(readTimeoutMillis);
+      log("Set read timeout " + readTimeoutMillis + "ms for " + clientSocket);
       final InputStream in = clientSocket.getInputStream();
       final OutputStream out = clientSocket.getOutputStream();
       final byte[] inData = new byte[1];
@@ -188,7 +216,7 @@ final class Server {
   }
 
   static final void log(final Object msg) {
-    System.err.printf("%30s %33s %s%n", DateTimeFormatter.ISO_INSTANT.format(Instant.now()), Thread.currentThread(), msg);
+    System.err.printf("%-30s %-9.9s %s%n", DateTimeFormatter.ISO_INSTANT.format(Instant.now()), Thread.currentThread().getName(), msg);
   }
 
   static final String toUnsignedHexString(final byte b) {
@@ -198,5 +226,22 @@ final class Server {
 
   static final InetSocketAddress parseCliArgs(final String... args) {
     return new InetSocketAddress(args[0], Integer.parseInt(args[1]));
+  }
+
+  private static final class NamingThreadFactory implements ThreadFactory {
+    private final String name;
+    private final AtomicLong counter;
+
+    private NamingThreadFactory(final String name) {
+      this.name = name;
+      counter = new AtomicLong();
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+      final Thread t = Executors.defaultThreadFactory().newThread(r);
+      t.setName(name + "-" + counter.getAndIncrement());
+      return t;
+    }
   }
 }
