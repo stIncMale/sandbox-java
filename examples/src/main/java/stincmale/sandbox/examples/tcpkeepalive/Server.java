@@ -24,7 +24,7 @@ import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
 /**
  * A TCP server that implements a trivial protocol mostly compliant with
  * the echo protocol specified by the <a href="https://www.rfc-editor.org/rfc/rfc862.html">RFC 862</a>.
- * The specifics of the protocol compared to the echo protocol are:
+ * The peculiarities of the protocol compared to the echo protocol are:
  * <ol>
  *   <li>
  *     Each byte is treated as a separate message.
@@ -48,18 +48,33 @@ import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
  *   </li>
  *   <li>
  *     When a client decides to disconnect, it must send the {@code bye} message.
- *     The server replies by sending the same message back, and upon receiving it the client must gracefully terminate
+ *     The server replies by sending the same message back, and upon receiving it the client must gracefully closes
  *     (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP CLOSE user command</a>) the connection.
  *   </li>
+ * </ol>
+ * <p>
+ * Server-side connection termination:
+ * <ul>
  *   <li>
- *     When the server detects that a client has closed the connection, it closes its side of the connection.
+ *     If the first message sent by a client is not {@code hello},
+ *     then the client is considered not well-behaved and the server forcefully closes
+ *     (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP ABORT user command</a>) the connection.
+ *   </li>
+ *   <li>
+ *     If the server does not receive any data from a client within server's read timeout,
+ *     then the server forcefully closes
+ *     (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP ABORT user command</a>) the connection.
+ *   </li>
+ *   <li>
+ *     When the server detects that a client has closed the connection, it gracefully closes
+ *     (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP CLOSE user command</a>) the connection.
  *     Because a well-behaved client initiates the process of closing the connection,
  *     its socket ends up in the <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.2">TIME-WAIT state</a>,
  *     while the corresponding socket on the server side ends up in the fictional
  *     <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.2">CLOSED state</a>, thus promptly releasing resources.
  *     This way we prevent accumulation of sockets in the TIME-WAIT state on the server side.
  *   </li>
- * </ol>
+ * </ul>
  */
 final class Server {
   private static final byte HELLO = (byte)0x68;//U+0068, LATIN SMALL LETTER H
@@ -77,7 +92,6 @@ final class Server {
       serverSocket.setSoTimeout(acceptTimeoutMillis);
       log("Accepting connections on " + serverSocket);
       while (true) {
-        Thread.currentThread().interrupt();
         final Socket clientSocket = serverSocket.accept();
         boolean successfullyAccepted = false;
         try {
@@ -101,7 +115,7 @@ final class Server {
   }
 
   /**
-   * Aborts (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP ABORT user command</a>)
+   * Forcefully closes (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP ABORT user command</a>)
    * the connection for the specified {@code socket}
    * and closes the {@code socket}.
    */
@@ -117,11 +131,11 @@ final class Server {
   }
 
   /**
-   * Gracefully terminates (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP CLOSE user command</a>)
+   * Gracefully closes (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP CLOSE user command</a>)
    * the connection for the specified {@code socket}
    * and closes the {@code socket}.
    */
-  private static final void close(final Socket socket) {
+  static final void close(final Socket socket) {
     try (socket) {
       log("Gracefully closing " + socket);
       socket.setSoLinger(false, -1);
@@ -154,7 +168,7 @@ final class Server {
   }
 
   private static final void serve(final Socket clientSocket, final int readTimeoutMillis) throws IOException {
-    Boolean supportedClient = null;
+    Boolean wellBehavedClient = null;
     boolean clientDisconnected = false;
     try {
       clientSocket.setSoTimeout(readTimeoutMillis);
@@ -167,22 +181,22 @@ final class Server {
         int receivedLength = in.read(inData);
         if (receivedLength > 0) {
           inMessage = inData[0];
-          if (supportedClient == null) {
-            supportedClient = inMessage == HELLO;
+          if (wellBehavedClient == null) {
+            wellBehavedClient = inMessage == HELLO;
           }
-          if (supportedClient) {
+          if (wellBehavedClient) {
             processInMessage(inMessage, out, clientSocket.toString());
           }
         } else if (receivedLength == -1) {
           clientDisconnected = true;
         }
-      } while (!clientDisconnected && (supportedClient == null || supportedClient));
+      } while (!clientDisconnected && (wellBehavedClient == null || wellBehavedClient));
     } finally {
       try {
         if (clientDisconnected) {
           log("The client " + clientSocket + " disconnected");
-        } else if (supportedClient != null && !supportedClient) {
-          log("The client " + clientSocket + " is not supported");
+        } else if (wellBehavedClient != null && !wellBehavedClient) {
+          log("The client " + clientSocket + " is not well-behaved");
         }
       } finally {
         if (clientDisconnected) {

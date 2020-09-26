@@ -23,10 +23,7 @@ final class Client {
 
   public static final void main(final String... args) throws IOException {
     final InetSocketAddress serverSocketAddress = parseCliArgs(args);
-    //as much as possible, a client should initiate closing the connection, so that its socket stays in TIME-WAIT state, not the server's socket
-    final int readTimeoutMillis = Server.SO_READ_TIMEOUT_MILLIS > 1
-        ? Math.round(Server.SO_READ_TIMEOUT_MILLIS * 0.8f)
-        : Server.SO_READ_TIMEOUT_MILLIS;
+    final int readTimeoutMillis = Server.SO_READ_TIMEOUT_MILLIS;//may also be smaller or larger than the server's read timeout, it does not matter
     boolean serverDisconnected = false;
     Socket socket = new Socket();
     socket.setKeepAlive(true);
@@ -56,7 +53,7 @@ final class Client {
       if (serverDisconnected) {
         log("The server " + socket + " disconnected");
       }
-      close(socket);
+      Server.close(socket);
     }
   }
 
@@ -109,22 +106,6 @@ final class Client {
       if (e != null) {
         throw e;
       }
-    }
-  }
-
-  /**
-   * Gracefully terminates (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP CLOSE user command</a>)
-   * the connection for the specified {@code socket}
-   * and closes the {@code socket}.
-   */
-  private static final void close(final Socket socket) {
-    try (socket) {
-      log("Gracefully closing " + socket);
-      socket.setSoLinger(false, -1);
-    } catch (final IOException | RuntimeException e) {
-      log(printStackTraceToString(e));
-    } finally {
-      log("Disconnected " + socket);
     }
   }
 }
