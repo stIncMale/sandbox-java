@@ -64,19 +64,6 @@
             </argLine>
           </configuration>
         </plugin>
-        <plugin>
-            <groupId>org.ec4j.maven</groupId>
-            <artifactId>editorconfig-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>editorconfig-check</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
       </plugins>
     </pluginManagement>
     <defaultGoal>verify</defaultGoal>
