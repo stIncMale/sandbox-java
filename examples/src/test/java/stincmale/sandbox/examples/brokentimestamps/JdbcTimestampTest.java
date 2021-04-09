@@ -222,7 +222,7 @@ final class JdbcTimestampTest {
   private final Connection getConnection() {
     try {
       //specify your DB URL here, perhaps add the JDBC driver dependency to pom.xml
-      final Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/male?user=male&password=");
+      final Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/postgres?user=postgres&password=");
       connection.setAutoCommit(false);
       return connection;
     } catch (final SQLException e) {
