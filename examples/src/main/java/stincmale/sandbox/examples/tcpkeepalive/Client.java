@@ -28,12 +28,12 @@ final class Client {
     Socket socket = new Socket();
     socket.setKeepAlive(true);
     try {
-      log("Connecting to " + serverSocketAddress + " with timeout " + SO_CONNECT_TIMEOUT_MILLIS + "ms");
+      log("Connecting to " + serverSocketAddress + " with timeout " + SO_CONNECT_TIMEOUT_MILLIS + " ms");
       socket.connect(serverSocketAddress, SO_CONNECT_TIMEOUT_MILLIS);
       log("Connected via " + socket);
       startDaemonUserInputHandler(socket.getOutputStream(), socket.toString());
       socket.setSoTimeout(readTimeoutMillis);
-      log("Set read timeout " + readTimeoutMillis + "ms for " + socket);
+      log("Set read timeout " + readTimeoutMillis + " ms for " + socket);
       final InputStream in = socket.getInputStream();
       final byte[] inData = new byte[1];
       int receivedLength;

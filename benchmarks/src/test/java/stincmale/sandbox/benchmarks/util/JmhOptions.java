@@ -1,10 +1,10 @@
 package stincmale.sandbox.benchmarks.util;
 
-import static java.lang.Boolean.parseBoolean;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import static java.lang.Boolean.parseBoolean;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 

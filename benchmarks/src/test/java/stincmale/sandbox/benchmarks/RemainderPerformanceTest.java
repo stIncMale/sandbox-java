@@ -17,19 +17,6 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.jvmArgsDisableGc;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
-/**
- * Test environment:
- * [single CPU] 3.4 GHz Intel Core i5 (4 cores, 4 hardware threads),
- * [OS] macOS 10.13.6 (17G4015),
- * [JDK] OpenJDK 11.0.1+13 (<a href="https://jdk.java.net/11/">a build from Oracle</a>).
- * <pre>{@code
- * Benchmark                              Mode  Cnt  Score   Error  Units
- * RemainderPerformanceTest.baseline      avgt   30  2.447 ± 0.012  ns/op
- * RemainderPerformanceTest.bitwise       avgt   30  2.457 ± 0.007  ns/op
- * RemainderPerformanceTest.ordinaryPow2  avgt   30  2.901 ± 0.008  ns/op
- * RemainderPerformanceTest.ordinary      avgt   30  3.482 ± 0.010  ns/op
- * }</pre>
- */
 @TestInstance(Lifecycle.PER_CLASS)
 public class RemainderPerformanceTest {
   private static final long DENOMINATOR_POW2 = 1024;//2^10, must be a power of 2

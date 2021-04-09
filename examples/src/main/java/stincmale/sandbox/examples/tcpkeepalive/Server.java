@@ -152,7 +152,7 @@ final class Server {
     final Set<SocketOption<?>> supportedOptions = socket.supportedOptions();
     if (supportedOptions.contains(TCP_KEEPIDLE)) {
       socket.setOption(TCP_KEEPIDLE, tcpKeepAliveIdleSeconds);
-      log("Set " + TCP_KEEPIDLE + " " + tcpKeepAliveIdleMillis +"ms for " + socket);
+      log("Set " + TCP_KEEPIDLE + " " + tcpKeepAliveIdleMillis + " ms for " + socket);
     } else {
       log(TCP_KEEPIDLE + " is not supported for " + socket);
     }
@@ -161,7 +161,7 @@ final class Server {
      * (see https://man7.org/linux/man-pages/man7/tcp.7.html).*/
     if (supportedOptions.contains(TCP_KEEPINTERVAL)) {
       socket.setOption(TCP_KEEPINTERVAL, tcpKeepAliveIdleSeconds);
-      log("Set " + TCP_KEEPINTERVAL + " " + tcpKeepAliveIdleMillis +"ms for " + socket);
+      log("Set " + TCP_KEEPINTERVAL + " " + tcpKeepAliveIdleMillis + " ms for " + socket);
     } else {
       log(TCP_KEEPINTERVAL + " is not supported for " + socket);
     }
@@ -172,7 +172,7 @@ final class Server {
     boolean clientDisconnected = false;
     try {
       clientSocket.setSoTimeout(readTimeoutMillis);
-      log("Set read timeout " + readTimeoutMillis + "ms for " + clientSocket);
+      log("Set read timeout " + readTimeoutMillis + " ms for " + clientSocket);
       final InputStream in = clientSocket.getInputStream();
       final OutputStream out = clientSocket.getOutputStream();
       final byte[] inData = new byte[1];

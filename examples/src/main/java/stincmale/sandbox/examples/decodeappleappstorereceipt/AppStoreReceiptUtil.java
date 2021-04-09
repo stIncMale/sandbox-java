@@ -1,10 +1,5 @@
 package stincmale.sandbox.examples.decodeappleappstorereceipt;
 
-import com.beanit.asn1bean.ber.types.BerInteger;
-import com.beanit.asn1bean.ber.types.BerOctetString;
-import com.beanit.asn1bean.ber.types.string.BerIA5String;
-import com.beanit.asn1bean.ber.types.string.BerUTF8String;
-import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -20,6 +15,11 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import com.beanit.asn1bean.ber.types.BerInteger;
+import com.beanit.asn1bean.ber.types.BerOctetString;
+import com.beanit.asn1bean.ber.types.string.BerIA5String;
+import com.beanit.asn1bean.ber.types.string.BerUTF8String;
+import static com.google.common.base.Preconditions.checkNotNull;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSTypedData;
@@ -243,7 +243,8 @@ public final class AppStoreReceiptUtil {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
     return getInAppAttribute(inAppReceipt, SUBSCRIPTION_EXPIRATION_DATE)
         .map(inAppAttribute -> {
-          @Nullable final Instant result = decodeInstant(inAppAttribute.getValue());
+          @Nullable
+          final Instant result = decodeInstant(inAppAttribute.getValue());
           return result == null//one-off subscriptions do not have SUBSCRIPTION_EXPIRATION_DATE value
               ? Instant.EPOCH
               : result;

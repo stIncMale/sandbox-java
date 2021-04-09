@@ -18,49 +18,6 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.jvmArgsDisableGc;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
-/**
- * Test environment:
- * [single CPU] 3.4 GHz Intel Core i5 (4 cores, 4 hardware threads),
- * [OS] macOS 10.13.6 (17G4015),
- * [JDK] OpenJDK 11.0.1+13 (<a href="https://jdk.java.net/11/">a build from Oracle</a>).
- * <pre>{@code
- * Benchmark                                            Mode  Cnt      Score      Error  Units
- * PrimitiveDataTypeMathPerformanceTest.baselineInt     avgt   30      2.647 ±    0.015  ns/op
- * PrimitiveDataTypeMathPerformanceTest.baselineFloat   avgt   30      3.001 ±    0.011  ns/op
- * PrimitiveDataTypeMathPerformanceTest.baselineLong    avgt   30      2.948 ±    0.006  ns/op
- * PrimitiveDataTypeMathPerformanceTest.baselineDouble  avgt   30      3.227 ±    0.007  ns/op
- *
- * PrimitiveDataTypeMathPerformanceTest.addInt          avgt   30      3.122 ±    0.029  ns/op
- * PrimitiveDataTypeMathPerformanceTest.addFloat        avgt   30      3.450 ±    0.012  ns/op
- * PrimitiveDataTypeMathPerformanceTest.addLong         avgt   30      3.091 ±    0.011  ns/op
- * PrimitiveDataTypeMathPerformanceTest.addDouble       avgt   30      3.408 ±    0.009  ns/op
- *
- * PrimitiveDataTypeMathPerformanceTest.divInt          avgt   30      5.276 ±    0.015  ns/op
- * PrimitiveDataTypeMathPerformanceTest.divFloat        avgt   30      3.774 ±    0.021  ns/op
- * PrimitiveDataTypeMathPerformanceTest.divLong         avgt   30     11.967 ±    0.042  ns/op
- * PrimitiveDataTypeMathPerformanceTest.divDouble       avgt   30      3.881 ±    0.018  ns/op
- *
- * PrimitiveDataTypeMathPerformanceTest.eqInt           avgt   30      3.251 ±    0.011  ns/op
- * PrimitiveDataTypeMathPerformanceTest.eqFloat         avgt   30      3.468 ±    0.009  ns/o
- * PrimitiveDataTypeMathPerformanceTest.eqLong          avgt   30      3.278 ±    0.009  ns/op
- * PrimitiveDataTypeMathPerformanceTest.eqDouble        avgt   30      3.548 ±    0.010  ns/op
- *
- * PrimitiveDataTypeMathPerformanceTest.ltInt           avgt   30      3.343 ±    0.016  ns/op
- * PrimitiveDataTypeMathPerformanceTest.ltFloat         avgt   30      3.593 ±    0.016  ns/op
- * PrimitiveDataTypeMathPerformanceTest.ltLong          avgt   30      3.337 ±    0.007  ns/op
- * PrimitiveDataTypeMathPerformanceTest.ltDouble        avgt   30      3.536 ±    0.016  ns/op
- *
- * PrimitiveDataTypeMathPerformanceTest.multInt         avgt   30      3.117 ±    0.009  ns/op
- * PrimitiveDataTypeMathPerformanceTest.multFloat       avgt   30      3.510 ±    0.010  ns/op
- * PrimitiveDataTypeMathPerformanceTest.multLong        avgt   30      3.117 ±    0.013  ns/op
- * PrimitiveDataTypeMathPerformanceTest.multDouble      avgt   30      3.459 ±    0.007  ns/op
- *
- * PrimitiveDataTypeMathPerformanceTest.remInt          avgt   30      5.269 ±    0.010  ns/op
- * PrimitiveDataTypeMathPerformanceTest.remFloat        avgt   30     10.248 ±    0.036  ns/op
- * PrimitiveDataTypeMathPerformanceTest.remLong         avgt   30     11.797 ±    0.052  ns/op
- * PrimitiveDataTypeMathPerformanceTest.remDouble       avgt   30      8.898 ±    0.067  ns/op
- * }</pre>
- */
 @TestInstance(Lifecycle.PER_CLASS)
 public class PrimitiveDataTypeMathPerformanceTest {
   private static final int NUMBER_OF_VALUES = 64;//2^6, must be a power of 2
