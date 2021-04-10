@@ -35,11 +35,11 @@ import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
  *       <li>
  *         0x68 (0b1101000 or 104 in decimal notation, represents LATIN SMALL LETTER H in both
  *         <a href="https://www.rfc-editor.org/rfc/rfc20">US-ASCII</a> and <a href="https://www.rfc-editor.org/rfc/rfc3629">UTF-8</a>)
- *         - {@code hello} message;
+ *         is a {@code hello} message;
  *       </li>
  *       <li>
  *         0x62 (0b1100010 or 98 in decimal notation, represents LATIN SMALL LETTER B)
- *         - {@code bye} message.
+ *         is a {@code bye} message.
  *       </li>
  *     </ul>
  *   </li>
@@ -48,7 +48,7 @@ import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
  *   </li>
  *   <li>
  *     When a client decides to disconnect, it must send the {@code bye} message.
- *     The server replies by sending the same message back, and upon receiving it the client must gracefully closes
+ *     The server replies by sending the same message back, and upon receiving it the client must gracefully close
  *     (see <a href="https://www.rfc-editor.org/rfc/rfc793.html#section-3.8">TCP CLOSE user command</a>) the connection.
  *   </li>
  * </ol>
@@ -77,20 +77,21 @@ import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
  * </ul>
  */
 final class Server {
-  private static final byte HELLO = (byte)0x68;//U+0068, LATIN SMALL LETTER H
-  static final byte BYE = (byte)0x62;//U+0062, LATIN SMALL LETTER B
+  private static final byte HELLO = (byte)0x68;// U+0068, LATIN SMALL LETTER H
+  static final byte BYE = (byte)0x62;// U+0062, LATIN SMALL LETTER B
   static final int TCP_KEEP_ALIVE_IDLE_SECONDS = 5;
   static final int SO_READ_TIMEOUT_MILLIS = Math.toIntExact(TimeUnit.SECONDS.toMillis(5 * TCP_KEEP_ALIVE_IDLE_SECONDS));
 
   public static final void main(final String... args) throws IOException {
     final InetSocketAddress serverSocketAddress = parseCliArgs(args);
-    final int acceptTimeoutMillis = 0;//infinitely wait for new incoming connections
+    final int acceptTimeoutMillis = 0;// infinitely wait for new incoming connections
     final ExecutorService executor = Executors.newCachedThreadPool(new NamingThreadFactory("server"));
     log("Starting listening on " + serverSocketAddress);
     try (ServerSocket serverSocket = new ServerSocket()) {
       serverSocket.bind(serverSocketAddress);
       serverSocket.setSoTimeout(acceptTimeoutMillis);
       log("Accepting connections on " + serverSocket);
+      // noinspection InfiniteLoopStatement
       while (true) {
         final Socket clientSocket = serverSocket.accept();
         boolean successfullyAccepted = false;
@@ -100,7 +101,7 @@ final class Server {
           executor.submit(() -> {
             try {
               serve(clientSocket, SO_READ_TIMEOUT_MILLIS);
-            } catch (final Throwable e) {
+            } catch (final RuntimeException | IOException e) {
               log(String.format("Exception when serving %s. %s", clientSocket, printStackTraceToString(e)));
             }
           });
@@ -122,8 +123,8 @@ final class Server {
   private static final void abort(final Socket socket) {
     try (socket) {
       log("Forcefully closing " + socket);
-      socket.setSoLinger(true, 0);//close forcefully with TCP RST
-    } catch (final IOException | RuntimeException e) {
+      socket.setSoLinger(true, 0);// close forcefully with TCP RST
+    } catch (final RuntimeException| IOException e) {
       log(printStackTraceToString(e));
     } finally {
       log("Disconnected " + socket);
@@ -139,7 +140,7 @@ final class Server {
     try (socket) {
       log("Gracefully closing " + socket);
       socket.setSoLinger(false, -1);
-    } catch (final IOException | RuntimeException e) {
+    } catch (final RuntimeException| IOException e) {
       log(printStackTraceToString(e));
     } finally {
       log("Disconnected " + socket);
@@ -158,7 +159,7 @@ final class Server {
     }
     /* The documentation of TCP_KEEPINTERVAL does not seem to match the actual behavior. At least on Linux,
      * it specifies the interval between all probes but the first one. This actual behavior matches the one specified for TCP_KEEPINTVL
-     * (see https://man7.org/linux/man-pages/man7/tcp.7.html).*/
+     * (see https://man7.org/linux/man-pages/man7/tcp.7.html). */
     if (supportedOptions.contains(TCP_KEEPINTERVAL)) {
       socket.setOption(TCP_KEEPINTERVAL, tcpKeepAliveIdleSeconds);
       log("Set " + TCP_KEEPINTERVAL + " " + tcpKeepAliveIdleMillis + " ms for " + socket);
@@ -219,13 +220,13 @@ final class Server {
     out.flush();
   }
 
-  static final String printStackTraceToString(final Throwable t) {
+  static final String printStackTraceToString(final Exception t) {
     try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
       t.printStackTrace(pw);
       pw.flush();
       return sw.toString();
-    } catch (final IOException e) {//is not expected to happen
-      throw new RuntimeException(e);
+    } catch (final IOException e) {
+      throw new AssertionError(e);
     }
   }
 

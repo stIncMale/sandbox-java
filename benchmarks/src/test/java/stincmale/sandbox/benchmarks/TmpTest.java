@@ -21,7 +21,7 @@ public class TmpTest {
 
   public final void runThroughputBenchmarks(final int numberOfThreads) throws RunnerException {
     final OptionsBuilder opts = new OptionsBuilder();
-    opts.jvmArgs("-Xverify:all", "--illegal-access=deny", "-Xms1024m", "-Xmx1024m")
+    opts.jvmArgs("-Xverify:all", "-Xms1024m", "-Xmx1024m")
         .shouldDoGC(false)
         .syncIterations(true)
         .shouldFailOnError(true)
@@ -79,7 +79,7 @@ public class TmpTest {
     private ReentrantReadWriteLock rwLock;
     private LongAdder opsBeginCounter;
     private LongAdder opsEndCounter;
-    private long startNanos;//JMH probably registers a later instant as the start time
+    private long startNanos;// JMH probably registers a later instant as the start time
 
     public BenchmarkState() {
     }
@@ -95,12 +95,13 @@ public class TmpTest {
 
     @TearDown(Level.Iteration)
     public final void tearDown() {
-      final long stopNanos = System.nanoTime();//JMH probably registers an earlier instant as the start time
-      final double durationSeconds = ((double)(stopNanos - startNanos)) / TimeUnit.SECONDS.toNanos(1);//JMH probably registers a smaller duration
+      final long stopNanos = System.nanoTime();// JMH probably registers an earlier instant as the start time
+      // JMH probably registers a smaller duration
+      final double durationSeconds = ((double)(stopNanos - startNanos)) / TimeUnit.SECONDS.toNanos(1);
       final long opsBeginCount = opsBeginCounter.sum();
       final double throughputBegin = opsBeginCount / durationSeconds;
       final long opsEndCount = opsEndCounter.sum();
-      if (opsEndCount != opsBeginCount) {//should never happen, but I added just in case since the measurements are incorrect
+      if (opsEndCount != opsBeginCount) {// should never happen, but I added just in case since the measurements are incorrect
         throw new AssertionError(String.format("A benchmark method threw an exception that was swallowed by JMH %d times",
             opsBeginCount - opsEndCount));
       }

@@ -23,7 +23,7 @@ public class TreeHeightOfABinaryTree {
   static class Solution {
     static int height(Node root) {
       int result;
-      if (root.left == null && root.right == null) {//leaf
+      if (root.left == null && root.right == null) {// leaf
         result = 0;
       } else {
         int lh = root.left == null ? 0 : height(root.left);

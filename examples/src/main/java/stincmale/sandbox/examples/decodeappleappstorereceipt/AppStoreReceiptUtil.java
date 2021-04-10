@@ -245,7 +245,7 @@ public final class AppStoreReceiptUtil {
         .map(inAppAttribute -> {
           @Nullable
           final Instant result = decodeInstant(inAppAttribute.getValue());
-          return result == null//one-off subscriptions do not have SUBSCRIPTION_EXPIRATION_DATE value
+          return result == null// one-off subscriptions do not have SUBSCRIPTION_EXPIRATION_DATE value
               ? Instant.EPOCH
               : result;
         })
@@ -396,7 +396,7 @@ public final class AppStoreReceiptUtil {
   @Nullable
   private static final Instant decodeInstant(final BerOctetString v) {
     final String stringV = decodeAsn1IA5String(v);
-    return stringV.isEmpty()//one-off subscriptions do not have SUBSCRIPTION_EXPIRATION_DATE value
+    return stringV.isEmpty()// one-off subscriptions do not have SUBSCRIPTION_EXPIRATION_DATE value
         ? null
         : Instant.parse(decodeAsn1IA5String(v));
   }

@@ -26,7 +26,7 @@ public class ArrayFillPerformanceTest {
 
   static {
     for (int i = 0; i < ARRAY_SIZE; i++) {
-      arrFilledWithZeros[i] = 0;//just to handle it the same way we handle other pre-filled arrays
+      arrFilledWithZeros[i] = 0;// just to handle it the same way we handle other pre-filled arrays
       arrFilledWithOnes[i] = 1;
       arrFilledWithIndices[i] = i;
     }
@@ -88,7 +88,7 @@ public class ArrayFillPerformanceTest {
 
   @State(Scope.Thread)
   public static class ThreadState {
-    @Param({"10", "100", "1000", "10000", "100000"})//must not be bigger than ARRAY_SIZE
+    @Param({"10", "100", "1000", "10000", "100000"})// must not be bigger than ARRAY_SIZE
     private int length;
     private long[] arr;
 

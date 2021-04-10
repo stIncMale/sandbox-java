@@ -27,9 +27,9 @@ public class SwapNodesAlgo {
         int childNodeIdx = in.nextInt();
         if (childNodeIdx > 1) {
           nodes.computeIfAbsent(childNodeIdx, idx -> new Node(idx, depth.get() + 1));
-          if (i % 2 != 0) {//left
+          if (i % 2 != 0) {// left
             node.l = childNodeIdx;
-          } else {//right
+          } else {// right
             node.r = childNodeIdx;
           }
         }

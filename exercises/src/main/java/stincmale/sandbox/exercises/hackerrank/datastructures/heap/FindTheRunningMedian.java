@@ -45,7 +45,7 @@ public class FindTheRunningMedian {
           r = anchorIdx;
         } else if (v > list.get(anchorIdx)) {
           l = anchorIdx;
-        } else {//v == list.get(anchorIdx)
+        } else {// v == list.get(anchorIdx)
           list.add(anchorIdx + 1, v);
           break;
         }

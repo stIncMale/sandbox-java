@@ -23,7 +23,7 @@ final class Client {
 
   public static final void main(final String... args) throws IOException {
     final InetSocketAddress serverSocketAddress = parseCliArgs(args);
-    final int readTimeoutMillis = Server.SO_READ_TIMEOUT_MILLIS;//may also be smaller or larger than the server's read timeout, it does not matter
+    final int readTimeoutMillis = Server.SO_READ_TIMEOUT_MILLIS;// may also be smaller or larger than the server's read timeout, it does not matter
     boolean serverDisconnected = false;
     Socket socket = new Socket();
     socket.setKeepAlive(true);
@@ -61,7 +61,7 @@ final class Client {
     final Thread userInputHandler = new Thread(() -> {
       try {
         handleUserInput(out, connectionDescription);
-      } catch (final Throwable e) {
+      } catch (final RuntimeException | IOException e) {
         log(String.format("Exception when handling user input for %s. %s", connectionDescription, printStackTraceToString(e)));
       }
     });
@@ -70,15 +70,22 @@ final class Client {
     userInputHandler.start();
   }
 
-  private static final void handleUserInput(final OutputStream out, final String connectionDescription) throws IOException, InterruptedException {
+  private static final void handleUserInput(final OutputStream out, final String connectionDescription) throws IOException {
     final Scanner userInputScanner = new Scanner(System.in, Charset.defaultCharset());
     try {
+      // noinspection InfiniteLoopStatement
       while (true) {
         final byte[] userInput = userInput(userInputScanner);
         for (byte outMessage : userInput) {
           sendOutMessage(outMessage, out, connectionDescription);
         }
-        Thread.sleep(500);
+        try {
+          // noinspection BusyWait
+          Thread.sleep(500);
+        } catch (final InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException(e);
+        }
       }
     } finally {
       close(userInputScanner);

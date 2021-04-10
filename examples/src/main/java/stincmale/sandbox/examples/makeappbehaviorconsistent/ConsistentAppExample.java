@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 
 final class ConsistentAppExample {
   static {
-    {//do the application-wide setup in order to render the behavior consistent in different environments
+    {// do the application-wide setup in order to render the behavior consistent in different environments
       TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC)));
       Locale.setDefault(Locale.ENGLISH);
       /* Set UTF-8 charset for the stdout/stderr PrintStreams.
-       * The stdin is an InputStream and the concept of charset is not directly applicable to it.*/
+       * The stdin is an InputStream and the concept of charset is not directly applicable to it. */
       System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
       System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
     }
@@ -40,11 +40,11 @@ final class ConsistentAppExample {
    * Be careful when starting this application from an IDE, it most likely does not understand the syntax {@code $'\n'}.
    */
   public static final void main(final String... args) {
-    System.out.print(String.format("JVM-wide defaults: charset=%s, locale=%s, time zone=%s, line separator={%s}",
+    System.out.printf("JVM-wide defaults: charset=%s, locale=%s, time zone=%s, line separator={%s}",
         Charset.defaultCharset(),
         Locale.getDefault().toLanguageTag(),
         TimeZone.getDefault().getID(),
-        System.lineSeparator().codePoints().mapToObj(Character::getName).collect(Collectors.joining(", "))));
+        System.lineSeparator().codePoints().mapToObj(Character::getName).collect(Collectors.joining(", ")));
     System.out.println();
     System.out.println("Charset smoke test: latin:english___cyrillic:русский___hangul:한국어___math:μ∞θℤ");
   }

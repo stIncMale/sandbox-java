@@ -1,3 +1,3 @@
 ## About
 
-Contains performance benchmarks.
+Contains benchmarks.

@@ -20,8 +20,8 @@ public class LargestRectangle {
       } else if (h < rightmost.h) {
         long localMaxArea = shrinkPushAndFindMaxArea(stack, new Element(i, h));
         maxArea = Math.max(maxArea, localMaxArea);
-      } else {//h == rightmost.h
-        //nothing to do
+      } else {// h == rightmost.h
+        // nothing to do
       }
     }
     long localMaxArea = shrinkPushAndFindMaxArea(stack, new Element(i, 0));

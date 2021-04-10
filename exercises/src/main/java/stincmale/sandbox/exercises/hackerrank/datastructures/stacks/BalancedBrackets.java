@@ -11,16 +11,16 @@ public class BalancedBrackets {
   static String isBalanced(String s) {
     String result = "YES";
     if (s == null || s.length() == 0) {
-      //nothing to do
+      // nothing to do
     } else if (s.length() % 2 != 0) {
       result = "NO";
     } else {
       Deque<Character> stack = new ArrayDeque<>();
       for (int j = 0; j < s.length(); j++) {
         char c = s.charAt(j);
-        if (c == '{' || c == '[' || c == '(') {//opening
+        if (c == '{' || c == '[' || c == '(') {// opening
           stack.push(c);
-        } else {//closing
+        } else {// closing
           if (stack.isEmpty()) {
             result = "NO";
             break;

@@ -430,7 +430,7 @@ public class AtomicApiComparisonTest {
 
   @State(Scope.Thread)
   public static class ThreadState {
-    private static final int DISTINCT_VALUES_PER_THREAD = 128;//2^7, must be a power of 2
+    private static final int DISTINCT_VALUES_PER_THREAD = 128;// 2^7, must be a power of 2
 
     private long[] longs;//all values are distinct for a given thread, but some may be equal (highly unlikely) between threads
     private Long[] referenceLongs;
@@ -461,8 +461,8 @@ public class AtomicApiComparisonTest {
     }
 
     private int getAndIncrementIdx() {
-      final int result = idx++;//get and increment
-      idx = idx & (DISTINCT_VALUES_PER_THREAD - 1);//idx % DISTINCT_VALUES_PER_THREAD
+      final int result = idx++;// get and increment
+      idx = idx & (DISTINCT_VALUES_PER_THREAD - 1);// idx % DISTINCT_VALUES_PER_THREAD
       return result;
     }
   }

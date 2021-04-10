@@ -17,11 +17,11 @@ public class Contacts {
       for (int i = 0; i < numberOfOps; i++) {
         String opName = in.next();
         String opArgument = in.next();
-        if (opName.length() == 3) {//add opName
+        if (opName.length() == 3) {// add opName
           add(opArgument, trie);
-        } else {//find opName
+        } else {// find opName
           final int opResult = find(opArgument, trie);
-          if (i == numberOfOps - 1) {//last operation
+          if (i == numberOfOps - 1) {// last operation
             System.out.print(opResult);
           } else {
             System.out.println(opResult);
@@ -58,7 +58,7 @@ public class Contacts {
       Node current;
       if (node != null) {
         current = node.children.get(c);
-      } else {//partial has not been found
+      } else {// partial has not been found
         current = null;
       }
       if (current != null) {

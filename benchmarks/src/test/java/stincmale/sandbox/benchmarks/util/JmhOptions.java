@@ -20,7 +20,6 @@ public final class JmhOptions {
     final OptionsBuilder result = new OptionsBuilder();
     result.jvmArgs(
         "-Xverify:all",
-        "--illegal-access=deny",
         "-Xms4096m",
         "-Xmx4096m",
         javaServer ? "-server" : "-client",

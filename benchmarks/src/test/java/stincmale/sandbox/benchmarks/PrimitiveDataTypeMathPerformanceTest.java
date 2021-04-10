@@ -20,7 +20,7 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class PrimitiveDataTypeMathPerformanceTest {
-  private static final int NUMBER_OF_VALUES = 64;//2^6, must be a power of 2
+  private static final int NUMBER_OF_VALUES = 64;// 2^6, must be a power of 2
   private static final int[] operandsInt;
   private static final float[] operandsFloat;
   private static final long[] operandsLong;
@@ -33,34 +33,32 @@ public class PrimitiveDataTypeMathPerformanceTest {
     operandsLong = new long[NUMBER_OF_VALUES];
     operandsDouble = new double[NUMBER_OF_VALUES];
     for (int i = 0; i < NUMBER_OF_VALUES; i++) {
-      {//fill operandsInt
+      {// fill operandsInt
         int rndInt = rnd.nextInt();
         if (rndInt > Integer.MIN_VALUE / 2 && rndInt < Integer.MAX_VALUE / 2) {
           rndInt *= 2;
         }
-        /*
-         * The index for operandsInt/operandsFloat is i * 2
+        /* The index for operandsInt/operandsFloat is i * 2
          * to make sure that the number of both int/float and long/double array elements is about the same for each cache line.
          * This of course only works if the underlying software and hardware actually uses two times as much memory
-         * for long/double comparing to int/float and allocates all array elements contiguously in memory.
-         */
+         * for long/double comparing to int/float and allocates all array elements contiguously in memory. */
         operandsInt[i * 2] = rndInt;
       }
-      {//fill operandsFloat
+      {// fill operandsFloat
         float rndFloat = rnd.nextFloat();
         if (rndFloat > Float.MIN_VALUE / 2 && rndFloat < Float.MAX_VALUE / 2) {
           rndFloat *= 2;
         }
         operandsFloat[i * 2] = rndFloat;
       }
-      {//fill operandsLong
+      {// fill operandsLong
         long rndLong = rnd.nextLong();
         if (rndLong > Long.MIN_VALUE / 2 && rndLong < Long.MAX_VALUE / 2) {
           rndLong *= 2;
         }
         operandsLong[i] = rndLong;
       }
-      {//fill operandsDouble
+      {// fill operandsDouble
         double rndDouble = rnd.nextDouble();
         if (rndDouble > Double.MIN_VALUE / 2 && rndDouble < Double.MAX_VALUE / 2) {
           rndDouble *= 2;
@@ -326,7 +324,7 @@ public class PrimitiveDataTypeMathPerformanceTest {
   }
 
   private static final int nextIdx(final int idx, final int step) {
-    return (idx + step) & (NUMBER_OF_VALUES - 1);//(idx + step) % NUMBER_OF_VALUES
+    return (idx + step) & (NUMBER_OF_VALUES - 1);// (idx + step) % NUMBER_OF_VALUES
   }
 
   private static final int nextIdxIntFloat(final int idx) {

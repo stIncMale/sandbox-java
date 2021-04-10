@@ -15,22 +15,24 @@ import java.util.TimeZone;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.function.Executable;
+import org.opentest4j.AssertionFailedError;
 
 /**
- * This test illustrates the problem with {@link JDBCType#TIMESTAMP} (without timezone) described in
+ * This test class illustrates the problem with {@link JDBCType#TIMESTAMP} (without timezone) described in
  * <a href="https://www.kovalenko.link/blog/jdbc-timestamp-pitfalls">Pitfalls with JDBC PreparedStatement.setTimestamp/ResultSet.getTimestamp</a>.
  * <p>
- * You may see that regardless of the {@link TimeZone} craziness going on around,
+ * You may see that regardless of the {@link TimeZone} craziness happening,
  * storing and reading data of type {@link JDBCType#TIMESTAMP_WITH_TIMEZONE} never has issues,
- * while {@link JDBCType#TIMESTAMP} does.
+ * while {@link JDBCType#TIMESTAMP} does (see {@link Assertions#assertThrows(Class, Executable)}).
  */
-@Disabled("there are tests that fail intentionally, those are marked with //fails")
 @TestInstance(Lifecycle.PER_METHOD)
 final class JdbcTimestampTest {
   private static final TimeZone originalTz = TimeZone.getDefault();
@@ -54,9 +56,7 @@ final class JdbcTimestampTest {
     doWithConnection(connection -> {
       try (var statement = connection.createStatement()) {
         statement.addBatch("drop table if exists ts_test");
-        statement.addBatch("create table ts_test (\n" +
-            "tsz timestamp with time zone,\n" +
-            "ts timestamp)");//without time zone
+        statement.addBatch("create table ts_test (tsz timestamp with time zone, ts timestamp)");// without time zone
         statement.executeBatch();
       }
     });
@@ -96,7 +96,7 @@ final class JdbcTimestampTest {
     TimeZone.setDefault(tz2);
     final Timestamps read = select_preJdbc42(null);
     assertEquals(ts, read.tsz);
-    assertEquals(ts, read.ts);//fails
+    assertThrows(AssertionFailedError.class, () -> assertEquals(ts, read.ts));
   }
 
   @Test
@@ -106,7 +106,7 @@ final class JdbcTimestampTest {
     TimeZone.setDefault(tz4);
     final Timestamps read = select_preJdbc42(tz2);
     assertEquals(ts, read.tsz);
-    assertEquals(ts, read.ts);//fails
+    assertThrows(AssertionFailedError.class, () -> assertEquals(ts, read.ts));
   }
 
   @Test
@@ -126,16 +126,16 @@ final class JdbcTimestampTest {
     TimeZone.setDefault(tz4);
     final Instants read = select_postJdbc42(tz2);
     assertEquals(it, read.itz);
-    assertEquals(it, read.it);//fails
+    assertThrows(AssertionFailedError.class, () -> assertEquals(it, read.it));
   }
 
   private final void insert_preJdbc42(final Timestamp timestamp, @Nullable final TimeZone tz) {
     doWithConnection(connection -> {
       try (var statement = connection.prepareStatement("insert into ts_test (tsz, ts) values (?, ?)")) {
-        if (tz == null) {//don't store timestamps like this
+        if (tz == null) {// don't store timestamps like this
           statement.setObject(1, timestamp);
           statement.setObject(2, timestamp);
-        } else {//better do this
+        } else {// better do this
           Calendar calendar = Calendar.getInstance(tz);
           statement.setTimestamp(1, timestamp, calendar);
           statement.setTimestamp(2, timestamp, calendar);
@@ -151,10 +151,8 @@ final class JdbcTimestampTest {
         final ZoneId zoneId = tz.toZoneId();
         final OffsetDateTime offsetDateTime = OffsetDateTime.ofInstant(instant, zoneId);
         final LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, zoneId);
-        /*
-         * JDBC 4.2 (see https://jcp.org/en/jsr/detail?id=221, https://jcp.org/aboutJava/communityprocess/mrel/jsr221/index2.html)
-         * maps LocalDateTime to JDBCType.TIMESTAMP and OffsetDateTime to JDBCType.TIMESTAMP_WITH_TIMEZONE
-         */
+        /* JDBC 4.2 (see https://jcp.org/en/jsr/detail?id=221, https://jcp.org/aboutJava/communityprocess/mrel/jsr221/index2.html)
+         * maps LocalDateTime to JDBCType.TIMESTAMP and OffsetDateTime to JDBCType.TIMESTAMP_WITH_TIMEZONE. */
         statement.setObject(1, offsetDateTime);
         statement.setObject(2, localDateTime);
         statement.executeUpdate();
@@ -168,10 +166,10 @@ final class JdbcTimestampTest {
         rs.next();
         final Timestamp tsz;
         final Timestamp ts;
-        if (tz == null) {//don't read timestamps like this
+        if (tz == null) {// don't read timestamps like this
           tsz = rs.getTimestamp(1);
           ts = rs.getTimestamp(2);
-        } else {//better do this
+        } else {// better do this
           final Calendar calendar = Calendar.getInstance(tz);
           tsz = rs.getTimestamp(1, calendar);
           ts = rs.getTimestamp(2, calendar);
@@ -221,7 +219,7 @@ final class JdbcTimestampTest {
    */
   private final Connection getConnection() {
     try {
-      //specify your DB URL here, perhaps add the JDBC driver dependency to pom.xml
+      // specify your DB URL here, perhaps add the JDBC driver dependency to pom.xml
       final Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/postgres?user=postgres&password=");
       connection.setAutoCommit(false);
       return connection;
@@ -239,23 +237,9 @@ final class JdbcTimestampTest {
     void call(Connection connection) throws Exception;
   }
 
-  private static final class Timestamps {
-    private final Timestamp tsz;
-    private final Timestamp ts;
-
-    private Timestamps(final Timestamp tsz, final Timestamp ts) {
-      this.tsz = tsz;
-      this.ts = ts;
-    }
+  private record Timestamps(Timestamp tsz, Timestamp ts) {
   }
 
-  private static final class Instants {
-    private final Instant itz;
-    private final Instant it;
-
-    private Instants(final Instant itz, final Instant it) {
-      this.itz = itz;
-      this.it = it;
-    }
+  private record Instants(Instant itz, Instant it) {
   }
 }
