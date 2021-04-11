@@ -26,8 +26,8 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public class ListPerformanceTest {
-  public ListPerformanceTest() {
+public class ListPerformanceBenchmark {
+  public ListPerformanceBenchmark() {
   }
 
   @Test

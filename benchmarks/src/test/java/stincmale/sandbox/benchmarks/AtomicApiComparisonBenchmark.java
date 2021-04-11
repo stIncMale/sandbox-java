@@ -27,8 +27,8 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public class AtomicApiComparisonTest {
-  public AtomicApiComparisonTest() {
+public class AtomicApiComparisonBenchmark {
+  public AtomicApiComparisonBenchmark() {
   }
 
   public final void runThroughputBenchmarks(final int numberOfThreads) throws RunnerException {

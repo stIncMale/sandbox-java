@@ -19,7 +19,7 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.jvmArgsDisableGc;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public class PrimitiveDataTypeMathPerformanceTest {
+public class PrimitiveDataTypeMathPerformanceBenchmark {
   private static final int NUMBER_OF_VALUES = 64;// 2^6, must be a power of 2
   private static final int[] OPERANDS_INT;
   private static final float[] OPERANDS_FLOAT;
@@ -68,7 +68,7 @@ public class PrimitiveDataTypeMathPerformanceTest {
     }
   }
 
-  public PrimitiveDataTypeMathPerformanceTest() {
+  public PrimitiveDataTypeMathPerformanceBenchmark() {
   }
 
   @Test

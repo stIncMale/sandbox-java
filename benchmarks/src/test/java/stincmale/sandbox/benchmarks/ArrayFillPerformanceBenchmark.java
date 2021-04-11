@@ -18,7 +18,7 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public class ArrayFillPerformanceTest {
+public class ArrayFillPerformanceBenchmark {
   private static final int ARRAY_SIZE = 100_000;
   private static final long[] ARR_FILLED_WITH_ZEROS;
   private static final long[] ARR_FILLED_WITH_ONES;
@@ -34,7 +34,7 @@ public class ArrayFillPerformanceTest {
     }
   }
 
-  public ArrayFillPerformanceTest() {
+  public ArrayFillPerformanceBenchmark() {
   }
 
   @Test
