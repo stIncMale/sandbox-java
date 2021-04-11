@@ -15,8 +15,8 @@ final class AppStoreReceiptDecoderExample {
   public static final void main(final String... args) {
     final Payload payload = AppStoreReceiptUtil.decodeReceiptFromBase64(RECEIPT_BASE64);
     final String productId = "com.company.application.subscription";
-    final InAppReceipt inAppReceipt = AppStoreReceiptUtil.getInAppReceiptByProductId(payload, productId).orElseThrow();
-    System.out.println(AppStoreReceiptUtil.getPurchaseDate(inAppReceipt));
+    final InAppReceipt inAppReceipt = AppStoreReceiptUtil.inAppReceiptByProductId(payload, productId).orElseThrow();
+    System.out.println(AppStoreReceiptUtil.purchaseDate(inAppReceipt));
     System.out.println(AppStoreReceiptUtil.toString(payload, true));
   }
 }

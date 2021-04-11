@@ -9,9 +9,9 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
 public final class JmhOptions {
-  private static final boolean dryRun = parseBoolean(System.getProperty("sandbox.benchmark.dryRun", "false"));
-  private static final boolean javaServer = !dryRun;
-  private static final boolean javaEnableAssertions = dryRun;
+  private static final boolean DRY_RUN = parseBoolean(System.getProperty("sandbox.benchmark.dryRun", "false"));
+  private static final boolean JVM_SERVER = !DRY_RUN;
+  private static final boolean JVM_ENABLE_ASSERTIONS = DRY_RUN;
 
   private JmhOptions() {
   }
@@ -22,14 +22,14 @@ public final class JmhOptions {
         "-Xverify:all",
         "-Xms4096m",
         "-Xmx4096m",
-        javaServer ? "-server" : "-client",
-        javaEnableAssertions ? "-enableassertions" : "-disableassertions")
+        JVM_SERVER ? "-server" : "-client",
+        JVM_ENABLE_ASSERTIONS ? "-enableassertions" : "-disableassertions")
         .shouldDoGC(false)
         .syncIterations(true)
         .shouldFailOnError(true)
         .threads(1)
         .timeout(milliseconds(1000_000));
-    if (dryRun) {
+    if (DRY_RUN) {
       result.forks(1)
           .warmupTime(milliseconds(50))
           .warmupIterations(1)

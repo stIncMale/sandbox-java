@@ -194,7 +194,7 @@ final class JdbcTimestampIntegrationTest {
 
   @Nullable
   private final <R> R returnWithConnection(final JdbcAction<? extends R> action) {
-    try (var connection = getConnection()) {
+    try (var connection = connection()) {
       try {
         return action.call(connection);
       } catch (final Exception e) {
@@ -217,7 +217,7 @@ final class JdbcTimestampIntegrationTest {
   /**
    * @return A {@link Connection} with {@linkplain Connection#getAutoCommit() auto-commit} disabled.
    */
-  private final Connection getConnection() {
+  private final Connection connection() {
     try {
       final Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/postgres?user=postgres&password=");
       connection.setAutoCommit(false);

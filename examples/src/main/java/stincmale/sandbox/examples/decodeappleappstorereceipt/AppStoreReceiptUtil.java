@@ -105,10 +105,10 @@ public final class AppStoreReceiptUtil {
    * @return <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The in-app purchase receipt</a>.
    */
-  public static final Optional<InAppReceipt> getInAppReceiptByTransactionId(final Payload payload, final String transactionId) {
+  public static final Optional<InAppReceipt> inAppReceiptByTransactionId(final Payload payload, final String transactionId) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     checkNotNull(transactionId, "The argument %s must not be null", "transactionId");
-    return getReceiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
+    return receiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
         .stream()
         .map(receiptAttribute -> receiptAttribute.getValue().value)
         .map(bytes -> {
@@ -120,12 +120,12 @@ public final class AppStoreReceiptUtil {
           }
           return result;
         })
-        .filter(inAppReceipt -> transactionId.equals(getTransactionId(inAppReceipt)))
+        .filter(inAppReceipt -> transactionId.equals(transactionId(inAppReceipt)))
         .findAny();
   }
 
   /**
-   * Finds the {@linkplain #getPurchaseDate(InAppReceipt) newest} {@link InAppReceipt} with the specified product id.
+   * Finds the {@linkplain #purchaseDate(InAppReceipt) newest} {@link InAppReceipt} with the specified product id.
    *
    * @param payload See {@link #decodeReceipt(byte[])}.
    * @param productId <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
@@ -133,10 +133,10 @@ public final class AppStoreReceiptUtil {
    * @return <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The in-app purchase receipt</a>.
    */
-  public static final Optional<InAppReceipt> getInAppReceiptByProductId(final Payload payload, final String productId) {
+  public static final Optional<InAppReceipt> inAppReceiptByProductId(final Payload payload, final String productId) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     checkNotNull(productId, "The argument %s must not be null", "productId");
-    return getReceiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
+    return receiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
         .stream()
         .map(receiptAttribute -> receiptAttribute.getValue().value)
         .map(bytes -> {
@@ -148,12 +148,12 @@ public final class AppStoreReceiptUtil {
           }
           return result;
         })
-        .filter(inAppReceipt -> productId.equals(getProductId(inAppReceipt)))
-        .max(Comparator.comparing(AppStoreReceiptUtil::getPurchaseDate));
+        .filter(inAppReceipt -> productId.equals(productId(inAppReceipt)))
+        .max(Comparator.comparing(AppStoreReceiptUtil::purchaseDate));
   }
 
   /**
-   * Finds the {@linkplain #getSubscriptionExpirationDate(InAppReceipt) newest} {@link InAppReceipt} with the specified product id,
+   * Finds the {@linkplain #subscriptionExpirationDate(InAppReceipt) newest} {@link InAppReceipt} with the specified product id,
    * which belongs to a subscription.
    *
    * @param payload See {@link #decodeReceipt(byte[])}.
@@ -162,10 +162,10 @@ public final class AppStoreReceiptUtil {
    * @return <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The in-app purchase receipt</a>.
    */
-  public static final Optional<InAppReceipt> getInAppReceiptBySubscriptionProductId(final Payload payload, final String productId) {
+  public static final Optional<InAppReceipt> inAppReceiptBySubscriptionProductId(final Payload payload, final String productId) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     checkNotNull(productId, "The argument %s must not be null", "productId");
-    return getReceiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
+    return receiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
         .stream()
         .map(receiptAttribute -> receiptAttribute.getValue().value)
         .map(bytes -> {
@@ -177,71 +177,71 @@ public final class AppStoreReceiptUtil {
           }
           return result;
         })
-        .filter(inAppReceipt -> productId.equals(getProductId(inAppReceipt)))
-        .max(Comparator.comparing(AppStoreReceiptUtil::getSubscriptionExpirationDate));
+        .filter(inAppReceipt -> productId.equals(productId(inAppReceipt)))
+        .max(Comparator.comparing(AppStoreReceiptUtil::subscriptionExpirationDate));
   }
 
   /**
-   * Acts as {@link #getReceiptAttribute(Payload, ReceiptAttributeType)} for the attribute of type {@link ReceiptAttributeType#BUNDLE_IDENTIFIER}.
+   * Acts as {@link #receiptAttribute(Payload, ReceiptAttributeType)} for the attribute of type {@link ReceiptAttributeType#BUNDLE_IDENTIFIER}.
    */
-  public static final String getBundleId(final Payload payload) {
+  public static final String bundleId(final Payload payload) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
-    return getReceiptAttribute(payload, BUNDLE_IDENTIFIER)
+    return receiptAttribute(payload, BUNDLE_IDENTIFIER)
         .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
         .orElseThrow();
   }
 
   /**
-   * Acts as {@link #getInAppAttribute(InAppReceipt, InAppReceiptAttributeType)}
+   * Acts as {@link #inAppAttribute(InAppReceipt, InAppReceiptAttributeType)}
    * for the attribute of type {@link InAppReceiptAttributeType#TRANSACTION_IDENTIFIER}.
    */
-  public static final String getTransactionId(final InAppReceipt inAppReceipt) {
+  public static final String transactionId(final InAppReceipt inAppReceipt) {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
-    return getInAppAttribute(inAppReceipt, TRANSACTION_IDENTIFIER)
+    return inAppAttribute(inAppReceipt, TRANSACTION_IDENTIFIER)
         .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
         .orElseThrow();
   }
 
   /**
-   * Acts as {@link #getInAppAttribute(InAppReceipt, InAppReceiptAttributeType)}
+   * Acts as {@link #inAppAttribute(InAppReceipt, InAppReceiptAttributeType)}
    * for the attribute of type {@link InAppReceiptAttributeType#ORIGINAL_TRANSACTION_IDENTIFIER}.
    */
-  public static final String getOriginalTransactionId(final InAppReceipt inAppReceipt) {
+  public static final String originalTransactionId(final InAppReceipt inAppReceipt) {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
-    return getInAppAttribute(inAppReceipt, ORIGINAL_TRANSACTION_IDENTIFIER)
+    return inAppAttribute(inAppReceipt, ORIGINAL_TRANSACTION_IDENTIFIER)
         .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
         .orElseThrow();
   }
 
   /**
-   * Acts as {@link #getInAppAttribute(InAppReceipt, InAppReceiptAttributeType)}
+   * Acts as {@link #inAppAttribute(InAppReceipt, InAppReceiptAttributeType)}
    * for the attribute of type {@link InAppReceiptAttributeType#PRODUCT_IDENTIFIER}.
    */
-  public static final String getProductId(final InAppReceipt inAppReceipt) {
+  public static final String productId(final InAppReceipt inAppReceipt) {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
-    return getInAppAttribute(inAppReceipt, PRODUCT_IDENTIFIER)
+    return inAppAttribute(inAppReceipt, PRODUCT_IDENTIFIER)
         .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
         .orElseThrow();
   }
 
   /**
-   * Acts as {@link #getInAppAttribute(InAppReceipt, InAppReceiptAttributeType)}
+   * Acts as {@link #inAppAttribute(InAppReceipt, InAppReceiptAttributeType)}
    * for the attribute of type {@link InAppReceiptAttributeType#PURCHASE_DATE}.
    */
-  public static final Instant getPurchaseDate(final InAppReceipt inAppReceipt) {
+  public static final Instant purchaseDate(final InAppReceipt inAppReceipt) {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
-    return getInAppAttribute(inAppReceipt, PURCHASE_DATE)
+    return inAppAttribute(inAppReceipt, PURCHASE_DATE)
         .map(inAppAttribute -> decodeInstant(inAppAttribute.getValue()))
         .orElseThrow();
   }
 
   /**
-   * Acts as {@link #getInAppAttribute(InAppReceipt, InAppReceiptAttributeType)}
+   * Acts as {@link #inAppAttribute(InAppReceipt, InAppReceiptAttributeType)}
    * for the attribute of type {@link InAppReceiptAttributeType#SUBSCRIPTION_EXPIRATION_DATE}.
    */
-  public static final Instant getSubscriptionExpirationDate(final InAppReceipt inAppReceipt) {
+  public static final Instant subscriptionExpirationDate(final InAppReceipt inAppReceipt) {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
-    return getInAppAttribute(inAppReceipt, SUBSCRIPTION_EXPIRATION_DATE)
+    return inAppAttribute(inAppReceipt, SUBSCRIPTION_EXPIRATION_DATE)
         .map(inAppAttribute -> {
           @Nullable
           final Instant result = decodeInstant(inAppAttribute.getValue());
@@ -263,12 +263,12 @@ public final class AppStoreReceiptUtil {
    * @return The <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * attribute of the in-app purchase receipt</a>.
    */
-  public static final Optional<InAppAttribute> getInAppAttribute(final InAppReceipt inAppReceipt, final InAppReceiptAttributeType attributeType) {
+  public static final Optional<InAppAttribute> inAppAttribute(final InAppReceipt inAppReceipt, final InAppReceiptAttributeType attributeType) {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
     checkNotNull(attributeType, "The argument %s must not be null", "attributeType");
     return inAppReceipt.getInAppAttribute()
         .stream()
-        .filter(inAppAttribute -> inAppAttribute.getType().intValue() == attributeType.getValue())
+        .filter(inAppAttribute -> inAppAttribute.getType().intValue() == attributeType.intType())
         .findAny();
   }
 
@@ -284,12 +284,12 @@ public final class AppStoreReceiptUtil {
    * @return The <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * attribute of the the receipt</a>.
    */
-  public static final Optional<ReceiptAttribute> getReceiptAttribute(final Payload payload, final ReceiptAttributeType attributeType) {
+  public static final Optional<ReceiptAttribute> receiptAttribute(final Payload payload, final ReceiptAttributeType attributeType) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     checkNotNull(attributeType, "The argument %s must not be null", "attributeType");
     return payload.getReceiptAttribute()
         .stream()
-        .filter(receiptAttribute -> receiptAttribute.getType().intValue() == attributeType.getValue())
+        .filter(receiptAttribute -> receiptAttribute.getType().intValue() == attributeType.intType())
         .findAny();
   }
 
@@ -306,12 +306,12 @@ public final class AppStoreReceiptUtil {
    * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * attributes of the receipt</a>.
    */
-  public static final Collection<ReceiptAttribute> getReceiptAttributes(final Payload payload, final ReceiptAttributeType attributeType) {
+  public static final Collection<ReceiptAttribute> receiptAttributes(final Payload payload, final ReceiptAttributeType attributeType) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     checkNotNull(attributeType, "The argument %s must not be null", "attributeType");
     return payload.getReceiptAttribute()
         .stream()
-        .filter(receiptAttribute -> receiptAttribute.getType().intValue() == attributeType.getValue())
+        .filter(receiptAttribute -> receiptAttribute.getType().intValue() == attributeType.intType())
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
@@ -347,7 +347,7 @@ public final class AppStoreReceiptUtil {
     checkNotNull(receiptAttribute, "The argument %s must not be null", "receiptAttribute");
     final ReceiptAttributeType type = ReceiptAttributeType.of(receiptAttribute.getType().intValue());
     return ReceiptAttribute.class.getSimpleName()
-        + "(type=" + type.getName()
+        + "(type=" + type.typeName()
         + ", version=" + receiptAttribute.getVersion().value.toString()
         + ", value=" + type.asString(receiptAttribute.getValue(), omitUnsupportedAttributes)
         + ')';
@@ -357,7 +357,7 @@ public final class AppStoreReceiptUtil {
     checkNotNull(inAppAttribute, "The argument %s must not be null", "inAppAttribute");
     final InAppReceiptAttributeType type = InAppReceiptAttributeType.of(inAppAttribute.getType().intValue());
     return InAppAttribute.class.getSimpleName()
-        + "(type=" + type.getName()
+        + "(type=" + type.typeName()
         + ", version=" + inAppAttribute.getVersion().value.toString()
         + ", value=" + type.asString(inAppAttribute.getValue())
         + ')';
@@ -436,16 +436,16 @@ public final class AppStoreReceiptUtil {
       this.name = name;
     }
 
-    public final int getValue() {
+    public final int intType() {
       return value;
     }
 
-    public final String getName() {
+    public final String typeName() {
       return name;
     }
 
-    public static final ReceiptAttributeType of(final int type) {
-      return switch (type) {
+    public static final ReceiptAttributeType of(final int intType) {
+      return switch (intType) {
         case 2 -> BUNDLE_IDENTIFIER;
         case 3 -> APP_VERSION;
         case 4 -> OPAQUE_VALUE;
@@ -491,16 +491,16 @@ public final class AppStoreReceiptUtil {
       this.name = name;
     }
 
-    public final int getValue() {
+    public final int intType() {
       return value;
     }
 
-    public final String getName() {
+    public final String typeName() {
       return name;
     }
 
-    public static final InAppReceiptAttributeType of(final int type) {
-      return switch (type) {
+    public static final InAppReceiptAttributeType of(final int intType) {
+      return switch (intType) {
         case 1701 -> QUANTITY;
         case 1702 -> PRODUCT_IDENTIFIER;
         case 1703 -> TRANSACTION_IDENTIFIER;

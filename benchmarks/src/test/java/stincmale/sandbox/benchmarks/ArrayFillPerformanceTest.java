@@ -20,15 +20,17 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 @TestInstance(Lifecycle.PER_CLASS)
 public class ArrayFillPerformanceTest {
   private static final int ARRAY_SIZE = 100_000;
-  private static final long[] arrFilledWithZeros = new long[ARRAY_SIZE];
-  private static final long[] arrFilledWithOnes = new long[ARRAY_SIZE];
-  private static final long[] arrFilledWithIndices = new long[ARRAY_SIZE];
+  private static final long[] ARR_FILLED_WITH_ZEROS;
+  private static final long[] ARR_FILLED_WITH_ONES;
+  private static final long[] ARR_FILLED_WITH_INDICES;
 
   static {
+    ARR_FILLED_WITH_ZEROS = new long[ARRAY_SIZE];
+    ARR_FILLED_WITH_ONES = new long[ARRAY_SIZE];
+    ARR_FILLED_WITH_INDICES = new long[ARRAY_SIZE];
     for (int i = 0; i < ARRAY_SIZE; i++) {
-      arrFilledWithZeros[i] = 0;// just to handle it the same way we handle other pre-filled arrays
-      arrFilledWithOnes[i] = 1;
-      arrFilledWithIndices[i] = i;
+      ARR_FILLED_WITH_ONES[i] = 1;
+      ARR_FILLED_WITH_INDICES[i] = i;
     }
   }
 
@@ -59,7 +61,7 @@ public class ArrayFillPerformanceTest {
 
   @Benchmark
   public void systemArrayCopy0(final ThreadState state) {
-    System.arraycopy(arrFilledWithZeros, 0, state.arr, 0, state.arr.length);
+    System.arraycopy(ARR_FILLED_WITH_ZEROS, 0, state.arr, 0, state.arr.length);
   }
 
   @Benchmark
@@ -71,7 +73,7 @@ public class ArrayFillPerformanceTest {
 
   @Benchmark
   public void systemArrayCopy1(final ThreadState state) {
-    System.arraycopy(arrFilledWithOnes, 0, state.arr, 0, state.arr.length);
+    System.arraycopy(ARR_FILLED_WITH_ONES, 0, state.arr, 0, state.arr.length);
   }
 
   @Benchmark
@@ -83,7 +85,7 @@ public class ArrayFillPerformanceTest {
 
   @Benchmark
   public void systemArrayCopyIdx(final ThreadState state) {
-    System.arraycopy(arrFilledWithIndices, 0, state.arr, 0, state.arr.length);
+    System.arraycopy(ARR_FILLED_WITH_INDICES, 0, state.arr, 0, state.arr.length);
   }
 
   @State(Scope.Thread)

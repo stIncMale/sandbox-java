@@ -8,7 +8,6 @@ import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 import static stincmale.sandbox.examples.tcpkeepalive.Server.BYE;
 import static stincmale.sandbox.examples.tcpkeepalive.Server.log;
 import static stincmale.sandbox.examples.tcpkeepalive.Server.parseCliArgs;
@@ -19,7 +18,7 @@ import static stincmale.sandbox.examples.tcpkeepalive.Server.toUnsignedHexString
  * A trivial TCP client working according to the protocol specified by the {@link Server} class.
  */
 final class Client {
-  private static final int SO_CONNECT_TIMEOUT_MILLIS = Math.toIntExact(TimeUnit.SECONDS.toMillis(1));
+  private static final int SO_CONNECT_TIMEOUT_MILLIS = 1000;
 
   public static final void main(final String... args) throws IOException {
     final InetSocketAddress serverSocketAddress = parseCliArgs(args);
