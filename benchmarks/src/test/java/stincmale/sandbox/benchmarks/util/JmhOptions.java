@@ -9,7 +9,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
 public final class JmhOptions {
-  private static final boolean dryRun = parseBoolean(System.getProperty("sandbox.dryRun", "false"));
+  private static final boolean dryRun = parseBoolean(System.getProperty("sandbox.benchmark.dryRun", "false"));
   private static final boolean javaServer = !dryRun;
   private static final boolean javaEnableAssertions = dryRun;
 

@@ -16,6 +16,13 @@
     <version>0.0.0-SNAPSHOT</version>
     <relativePath>version.xml</relativePath>
   </parent>
+  <properties>
+      <sandbox.test.argLine>
+        -Xverify:all
+        -Xshare:auto
+        -Xmx1000m
+      </sandbox.test.argLine>
+    </properties>
   <build>
     <pluginManagement>
       <plugins>
@@ -52,16 +59,46 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
-            <trimStackTrace>false</trimStackTrace>
-            <useUnlimitedThreads>false</useUnlimitedThreads>
-            <enableAssertions>true</enableAssertions>
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
-            <argLine>
-              -Xverify:all
-              -Xmx1024m
-            </argLine>
+            <enableAssertions>true</enableAssertions>
+            <argLine>${sandbox.test.argLine}</argLine>
+            <includes>
+              <include>
+                <![CDATA[
+                  %regex[.*(?<!Integration)Test\..*]
+                ]]>
+              </include>
+              <include>
+                <![CDATA[
+                  %regex[.*(?<!Integration)Benchmark\..*]
+                ]]>
+              </include>
+            </includes>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>integration-test</id>
+              <goals>
+                <goal>integration-test</goal>
+                <goal>verify</goal>
+              </goals>
+              <configuration>
+                <forkCount>1</forkCount>
+                <reuseForks>true</reuseForks>
+                <enableAssertions>true</enableAssertions>
+                <argLine>${sandbox.test.argLine}</argLine>
+                <includes>
+                  <include>**/*IntegrationTest.java</include>
+                  <include>**/*IntegrationBenchmark.java</include>
+                </includes>
+              </configuration>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -69,10 +106,16 @@
   </build>
   <profiles>
     <profile>
-      <id>default</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
+      <id>with-integration-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <!--suppress MavenModelInspection for some reason IDEA reports "Plugin not found"-->
+            <artifactId>maven-failsafe-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>

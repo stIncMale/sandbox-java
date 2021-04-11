@@ -33,8 +33,8 @@ import org.opentest4j.AssertionFailedError;
  * storing and reading data of type {@link JDBCType#TIMESTAMP_WITH_TIMEZONE} never has issues,
  * while {@link JDBCType#TIMESTAMP} does (see {@link Assertions#assertThrows(Class, Executable)}).
  */
-@TestInstance(Lifecycle.PER_METHOD)
-final class JdbcTimestampTest {
+@TestInstance(Lifecycle.PER_CLASS)
+final class JdbcTimestampIntegrationTest {
   private static final TimeZone originalTz = TimeZone.getDefault();
   private static final TimeZone tz1 = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.ofHoursMinutes(0, 1)));
   private static final TimeZone tz2 = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.ofHoursMinutes(0, 2)));
@@ -43,7 +43,7 @@ final class JdbcTimestampTest {
   private static final Timestamp ts = new Timestamp(1000_000_000_000L);
   private static final Instant it = ts.toInstant();
 
-  private JdbcTimestampTest() {
+  private JdbcTimestampIntegrationTest() {
   }
 
   @AfterAll
@@ -132,7 +132,7 @@ final class JdbcTimestampTest {
   private final void insert_preJdbc42(final Timestamp timestamp, @Nullable final TimeZone tz) {
     doWithConnection(connection -> {
       try (var statement = connection.prepareStatement("insert into ts_test (tsz, ts) values (?, ?)")) {
-        if (tz == null) {// don't store timestamps like this
+        if (tz == null) {// do not store timestamps like this
           statement.setObject(1, timestamp);
           statement.setObject(2, timestamp);
         } else {// better do this
@@ -166,7 +166,7 @@ final class JdbcTimestampTest {
         rs.next();
         final Timestamp tsz;
         final Timestamp ts;
-        if (tz == null) {// don't read timestamps like this
+        if (tz == null) {// do not read timestamps like this
           tsz = rs.getTimestamp(1);
           ts = rs.getTimestamp(2);
         } else {// better do this
@@ -219,7 +219,6 @@ final class JdbcTimestampTest {
    */
   private final Connection getConnection() {
     try {
-      // specify your DB URL here, perhaps add the JDBC driver dependency to pom.xml
       final Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/postgres?user=postgres&password=");
       connection.setAutoCommit(false);
       return connection;

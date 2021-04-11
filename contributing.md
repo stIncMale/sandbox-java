@@ -8,8 +8,10 @@ Run from the project root directory:
 
 &#x23; | Command | Description
 --- | --- | ---
-1 | `mvn clean verify -f benchmarks/pom.xml -Dsandbox.dryRun=true` | Build **`benchmarks`** sub-project and run all benchmarks. Use `-Dsandbox.dryRun=false` or omit specifying this Java system property when actually measuring.
-2 | `mvn clean verify -f benchmarks/pom.xml -Dtest=AtomicApiComparisonTest` | Similar to 1, but runs a specific test.
-3 | `mvn clean verify -f examples/pom.xml` | Build **`examples`** sub-project.
-4 | `mvn clean verify -f exercises/pom.xml` | Build **`exercises`** sub-project.
-5 | `mvn clean verify -f benchmarks/pom.xml -Dsandbox.dryRun=true && mvn clean verify -f examples/pom.xml && mvn clean verify -f exercises/pom.xml` | Combines 1, 3, 4.
+1 | `mvn verify -f benchmarks/pom.xml` | Build the **`benchmarks`** sub-project and run benchmarks.
+1.1 | `mvn verify -f benchmarks/pom.xml -Dsandbox.benchmark.dryRun=true` | Dry run when benchmarking.
+1.2 | `mvn verify -f benchmarks/pom.xml -Dtest=AtomicApiComparisonTest` | Run a specific benchmark.
+2 | `mvn verify -f examples/pom.xml` | Build the **`examples`** sub-project and run unit tests.
+2.1 | `mvn verify -f examples/pom.xml -P with-integration-tests` | Also run intergation tests.
+4 | `mvn verify -f exercises/pom.xml` | Build the **`exercises`** sub-project and run unit tests.
+5 | `mvn clean -f benchmarks/pom.xml ; mvn clean -f examples/pom.xml ; mvn clean -f exercises/pom.xml` | Delete files generated at build-time.
