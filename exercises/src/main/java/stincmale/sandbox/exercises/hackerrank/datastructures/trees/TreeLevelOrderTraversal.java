@@ -8,7 +8,7 @@ import java.util.Scanner;
 /**
  * <a href="https://www.hackerrank.com/challenges/tree-level-order-traversal">Tree: Level Order Traversal</a>
  */
-public class TreeLevelOrderTraversal {
+final class TreeLevelOrderTraversal {
   public static void main(String[] args) {
     try (Scanner in = new Scanner(System.in)) {
       int t = in.nextInt();
@@ -20,6 +20,26 @@ public class TreeLevelOrderTraversal {
       assert root != null;
       Solution.levelOrder(root);
     }
+  }
+
+  static Node insert(Node root, int data) {
+    if (root == null) {
+      return new Node(data);
+    } else {
+      Node cur;
+      if (data <= root.data) {
+        cur = insert(root.left, data);
+        root.left = cur;
+      } else {
+        cur = insert(root.right, data);
+        root.right = cur;
+      }
+      return root;
+    }
+  }
+
+  private TreeLevelOrderTraversal() {
+    throw new AssertionError();
   }
 
   static class Solution {
@@ -56,22 +76,6 @@ public class TreeLevelOrderTraversal {
       this.data = data;
       left = null;
       right = null;
-    }
-  }
-
-  static Node insert(Node root, int data) {
-    if (root == null) {
-      return new Node(data);
-    } else {
-      Node cur;
-      if (data <= root.data) {
-        cur = insert(root.left, data);
-        root.left = cur;
-      } else {
-        cur = insert(root.right, data);
-        root.right = cur;
-      }
-      return root;
     }
   }
 }

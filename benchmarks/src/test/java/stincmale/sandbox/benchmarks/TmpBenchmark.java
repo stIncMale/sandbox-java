@@ -1,5 +1,6 @@
 package stincmale.sandbox.benchmarks;
 
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -73,6 +74,12 @@ public class TmpBenchmark {
     s.opsEndCounter.increment();
   }
 
+  public static final void main(final String... args) throws RunnerException {
+    final int numberOfThreads = 2;
+    final TmpBenchmark test = new TmpBenchmark();
+    test.runThroughputBenchmarks(numberOfThreads);
+  }
+
   @State(Scope.Benchmark)
   public static class BenchmarkState {
     private Object monitor;
@@ -95,23 +102,22 @@ public class TmpBenchmark {
 
     @TearDown(Level.Iteration)
     public final void tearDown() {
-      final long stopNanos = System.nanoTime();// JMH probably registers an earlier instant as the start time
+      // JMH probably registers an earlier instant as the start time
+      final long stopNanos = System.nanoTime();
       // JMH probably registers a smaller duration
-      final double durationSeconds = ((double)(stopNanos - startNanos)) / TimeUnit.SECONDS.toNanos(1);
+      final double durationSeconds =
+          ((double)(stopNanos - startNanos)) / TimeUnit.SECONDS.toNanos(1);
       final long opsBeginCount = opsBeginCounter.sum();
       final double throughputBegin = opsBeginCount / durationSeconds;
       final long opsEndCount = opsEndCounter.sum();
-      if (opsEndCount != opsBeginCount) {// should never happen, but I added just in case since the measurements are incorrect
-        throw new AssertionError(String.format("A benchmark method threw an exception that was swallowed by JMH %d times",
+      // should never happen, but I added just in case since the measurements are incorrect
+      if (opsEndCount != opsBeginCount) {
+        throw new AssertionError(String.format(Locale.ROOT,
+            "A benchmark method threw an exception that was swallowed by JMH %d times",
             opsBeginCount - opsEndCount));
       }
-      System.out.printf("%n# non-JMH: throughput %.3f ops/s (%d ops / %.3f s)%n", throughputBegin, opsBeginCount, durationSeconds);
+      System.out.printf(Locale.ROOT, "%n# non-JMH: throughput %.3f ops/s (%d ops / %.3f s)%n",
+          throughputBegin, opsBeginCount, durationSeconds);
     }
-  }
-
-  public static final void main(final String... args) throws RunnerException {
-    final int numberOfThreads = 2;
-    final TmpBenchmark test = new TmpBenchmark();
-    test.runThroughputBenchmarks(numberOfThreads);
   }
 }

@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  * <a href="https://www.hackerrank.com/challenges/swap-nodes-algo">Swap Nodes [Algo]</a>
  */
-public class SwapNodesAlgo {
+final class SwapNodesAlgo {
   public static void main(String[] args) {
     try (Scanner in = new Scanner(System.in)) {
       int numberOfNodes = in.nextInt();
@@ -42,6 +42,10 @@ public class SwapNodesAlgo {
         printTraverse(nodes);
       }
     }
+  }
+
+  private SwapNodesAlgo() {
+    throw new AssertionError();
   }
 
   static NavigableMap<Integer, List<Node>> createLayers(SortedMap<Integer, Node> nodes) {

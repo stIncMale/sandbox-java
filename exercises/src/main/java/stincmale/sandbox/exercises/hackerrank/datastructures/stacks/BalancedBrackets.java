@@ -7,7 +7,7 @@ import java.util.Scanner;
 /**
  * <a href="https://www.hackerrank.com/challenges/balanced-brackets">Balanced Brackets</a>
  */
-public class BalancedBrackets {
+final class BalancedBrackets {
   static String isBalanced(String s) {
     String result = "YES";
     if (s == null || s.length() == 0) {
@@ -42,6 +42,10 @@ public class BalancedBrackets {
       }
     }
     return result;
+  }
+
+  private BalancedBrackets() {
+    throw new AssertionError();
   }
 
   public static void main(String[] args) {

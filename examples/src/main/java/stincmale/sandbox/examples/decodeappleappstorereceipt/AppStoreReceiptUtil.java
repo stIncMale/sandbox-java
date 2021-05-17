@@ -41,7 +41,8 @@ import stincmale.sandbox.examples.decodeappleappstorereceipt.asn1.receiptmodule.
  * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html">
  * receipts issued by Apple App Store</a>.
  * <p>
- * Note that upon initialization this class {@linkplain Security#addProvider(Provider) adds} a new {@link BouncyCastleProvider}.
+ * Note that upon initialization this class {@linkplain Security#addProvider(Provider) adds}
+ * a new {@link BouncyCastleProvider}.
  */
 public final class AppStoreReceiptUtil {
   static {
@@ -51,17 +52,20 @@ public final class AppStoreReceiptUtil {
   /**
    * See {@link #decodeReceipt(byte[])}.
    *
-   * @param receiptBase64 A receipt (see {@link #decodeReceipt(byte[])}) encoded with Base64 encoding.
+   * @param receiptBase64 A receipt (see {@link #decodeReceipt(byte[])})
+   * encoded with Base64 encoding.
    */
   public static final Payload decodeReceiptFromBase64(final String receiptBase64) {
     checkNotNull(receiptBase64, "The argument %s must not be null", receiptBase64);
-    return decodeReceipt(Base64.getDecoder().decode(receiptBase64.getBytes(StandardCharsets.UTF_8)));
+    return decodeReceipt(Base64.getDecoder()
+        .decode(receiptBase64.getBytes(StandardCharsets.UTF_8)));
   }
 
   /**
    * See {@link #decodeReceipt(byte[])}.
    *
-   * @param receiptBase64 A receipt (see {@link #decodeReceipt(byte[])}) encoded with Base64 encoding.
+   * @param receiptBase64 A receipt (see {@link #decodeReceipt(byte[])})
+   * encoded with Base64 encoding.
    */
   public static final Payload decodeReceiptFromBase64(final byte[] receiptBase64) {
     checkNotNull(receiptBase64, "The argument %s must not be null", receiptBase64);
@@ -73,7 +77,8 @@ public final class AppStoreReceiptUtil {
    *
    * @param receipt A receipt that is described by Apple as a
    * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html">
-   * "PKCS #7 container, as defined by RFC 2315, with its payload encoded using ASN.1 (Abstract Syntax Notation One), as defined by ITU-T X.690"</a>.
+   * "PKCS #7 container, as defined by RFC 2315, with its payload encoded using
+   * ASN.1 (Abstract Syntax Notation One), as defined by ITU-T X.690"</a>.
    * @return Extracted {@link Payload} which
    * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html">
    * "is composed of a set of receipt attributes"</a>.
@@ -105,7 +110,8 @@ public final class AppStoreReceiptUtil {
    * @return <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The in-app purchase receipt</a>.
    */
-  public static final Optional<InAppReceipt> inAppReceiptByTransactionId(final Payload payload, final String transactionId) {
+  public static final Optional<InAppReceipt> inAppReceiptByTransactionId(
+      final Payload payload, final String transactionId) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     checkNotNull(transactionId, "The argument %s must not be null", "transactionId");
     return receiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
@@ -125,7 +131,8 @@ public final class AppStoreReceiptUtil {
   }
 
   /**
-   * Finds the {@linkplain #purchaseDate(InAppReceipt) newest} {@link InAppReceipt} with the specified product id.
+   * Finds the {@linkplain #purchaseDate(InAppReceipt) newest} {@link InAppReceipt}
+   * with the specified product id.
    *
    * @param payload See {@link #decodeReceipt(byte[])}.
    * @param productId <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
@@ -133,7 +140,8 @@ public final class AppStoreReceiptUtil {
    * @return <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The in-app purchase receipt</a>.
    */
-  public static final Optional<InAppReceipt> inAppReceiptByProductId(final Payload payload, final String productId) {
+  public static final Optional<InAppReceipt> inAppReceiptByProductId(
+      final Payload payload, final String productId) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     checkNotNull(productId, "The argument %s must not be null", "productId");
     return receiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
@@ -153,8 +161,8 @@ public final class AppStoreReceiptUtil {
   }
 
   /**
-   * Finds the {@linkplain #subscriptionExpirationDate(InAppReceipt) newest} {@link InAppReceipt} with the specified product id,
-   * which belongs to a subscription.
+   * Finds the {@linkplain #subscriptionExpirationDate(InAppReceipt) newest} {@link InAppReceipt}
+   * with the specified product id, which belongs to a subscription.
    *
    * @param payload See {@link #decodeReceipt(byte[])}.
    * @param productId <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
@@ -162,7 +170,8 @@ public final class AppStoreReceiptUtil {
    * @return <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * The in-app purchase receipt</a>.
    */
-  public static final Optional<InAppReceipt> inAppReceiptBySubscriptionProductId(final Payload payload, final String productId) {
+  public static final Optional<InAppReceipt> inAppReceiptBySubscriptionProductId(
+      final Payload payload, final String productId) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     checkNotNull(productId, "The argument %s must not be null", "productId");
     return receiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
@@ -182,7 +191,8 @@ public final class AppStoreReceiptUtil {
   }
 
   /**
-   * Acts as {@link #receiptAttribute(Payload, ReceiptAttributeType)} for the attribute of type {@link ReceiptAttributeType#BUNDLE_IDENTIFIER}.
+   * Acts as {@link #receiptAttribute(Payload, ReceiptAttributeType)}
+   * for the attribute of type {@link ReceiptAttributeType#BUNDLE_IDENTIFIER}.
    */
   public static final String bundleId(final Payload payload) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
@@ -245,7 +255,8 @@ public final class AppStoreReceiptUtil {
         .map(inAppAttribute -> {
           @Nullable
           final Instant result = decodeInstant(inAppAttribute.getValue());
-          return result == null// one-off subscriptions do not have SUBSCRIPTION_EXPIRATION_DATE value
+          // one-off subscriptions do not have SUBSCRIPTION_EXPIRATION_DATE value
+          return result == null
               ? Instant.EPOCH
               : result;
         })
@@ -263,7 +274,8 @@ public final class AppStoreReceiptUtil {
    * @return The <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * attribute of the in-app purchase receipt</a>.
    */
-  public static final Optional<InAppAttribute> inAppAttribute(final InAppReceipt inAppReceipt, final InAppReceiptAttributeType attributeType) {
+  public static final Optional<InAppAttribute> inAppAttribute(
+      final InAppReceipt inAppReceipt, final InAppReceiptAttributeType attributeType) {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
     checkNotNull(attributeType, "The argument %s must not be null", "attributeType");
     return inAppReceipt.getInAppAttribute()
@@ -276,20 +288,22 @@ public final class AppStoreReceiptUtil {
    * Finds an {@link ReceiptAttribute} with the specified type.
    *
    * @param payload See {@link #decodeReceipt(byte[])}.
-   * @param attributeType
-   * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html">
+   * @param attributeType <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html">
    * The type of the attribute of the receipt ({@code payload})</a>.
    * The correspondence between attributes and types is specified
-   * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">here</a>.
+   * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
+   * here</a>.
    * @return The <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * attribute of the the receipt</a>.
    */
-  public static final Optional<ReceiptAttribute> receiptAttribute(final Payload payload, final ReceiptAttributeType attributeType) {
+  public static final Optional<ReceiptAttribute> receiptAttribute(
+      final Payload payload, final ReceiptAttributeType attributeType) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     checkNotNull(attributeType, "The argument %s must not be null", "attributeType");
     return payload.getReceiptAttribute()
         .stream()
-        .filter(receiptAttribute -> receiptAttribute.getType().intValue() == attributeType.intType())
+        .filter(receiptAttribute ->
+            receiptAttribute.getType().intValue() == attributeType.intType())
         .findAny();
   }
 
@@ -297,55 +311,64 @@ public final class AppStoreReceiptUtil {
    * Finds all {@link ReceiptAttribute}s with the specified type.
    *
    * @param payload See {@link #decodeReceipt(byte[])}.
-   * @param attributeType
-   * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html">
+   * @param attributeType <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateLocally.html">
    * The type of the attribute of the receipt ({@code payload})</a>.
    * The correspondence between attributes and types is specified
-   * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">here</a>.
+   * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
+   * here</a>.
    * @return All matching
    * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
    * attributes of the receipt</a>.
    */
-  public static final Collection<ReceiptAttribute> receiptAttributes(final Payload payload, final ReceiptAttributeType attributeType) {
+  public static final Collection<ReceiptAttribute> receiptAttributes(
+      final Payload payload, final ReceiptAttributeType attributeType) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     checkNotNull(attributeType, "The argument %s must not be null", "attributeType");
     return payload.getReceiptAttribute()
         .stream()
-        .filter(receiptAttribute -> receiptAttribute.getType().intValue() == attributeType.intType())
+        .filter(receiptAttribute ->
+            receiptAttribute.getType().intValue() == attributeType.intType())
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
-  public static final String toString(final Payload payload, final boolean omitUnsupportedAttributes) {
+  public static final String toString(
+      final Payload payload, final boolean omitUnsupportedAttributes) {
     checkNotNull(payload, "The argument %s must not be null", "payload");
     return Payload.class.getSimpleName()
         + "(\n"
         + payload.getReceiptAttribute()
-        .stream()
-        .filter(receiptAttribute -> !omitUnsupportedAttributes ||
-            ReceiptAttributeType.of(receiptAttribute.getType().intValue()) != ReceiptAttributeType.UNSUPPORTED)
-        .map(receiptAttribute -> AppStoreReceiptUtil.toString(receiptAttribute, omitUnsupportedAttributes))
-        .map(s -> "\t" + s)
-        .collect(Collectors.joining("\n"))
+            .stream()
+            .filter(receiptAttribute -> !omitUnsupportedAttributes
+                || ReceiptAttributeType.of(receiptAttribute.getType().intValue())
+                    != ReceiptAttributeType.UNSUPPORTED)
+            .map(receiptAttribute ->
+                AppStoreReceiptUtil.toString(receiptAttribute, omitUnsupportedAttributes))
+            .map(s -> "\t" + s)
+            .collect(Collectors.joining("\n"))
         + "\n)";
   }
 
-  public static final String toString(final InAppReceipt inAppReceipt, final boolean omitUnsupportedAttributes) {
+  public static final String toString(
+      final InAppReceipt inAppReceipt, final boolean omitUnsupportedAttributes) {
     checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
     return InAppReceipt.class.getSimpleName()
         + "(\n"
         + inAppReceipt.getInAppAttribute()
-        .stream()
-        .filter(receiptAttribute -> !omitUnsupportedAttributes ||
-            InAppReceiptAttributeType.of(receiptAttribute.getType().intValue()) != InAppReceiptAttributeType.UNSUPPORTED)
-        .map(AppStoreReceiptUtil::toString)
-        .map(s -> "\t\t" + s)
-        .collect(Collectors.joining("\n"))
+            .stream()
+            .filter(receiptAttribute -> !omitUnsupportedAttributes
+                || InAppReceiptAttributeType.of(receiptAttribute.getType().intValue())
+                    != InAppReceiptAttributeType.UNSUPPORTED)
+            .map(AppStoreReceiptUtil::toString)
+            .map(s -> "\t\t" + s)
+            .collect(Collectors.joining("\n"))
         + "\n\t)";
   }
 
-  public static final String toString(final ReceiptAttribute receiptAttribute, final boolean omitUnsupportedAttributes) {
+  public static final String toString(
+      final ReceiptAttribute receiptAttribute, final boolean omitUnsupportedAttributes) {
     checkNotNull(receiptAttribute, "The argument %s must not be null", "receiptAttribute");
-    final ReceiptAttributeType type = ReceiptAttributeType.of(receiptAttribute.getType().intValue());
+    final ReceiptAttributeType type =
+        ReceiptAttributeType.of(receiptAttribute.getType().intValue());
     return ReceiptAttribute.class.getSimpleName()
         + "(type=" + type.typeName()
         + ", version=" + receiptAttribute.getVersion().value.toString()
@@ -355,7 +378,8 @@ public final class AppStoreReceiptUtil {
 
   public static final String toString(final InAppAttribute inAppAttribute) {
     checkNotNull(inAppAttribute, "The argument %s must not be null", "inAppAttribute");
-    final InAppReceiptAttributeType type = InAppReceiptAttributeType.of(inAppAttribute.getType().intValue());
+    final InAppReceiptAttributeType type = InAppReceiptAttributeType.of(
+        inAppAttribute.getType().intValue());
     return InAppAttribute.class.getSimpleName()
         + "(type=" + type.typeName()
         + ", version=" + inAppAttribute.getVersion().value.toString()
@@ -396,7 +420,7 @@ public final class AppStoreReceiptUtil {
   @Nullable
   private static final Instant decodeInstant(final BerOctetString v) {
     final String stringV = decodeAsn1IA5String(v);
-    return stringV.isEmpty()// one-off subscriptions do not have SUBSCRIPTION_EXPIRATION_DATE value
+    return stringV.isEmpty() // one-off subscriptions do not have SUBSCRIPTION_EXPIRATION_DATE value
         ? null
         : Instant.parse(decodeAsn1IA5String(v));
   }
@@ -415,7 +439,9 @@ public final class AppStoreReceiptUtil {
   }
 
   /**
-   * See https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html
+   * See
+   * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
+   * https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html</a>
    */
   public enum ReceiptAttributeType {
     BUNDLE_IDENTIFIER(2, "bundle_id"),
@@ -460,8 +486,10 @@ public final class AppStoreReceiptUtil {
 
     private final String asString(final BerOctetString v, final boolean omitUnsupportedAttributes) {
       return switch (this) {
-        case IN_APP_PURCHASE_RECEIPT -> AppStoreReceiptUtil.toString(decodeInAppReceipt(v), omitUnsupportedAttributes);
-        case BUNDLE_IDENTIFIER, APP_VERSION, ORIGINAL_APPLICATION_VERSION -> decodeAsn1UTF8String(v);
+        case IN_APP_PURCHASE_RECEIPT ->
+            AppStoreReceiptUtil.toString(decodeInAppReceipt(v), omitUnsupportedAttributes);
+        case BUNDLE_IDENTIFIER, APP_VERSION, ORIGINAL_APPLICATION_VERSION ->
+            decodeAsn1UTF8String(v);
         case RECEIPT_CREATION_DATE, RECEIPT_EXPIRATION_DATE -> decodeAsn1IA5String(v);
         default -> v.toString();
       };
@@ -469,7 +497,9 @@ public final class AppStoreReceiptUtil {
   }
 
   /**
-   * See https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html
+   * See
+   * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
+   * https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html</a>
    */
   public enum InAppReceiptAttributeType {
     QUANTITY(1701, "quantity"),
@@ -517,8 +547,13 @@ public final class AppStoreReceiptUtil {
     private final String asString(final BerOctetString v) {
       return switch (this) {
         case QUANTITY, WEB_ORDER_LINE_ITEM_ID -> decodeAsn1Integer(v).toString();
-        case PRODUCT_IDENTIFIER, TRANSACTION_IDENTIFIER, ORIGINAL_TRANSACTION_IDENTIFIER -> decodeAsn1UTF8String(v);
-        case PURCHASE_DATE, ORIGINAL_PURCHASE_DATE, SUBSCRIPTION_EXPIRATION_DATE, CANCELLATION_DATE -> decodeAsn1IA5String(v);
+        case PRODUCT_IDENTIFIER, TRANSACTION_IDENTIFIER, ORIGINAL_TRANSACTION_IDENTIFIER ->
+            decodeAsn1UTF8String(v);
+        case
+            PURCHASE_DATE,
+            ORIGINAL_PURCHASE_DATE,
+            SUBSCRIPTION_EXPIRATION_DATE,
+            CANCELLATION_DATE -> decodeAsn1IA5String(v);
         default -> v.toString();
       };
     }

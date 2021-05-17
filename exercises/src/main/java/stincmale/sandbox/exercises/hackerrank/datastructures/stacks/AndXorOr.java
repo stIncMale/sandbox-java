@@ -5,7 +5,7 @@ import java.util.Scanner;
 /**
  * <a href="https://www.hackerrank.com/challenges/and-xor-or">AND xor OR</a>
  */
-public class AndXorOr {
+final class AndXorOr {
   public static void main(String[] args) {
     try (Scanner in = new Scanner(System.in)) {
       int n = in.nextInt();
@@ -24,6 +24,10 @@ public class AndXorOr {
       }
       System.out.print(maxS);
     }
+  }
+
+  private AndXorOr() {
+    throw new AssertionError();
   }
 
   static int s(int m1, int m2) {

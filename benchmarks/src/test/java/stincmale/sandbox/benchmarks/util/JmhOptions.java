@@ -9,14 +9,16 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
 public final class JmhOptions {
-  private static final boolean DRY_RUN = parseBoolean(System.getProperty("sandbox.benchmark.dryRun", "false"));
+  private static final boolean DRY_RUN =
+      parseBoolean(System.getProperty("sandbox.benchmark.dryRun", "false"));
   private static final boolean JVM_SERVER = !DRY_RUN;
   private static final boolean JVM_ENABLE_ASSERTIONS = DRY_RUN;
 
   private JmhOptions() {
   }
 
-  public static final OptionsBuilder newOptionsBuilder(@Nullable final Consumer<OptionsBuilder> forksWarmupIterationsTuner) {
+  public static final OptionsBuilder newOptionsBuilder(
+      @Nullable final Consumer<OptionsBuilder> forksWarmupIterationsTuner) {
     final OptionsBuilder result = new OptionsBuilder();
     result.jvmArgs(
         "-Xverify:all",

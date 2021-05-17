@@ -7,6 +7,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Scanner;
 import static stincmale.sandbox.examples.tcpkeepalive.Server.BYE;
 import static stincmale.sandbox.examples.tcpkeepalive.Server.log;
@@ -22,12 +23,14 @@ final class Client {
 
   public static final void main(final String... args) throws IOException {
     final InetSocketAddress serverSocketAddress = parseCliArgs(args);
-    final int readTimeoutMillis = Server.SO_READ_TIMEOUT_MILLIS;// may also be smaller or larger than the server's read timeout, it does not matter
+    // may also be smaller or larger than the server's read timeout, it does not matter
+    final int readTimeoutMillis = Server.SO_READ_TIMEOUT_MILLIS;
     boolean serverDisconnected = false;
     Socket socket = new Socket();
     socket.setKeepAlive(true);
     try {
-      log("Connecting to " + serverSocketAddress + " with timeout " + SO_CONNECT_TIMEOUT_MILLIS + " ms");
+      log("Connecting to " + serverSocketAddress
+          + " with timeout " + SO_CONNECT_TIMEOUT_MILLIS + " ms");
       socket.connect(serverSocketAddress, SO_CONNECT_TIMEOUT_MILLIS);
       log("Connected via " + socket);
       startDaemonUserInputHandler(socket.getOutputStream(), socket.toString());
@@ -56,12 +59,14 @@ final class Client {
     }
   }
 
-  private static final void startDaemonUserInputHandler(final OutputStream out, final String connectionDescription) {
+  private static final void startDaemonUserInputHandler(
+      final OutputStream out, final String connectionDescription) {
     final Thread userInputHandler = new Thread(() -> {
       try {
         handleUserInput(out, connectionDescription);
       } catch (final RuntimeException | IOException e) {
-        log(String.format("Exception when handling user input for %s. %s", connectionDescription, printStackTraceToString(e)));
+        log(String.format(Locale.ROOT, "Exception when handling user input for %s. %s",
+            connectionDescription, printStackTraceToString(e)));
       }
     });
     userInputHandler.setDaemon(true);
@@ -69,7 +74,8 @@ final class Client {
     userInputHandler.start();
   }
 
-  private static final void handleUserInput(final OutputStream out, final String connectionDescription) throws IOException {
+  private static final void handleUserInput(
+      final OutputStream out, final String connectionDescription) throws IOException {
     final Scanner userInputScanner = new Scanner(System.in, Charset.defaultCharset());
     try {
       // noinspection InfiniteLoopStatement
@@ -92,15 +98,18 @@ final class Client {
   }
 
   private static final byte[] userInput(final Scanner scanner) {
-    System.out.printf("Specify data to be sent:%n");
+    System.out.printf(Locale.ROOT, "Specify data to be sent:%n");
     return scanner.next().getBytes(StandardCharsets.UTF_8);
   }
 
-  private static final void processInMessage(final byte message, final String connectionDescription) {
+  private static final void processInMessage(
+      final byte message, final String connectionDescription) {
     log("Received " + toUnsignedHexString(message) + " via " + connectionDescription);
   }
 
-  static final void sendOutMessage(final byte message, final OutputStream out, final String connectionDescription) throws IOException {
+  static final void sendOutMessage(
+      final byte message, final OutputStream out, final String connectionDescription)
+      throws IOException {
     log("Sending " + toUnsignedHexString(message) + " via " + connectionDescription);
     out.write(message);
     out.flush();
@@ -113,5 +122,9 @@ final class Client {
         throw e;
       }
     }
+  }
+
+  private Client() {
+    throw new AssertionError();
   }
 }

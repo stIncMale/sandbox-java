@@ -60,6 +60,7 @@ public class ListPerformanceBenchmark {
     boolean result = false;
     final List<Object> list = state.listDescriptor.get(state.size);
     for (final Object o : list) {
+      //noinspection IfStatementMissingBreakInLoop
       if (o == list) {
         result = true;
       }
@@ -130,7 +131,8 @@ public class ListPerformanceBenchmark {
     public ThreadStateForIterating() {
     }
 
-    private static final <L extends List<Object>> L createList(final int size, final Supplier<L> listFactory) {
+    private static final <L extends List<Object>> L createList(
+        final int size, final Supplier<L> listFactory) {
       return range(0, size)
           .mapToObj(i -> new Object())
           .collect(Collectors.toCollection(listFactory));

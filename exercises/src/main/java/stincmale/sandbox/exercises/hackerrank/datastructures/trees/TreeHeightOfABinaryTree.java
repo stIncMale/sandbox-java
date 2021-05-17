@@ -5,7 +5,7 @@ import java.util.Scanner;
 /**
  * <a href="https://www.hackerrank.com/challenges/tree-height-of-a-binary-tree">Tree: Height of a Binary Tree</a>
  */
-public class TreeHeightOfABinaryTree {
+final class TreeHeightOfABinaryTree {
   public static void main(String[] args) {
     try (Scanner in = new Scanner(System.in)) {
       int t = in.nextInt();
@@ -18,6 +18,26 @@ public class TreeHeightOfABinaryTree {
       int height = Solution.height(root);
       System.out.println(height);
     }
+  }
+
+  static Node insert(Node root, int data) {
+    if (root == null) {
+      return new Node(data);
+    } else {
+      Node cur;
+      if (data <= root.data) {
+        cur = insert(root.left, data);
+        root.left = cur;
+      } else {
+        cur = insert(root.right, data);
+        root.right = cur;
+      }
+      return root;
+    }
+  }
+
+  private TreeHeightOfABinaryTree() {
+    throw new AssertionError();
   }
 
   static class Solution {
@@ -43,22 +63,6 @@ public class TreeHeightOfABinaryTree {
       this.data = data;
       left = null;
       right = null;
-    }
-  }
-
-  static Node insert(Node root, int data) {
-    if (root == null) {
-      return new Node(data);
-    } else {
-      Node cur;
-      if (data <= root.data) {
-        cur = insert(root.left, data);
-        root.left = cur;
-      } else {
-        cur = insert(root.right, data);
-        root.right = cur;
-      }
-      return root;
     }
   }
 }

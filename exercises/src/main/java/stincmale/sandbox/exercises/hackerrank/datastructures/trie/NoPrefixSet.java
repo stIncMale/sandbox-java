@@ -7,7 +7,7 @@ import java.util.Scanner;
 /**
  * <a href="https://www.hackerrank.com/challenges/no-prefix-set">No Prefix Set</a>
  */
-public class NoPrefixSet {
+final class NoPrefixSet {
   public static void main(String[] args) {
     try (Scanner in = new Scanner(System.in)) {
       int n = in.nextInt();
@@ -35,6 +35,10 @@ public class NoPrefixSet {
       }
       System.out.println("GOOD SET");
     }
+  }
+
+  private NoPrefixSet() {
+    throw new AssertionError();
   }
 
   static class Node {

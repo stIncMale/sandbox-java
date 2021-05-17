@@ -96,7 +96,8 @@ public class AtomicApiComparisonBenchmark {
 
   @Benchmark
   public final long atomicLongFieldUpdaterGetAndIncrementManual(final BenchmarkState state) {
-    final AtomicLongFieldUpdater<BenchmarkState> atomicFieldUpdater = BenchmarkState.atomicLongFieldUpdater;
+    final AtomicLongFieldUpdater<BenchmarkState> atomicFieldUpdater =
+        BenchmarkState.atomicLongFieldUpdater;
     long v;
     do {
       v = atomicFieldUpdater.get(state);
@@ -106,7 +107,8 @@ public class AtomicApiComparisonBenchmark {
 
   @Benchmark
   public final long atomicLongFieldUpdaterGetAndIncrementManualBackoff(final BenchmarkState state) {
-    final AtomicLongFieldUpdater<BenchmarkState> atomicFieldUpdater = BenchmarkState.atomicLongFieldUpdater;
+    final AtomicLongFieldUpdater<BenchmarkState> atomicFieldUpdater =
+        BenchmarkState.atomicLongFieldUpdater;
     long v;
     for (int numberOfFailures = 1; ; numberOfFailures++) {
       v = atomicFieldUpdater.get(state);
@@ -149,7 +151,7 @@ public class AtomicApiComparisonBenchmark {
 
   @Benchmark
   public final Long atomicReferenceLongGetAndIncrement(final BenchmarkState state) {
-    return state.atomicReferenceLong.getAndAccumulate(1L, (v, acc) -> v + acc);
+    return state.atomicReferenceLong.getAndAccumulate(1L, Long::sum);
   }
 
   @Benchmark
@@ -178,12 +180,14 @@ public class AtomicApiComparisonBenchmark {
 
   @Benchmark
   public final long atomicReferenceLongFieldUpdaterGetAndIncrement(final BenchmarkState state) {
-    return BenchmarkState.atomicReferenceLongFieldUpdater.getAndAccumulate(state, 1L, (v, acc) -> v + acc);
+    return BenchmarkState.atomicReferenceLongFieldUpdater.getAndAccumulate(state, 1L, Long::sum);
   }
 
   @Benchmark
-  public final Long atomicReferenceLongFieldUpdaterGetAndIncrementManual(final BenchmarkState state) {
-    final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicFieldUpdater = BenchmarkState.atomicReferenceLongFieldUpdater;
+  public final Long atomicReferenceLongFieldUpdaterGetAndIncrementManual(
+      final BenchmarkState state) {
+    final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicFieldUpdater =
+        BenchmarkState.atomicReferenceLongFieldUpdater;
     Long v;
     do {
       v = atomicFieldUpdater.get(state);
@@ -192,8 +196,10 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final Long atomicReferenceLongFieldUpdaterGetAndIncrementManualBackoff(final BenchmarkState state) {
-    final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicFieldUpdater = BenchmarkState.atomicReferenceLongFieldUpdater;
+  public final Long atomicReferenceLongFieldUpdaterGetAndIncrementManualBackoff(
+      final BenchmarkState state) {
+    final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicFieldUpdater =
+        BenchmarkState.atomicReferenceLongFieldUpdater;
     Long v;
     for (int numberOfFailures = 1; ; numberOfFailures++) {
       v = atomicFieldUpdater.get(state);
@@ -230,7 +236,8 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final long atomicLongCompareAndSet(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final long atomicLongCompareAndSet(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final long newV = threadState.getAndAdvanceLong();
     final AtomicLong atomic = benchmarkState.atomicLong;
     long v;
@@ -241,7 +248,8 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final long atomicLongCompareAndSetBackoff(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final long atomicLongCompareAndSetBackoff(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final long newV = threadState.getAndAdvanceLong();
     final AtomicLong atomic = benchmarkState.atomicLong;
     long v;
@@ -256,9 +264,11 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final long atomicLongFieldUpdaterCompareAndSet(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final long atomicLongFieldUpdaterCompareAndSet(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final long newV = threadState.getAndAdvanceLong();
-    final AtomicLongFieldUpdater<BenchmarkState> atomicFieldUpdater = BenchmarkState.atomicLongFieldUpdater;
+    final AtomicLongFieldUpdater<BenchmarkState> atomicFieldUpdater =
+        BenchmarkState.atomicLongFieldUpdater;
     long v;
     do {
       v = atomicFieldUpdater.get(benchmarkState);
@@ -267,9 +277,11 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final long atomicLongFieldUpdaterCompareAndSetBackoff(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final long atomicLongFieldUpdaterCompareAndSetBackoff(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final long newV = threadState.getAndAdvanceLong();
-    final AtomicLongFieldUpdater<BenchmarkState> atomicFieldUpdater = BenchmarkState.atomicLongFieldUpdater;
+    final AtomicLongFieldUpdater<BenchmarkState> atomicFieldUpdater =
+        BenchmarkState.atomicLongFieldUpdater;
     long v;
     for (int numberOfFailures = 1; ; numberOfFailures++) {
       v = atomicFieldUpdater.get(benchmarkState);
@@ -282,7 +294,8 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final long varHandleLongCompareAndSet(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final long varHandleLongCompareAndSet(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final long newV = threadState.getAndAdvanceLong();
     final VarHandle varHandle = BenchmarkState.varHandleLong;
     long v;
@@ -293,7 +306,8 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final long varHandleLongCompareAndSetBackoff(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final long varHandleLongCompareAndSetBackoff(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final long newV = threadState.getAndAdvanceLong();
     final VarHandle varHandle = BenchmarkState.varHandleLong;
     long v;
@@ -308,7 +322,8 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final Long atomicReferenceLongCompareAndSet(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final Long atomicReferenceLongCompareAndSet(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final Long newV = threadState.getAndAdvanceReferenceLong();
     final AtomicReference<Long> atomic = benchmarkState.atomicReferenceLong;
     Long v;
@@ -319,7 +334,8 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final Long atomicReferenceLongCompareAndSetBackoff(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final Long atomicReferenceLongCompareAndSetBackoff(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final Long newV = threadState.getAndAdvanceReferenceLong();
     final AtomicReference<Long> atomic = benchmarkState.atomicReferenceLong;
     Long v;
@@ -334,9 +350,11 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final Long atomicReferenceLongFieldUpdaterCompareAndSet(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final Long atomicReferenceLongFieldUpdaterCompareAndSet(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final Long newV = threadState.getAndAdvanceReferenceLong();
-    final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicFieldUpdater = BenchmarkState.atomicReferenceLongFieldUpdater;
+    final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicFieldUpdater =
+        BenchmarkState.atomicReferenceLongFieldUpdater;
     Long v;
     do {
       v = atomicFieldUpdater.get(benchmarkState);
@@ -345,9 +363,11 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final Long atomicReferenceLongFieldUpdaterCompareAndSetBackoff(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final Long atomicReferenceLongFieldUpdaterCompareAndSetBackoff(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final Long newV = threadState.getAndAdvanceReferenceLong();
-    final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicFieldUpdater = BenchmarkState.atomicReferenceLongFieldUpdater;
+    final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicFieldUpdater =
+        BenchmarkState.atomicReferenceLongFieldUpdater;
     Long v;
     for (int numberOfFailures = 1; ; numberOfFailures++) {
       v = atomicFieldUpdater.get(benchmarkState);
@@ -360,7 +380,8 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final Long varHandleReferenceLongCompareAndSet(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final Long varHandleReferenceLongCompareAndSet(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final Long newV = threadState.getAndAdvanceReferenceLong();
     final VarHandle varHandle = BenchmarkState.varHandleReferenceLong;
     Long v;
@@ -371,7 +392,8 @@ public class AtomicApiComparisonBenchmark {
   }
 
   @Benchmark
-  public final Long varHandleReferenceLongCompareAndSetBackoff(final BenchmarkState benchmarkState, final ThreadState threadState) {
+  public final Long varHandleReferenceLongCompareAndSetBackoff(
+      final BenchmarkState benchmarkState, final ThreadState threadState) {
     final Long newV = threadState.getAndAdvanceReferenceLong();
     final VarHandle varHandle = BenchmarkState.varHandleReferenceLong;
     Long v;
@@ -383,6 +405,14 @@ public class AtomicApiComparisonBenchmark {
       backoff(numberOfFailures);
     }
     return v;
+  }
+
+  private static final void backoff(final int numberOfFailures) {
+    if (numberOfFailures > BenchmarkState.FAILURES_WITHOUT_BACKOFF) {
+      parkNanos(min(
+          numberOfFailures * BenchmarkState.EXPONENTIAL_BACKOFF_FACTOR,
+          BenchmarkState.MAX_BACKOFF_NANOS));
+    }
   }
 
   @State(Scope.Benchmark)
@@ -391,17 +421,21 @@ public class AtomicApiComparisonBenchmark {
     private static final int EXPONENTIAL_BACKOFF_FACTOR = 2;
     private static final int MAX_BACKOFF_NANOS = 10;
     private static final AtomicLongFieldUpdater<BenchmarkState> atomicLongFieldUpdater;
-    private static final AtomicReferenceFieldUpdater<BenchmarkState, Long> atomicReferenceLongFieldUpdater;
+    private static final AtomicReferenceFieldUpdater<BenchmarkState, Long>
+        atomicReferenceLongFieldUpdater;
     private static final VarHandle varHandleLong;
     private static final VarHandle varHandleReferenceLong;
 
     static {
-      atomicLongFieldUpdater = AtomicLongFieldUpdater.newUpdater(BenchmarkState.class, "forAtomicLongFieldUpdater");
+      atomicLongFieldUpdater =
+          AtomicLongFieldUpdater.newUpdater(BenchmarkState.class, "forAtomicLongFieldUpdater");
       atomicReferenceLongFieldUpdater = AtomicReferenceFieldUpdater.newUpdater(
           BenchmarkState.class, Long.class, "forAtomicReferenceLongFieldUpdater");
       try {
-        varHandleLong = MethodHandles.lookup().findVarHandle(BenchmarkState.class, "forVarHandleLong", long.class);
-        varHandleReferenceLong = MethodHandles.lookup().findVarHandle(BenchmarkState.class, "forVarHandleReferenceLong", Long.class);
+        varHandleLong = MethodHandles.lookup()
+            .findVarHandle(BenchmarkState.class, "forVarHandleLong", long.class);
+        varHandleReferenceLong = MethodHandles.lookup()
+            .findVarHandle(BenchmarkState.class, "forVarHandleReferenceLong", Long.class);
       } catch (final NoSuchFieldException | IllegalAccessException e) {
         throw new RuntimeException(e);
       }
@@ -430,9 +464,11 @@ public class AtomicApiComparisonBenchmark {
 
   @State(Scope.Thread)
   public static class ThreadState {
-    private static final int DISTINCT_VALUES_PER_THREAD = 128;// 2^7, must be a power of 2
+    private static final int DISTINCT_VALUES_PER_THREAD = 128; // 2^7, must be a power of 2
 
-    private long[] longs;//all values are distinct for a given thread, but some may be equal (highly unlikely) between threads
+    /* All values are distinct for a given thread, but some may be equal (highly unlikely)
+     * among threads. */
+    private long[] longs;
     private Long[] referenceLongs;
     private int idx;
 
@@ -461,15 +497,9 @@ public class AtomicApiComparisonBenchmark {
     }
 
     private int getAndIncrementIdx() {
-      final int result = idx++;// get and increment
-      idx = idx & (DISTINCT_VALUES_PER_THREAD - 1);// idx % DISTINCT_VALUES_PER_THREAD
+      final int result = idx++; // get and increment
+      idx = idx & (DISTINCT_VALUES_PER_THREAD - 1); // idx % DISTINCT_VALUES_PER_THREAD
       return result;
-    }
-  }
-
-  private static final void backoff(final int numberOfFailures) {
-    if (numberOfFailures > BenchmarkState.FAILURES_WITHOUT_BACKOFF) {
-      parkNanos(min(numberOfFailures * BenchmarkState.EXPONENTIAL_BACKOFF_FACTOR, BenchmarkState.MAX_BACKOFF_NANOS));
     }
   }
 }

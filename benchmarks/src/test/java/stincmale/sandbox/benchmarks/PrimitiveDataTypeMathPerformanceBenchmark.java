@@ -20,7 +20,7 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class PrimitiveDataTypeMathPerformanceBenchmark {
-  private static final int NUMBER_OF_VALUES = 64;// 2^6, must be a power of 2
+  private static final int NUMBER_OF_VALUES = 64; // 2^6, must be a power of 2
   private static final int[] OPERANDS_INT;
   private static final float[] OPERANDS_FLOAT;
   private static final long[] OPERANDS_LONG;
@@ -33,32 +33,33 @@ public class PrimitiveDataTypeMathPerformanceBenchmark {
     OPERANDS_LONG = new long[NUMBER_OF_VALUES];
     OPERANDS_DOUBLE = new double[NUMBER_OF_VALUES];
     for (int i = 0; i < NUMBER_OF_VALUES; i++) {
-      {// fill operandsInt
+      { // fill operandsInt
         int rndInt = rnd.nextInt();
         if (rndInt > Integer.MIN_VALUE / 2 && rndInt < Integer.MAX_VALUE / 2) {
           rndInt *= 2;
         }
         /* The index for operandsInt/operandsFloat is i * 2
-         * to make sure that the number of both int/float and long/double array elements is about the same for each cache line.
-         * This of course only works if the underlying software and hardware actually uses two times as much memory
-         * for long/double comparing to int/float and allocates all array elements contiguously in memory. */
+         * to make sure that the number of both int/float and long/double array elements
+         * is about the same for each cache line. This of course only works if the underlying
+         * software and hardware actually uses two times as much memory for long/double comparing
+         * to int/float and allocates all array elements contiguously in memory. */
         OPERANDS_INT[i * 2] = rndInt;
       }
-      {// fill operandsFloat
+      { // fill operandsFloat
         float rndFloat = rnd.nextFloat();
         if (rndFloat > Float.MIN_VALUE / 2 && rndFloat < Float.MAX_VALUE / 2) {
           rndFloat *= 2;
         }
         OPERANDS_FLOAT[i * 2] = rndFloat;
       }
-      {// fill operandsLong
+      { // fill operandsLong
         long rndLong = rnd.nextLong();
         if (rndLong > Long.MIN_VALUE / 2 && rndLong < Long.MAX_VALUE / 2) {
           rndLong *= 2;
         }
         OPERANDS_LONG[i] = rndLong;
       }
-      {// fill operandsDouble
+      { // fill operandsDouble
         double rndDouble = rnd.nextDouble();
         if (rndDouble > Double.MIN_VALUE / 2 && rndDouble < Double.MAX_VALUE / 2) {
           rndDouble *= 2;
@@ -310,6 +311,18 @@ public class PrimitiveDataTypeMathPerformanceBenchmark {
     return OPERANDS_DOUBLE[idx] < OPERANDS_DOUBLE[nextIdx];
   }
 
+  private static final int nextIdx(final int idx, final int step) {
+    return (idx + step) & (NUMBER_OF_VALUES - 1); // (idx + step) % NUMBER_OF_VALUES
+  }
+
+  private static final int nextIdxIntFloat(final int idx) {
+    return nextIdx(idx, 2);
+  }
+
+  private static final int nextIdxLongDouble(final int idx) {
+    return nextIdx(idx, 1);
+  }
+
   @State(Scope.Thread)
   public static class ThreadState {
     private int idx;
@@ -321,17 +334,5 @@ public class PrimitiveDataTypeMathPerformanceBenchmark {
     public final void setup() {
       idx = 0;
     }
-  }
-
-  private static final int nextIdx(final int idx, final int step) {
-    return (idx + step) & (NUMBER_OF_VALUES - 1);// (idx + step) % NUMBER_OF_VALUES
-  }
-
-  private static final int nextIdxIntFloat(final int idx) {
-    return nextIdx(idx, 2);
-  }
-
-  private static final int nextIdxLongDouble(final int idx) {
-    return nextIdx(idx, 1);
   }
 }

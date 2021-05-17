@@ -2,12 +2,14 @@ package stincmale.sandbox.exercises.hackerrank.datastructures.heap;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Scanner;
 
 /**
- * <a href="https://www.hackerrank.com/challenges/find-the-running-median">Find the Running Median</a>
+ * <a href="https://www.hackerrank.com/challenges/find-the-running-median">
+ * Find the Running Median</a>
  */
-public class FindTheRunningMedian {
+final class FindTheRunningMedian {
   public static void main(String[] args) {
     try (Scanner in = new Scanner(System.in)) {
       int numberOfNumbers = in.nextInt();
@@ -18,15 +20,20 @@ public class FindTheRunningMedian {
         double median = numbers.size() == 1
             ? numbers.get(0)
             : numbers.size() % 2 == 0
-                ? (double)(numbers.get((numbers.size() - 1) / 2) + numbers.get(1 + (numbers.size() - 1) / 2)) / 2
+                ? (double)(numbers.get((numbers.size() - 1) / 2)
+                    + numbers.get(1 + (numbers.size() - 1) / 2)) / 2
                 : numbers.get(numbers.size() / 2);
         if (i < numberOfNumbers - 1) {
-          System.out.printf("%.1f\n", median);
+          System.out.printf(Locale.ROOT, "%.1f\n", median);
         } else {
-          System.out.printf("%.1f", median);
+          System.out.printf(Locale.ROOT, "%.1f", median);
         }
       }
     }
+  }
+
+  private FindTheRunningMedian() {
+    throw new AssertionError();
   }
 
   static void add(List<Integer> list, int v) {

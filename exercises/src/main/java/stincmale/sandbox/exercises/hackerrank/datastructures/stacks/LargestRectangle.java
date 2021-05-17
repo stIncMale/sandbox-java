@@ -7,7 +7,18 @@ import java.util.Scanner;
 /**
  * <a href="https://www.hackerrank.com/challenges/largest-rectangle">Largest Rectangle</a>
  */
-public class LargestRectangle {
+final class LargestRectangle {
+  public static void main(String[] args) {
+    try (Scanner in = new Scanner(System.in)) {
+      int n = in.nextInt();
+      int[] a = new int[n];
+      for (int i = 0; i < n; i++) {
+        a[i] = in.nextInt();
+      }
+      System.out.println(largestRectangle(a));
+    }
+  }
+
   static long largestRectangle(int[] a) {
     int i = 0;
     long maxArea = 0;
@@ -27,6 +38,10 @@ public class LargestRectangle {
     long localMaxArea = shrinkPushAndFindMaxArea(stack, new Element(i, 0));
     maxArea = Math.max(maxArea, localMaxArea);
     return maxArea;
+  }
+
+  private LargestRectangle() {
+    throw new AssertionError();
   }
 
   static int shrinkPushAndFindMaxArea(Deque<Element> stack, Element newElement) {
@@ -65,17 +80,6 @@ public class LargestRectangle {
     Element(int leftmostIdx, int h) {
       this.leftmostIdx = leftmostIdx;
       this.h = h;
-    }
-  }
-
-  public static void main(String[] args) {
-    try (Scanner in = new Scanner(System.in)) {
-      int n = in.nextInt();
-      int[] a = new int[n];
-      for (int i = 0; i < n; i++) {
-        a[i] = in.nextInt();
-      }
-      System.out.println(largestRectangle(a));
     }
   }
 }

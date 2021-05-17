@@ -9,7 +9,7 @@ import java.util.Scanner;
 /**
  * <a href="https://www.hackerrank.com/challenges/contacts">Contacts</a>
  */
-public class Contacts {
+final class Contacts {
   public static void main(String[] args) {
     try (Scanner in = new Scanner(System.in)) {
       int numberOfOps = in.nextInt();
@@ -70,6 +70,10 @@ public class Contacts {
       }
     }
     return result;
+  }
+
+  private Contacts() {
+    throw new AssertionError();
   }
 
   static class Node {
