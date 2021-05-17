@@ -38,6 +38,7 @@
             <compilerArgs>
               <arg>-Werror</arg>
               <arg>-Xlint:all,-processing</arg>
+              <arg>-implicit:none</arg>
             </compilerArgs>
           </configuration>
         </plugin>
@@ -66,12 +67,12 @@
             <includes>
               <include>
                 <![CDATA[
-                  %regex[.*(?<!Integration)Test\..*]
+                  %regex[.*(?<!It)Test\..*]
                 ]]>
               </include>
               <include>
                 <![CDATA[
-                  %regex[.*(?<!Integration)Benchmark\..*]
+                  %regex[.*(?<!It)Benchmark\..*]
                 ]]>
               </include>
             </includes>
@@ -93,10 +94,31 @@
                 <enableAssertions>true</enableAssertions>
                 <argLine>${sandbox.test.argLine}</argLine>
                 <includes>
-                  <include>**/*IntegrationTest.java</include>
-                  <include>**/*IntegrationBenchmark.java</include>
+                  <include>**/*ItTest.java</include>
+                  <include>**/*ItBenchmark.java</include>
                 </includes>
               </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <configuration>
+            <includes>**/*</includes>
+            <resourceIncludes>**/*</resourceIncludes>
+            <configLocation>checkstyle.xml</configLocation>
+            <consoleOutput>true</consoleOutput>
+            <logViolationsToConsole>true</logViolationsToConsole>
+            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          </configuration>
+          <executions>
+            <execution>
+              <id>validate</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
             </execution>
           </executions>
         </plugin>
@@ -106,12 +128,25 @@
   </build>
   <profiles>
     <profile>
-      <id>with-integration-tests</id>
+      <id>default</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <!--suppress MavenModelInspection for some reason IDEA reports "Plugin not found"-->
+            <artifactId>maven-checkstyle-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>with-it-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
           </plugin>
         </plugins>
