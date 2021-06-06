@@ -10,57 +10,57 @@ import java.util.Scanner;
  * Find the Running Median</a>
  */
 final class FindTheRunningMedian {
-  public static void main(String[] args) {
-    try (Scanner in = new Scanner(System.in)) {
-      int numberOfNumbers = in.nextInt();
-      List<Integer> numbers = new ArrayList<>();
-      for (int i = 0; i < numberOfNumbers; i++) {
-        int number = in.nextInt();
-        add(numbers, number);
-        double median = numbers.size() == 1
-            ? numbers.get(0)
-            : numbers.size() % 2 == 0
-                ? (double)(numbers.get((numbers.size() - 1) / 2)
-                    + numbers.get(1 + (numbers.size() - 1) / 2)) / 2
-                : numbers.get(numbers.size() / 2);
-        if (i < numberOfNumbers - 1) {
-          System.out.printf(Locale.ROOT, "%.1f\n", median);
+    public static void main(String[] args) {
+        try (Scanner in = new Scanner(System.in)) {
+            int numberOfNumbers = in.nextInt();
+            List<Integer> numbers = new ArrayList<>();
+            for (int i = 0; i < numberOfNumbers; i++) {
+                int number = in.nextInt();
+                add(numbers, number);
+                double median = numbers.size() == 1
+                        ? numbers.get(0)
+                        : numbers.size() % 2 == 0
+                                ? (double)(numbers.get((numbers.size() - 1) / 2)
+                                + numbers.get(1 + (numbers.size() - 1) / 2)) / 2
+                                : numbers.get(numbers.size() / 2);
+                if (i < numberOfNumbers - 1) {
+                    System.out.printf(Locale.ROOT, "%.1f\n", median);
+                } else {
+                    System.out.printf(Locale.ROOT, "%.1f", median);
+                }
+            }
+        }
+    }
+
+    private FindTheRunningMedian() {
+        throw new AssertionError();
+    }
+
+    static void add(List<Integer> list, int v) {
+        if (list.isEmpty()) {
+            list.add(v);
+        } else if (v >= list.get(list.size() - 1)) {
+            list.add(v);
+        } else if (v <= list.get(0)) {
+            list.add(0, v);
         } else {
-          System.out.printf(Locale.ROOT, "%.1f", median);
+            int l = 0;
+            int r = list.size() - 1;
+            while (true) {
+                int anchorIdx = l + (r - l) / 2;
+                if (v < list.get(anchorIdx)) {
+                    r = anchorIdx;
+                } else if (v > list.get(anchorIdx)) {
+                    l = anchorIdx;
+                } else {// v == list.get(anchorIdx)
+                    list.add(anchorIdx + 1, v);
+                    break;
+                }
+                if (r - l <= 1) {
+                    list.add(l + 1, v);
+                    break;
+                }
+            }
         }
-      }
     }
-  }
-
-  private FindTheRunningMedian() {
-    throw new AssertionError();
-  }
-
-  static void add(List<Integer> list, int v) {
-    if (list.isEmpty()) {
-      list.add(v);
-    } else if (v >= list.get(list.size() - 1)) {
-      list.add(v);
-    } else if (v <= list.get(0)) {
-      list.add(0, v);
-    } else {
-      int l = 0;
-      int r = list.size() - 1;
-      while (true) {
-        int anchorIdx = l + (r - l) / 2;
-        if (v < list.get(anchorIdx)) {
-          r = anchorIdx;
-        } else if (v > list.get(anchorIdx)) {
-          l = anchorIdx;
-        } else {// v == list.get(anchorIdx)
-          list.add(anchorIdx + 1, v);
-          break;
-        }
-        if (r - l <= 1) {
-          list.add(l + 1, v);
-          break;
-        }
-      }
-    }
-  }
 }
