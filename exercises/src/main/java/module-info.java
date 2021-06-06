@@ -1,0 +1,2 @@
+module stincmale.sandbox.excercises {
+}

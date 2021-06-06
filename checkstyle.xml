@@ -4,6 +4,12 @@
     "https://checkstyle.org/dtds/configuration_1_3.dtd">
 <module name="Checker">
   <property name="fileExtensions" value=""/>
+  <module name="BeforeExecutionExclusionFileFilter">
+    <!-- Using "|\n|" to express the regex pattern as multiple lines.
+         This pattern does not in practice match the name of any file. -->
+    <property name="fileNamePattern" value="module\-info\.java$|
+        |.*[/\\]decodeappleappstorereceipt[/\\]asn1[/\\]receiptmodule[/\\].*"/>
+  </module>
   <module name="SuppressionFilter">
     <property name="file" value="checkstyle-suppressions.xml" />
   </module>
