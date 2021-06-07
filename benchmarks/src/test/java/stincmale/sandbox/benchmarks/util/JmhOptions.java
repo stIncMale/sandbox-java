@@ -61,7 +61,7 @@ public final class JmhOptions {
     }
 
     /**
-     * Example:
+     * Concatenates arrays. Example:
      * <pre>{@code
      *  new OptionsBuilder().jvmArgsAppend(concat(
      *    jvmArgsDisableGc(),

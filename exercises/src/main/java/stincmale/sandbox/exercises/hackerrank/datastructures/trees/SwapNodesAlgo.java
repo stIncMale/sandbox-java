@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
- * <a href="https://www.hackerrank.com/challenges/swap-nodes-algo">Swap Nodes [Algo]</a>
+ * <a href="https://www.hackerrank.com/challenges/swap-nodes-algo">Swap Nodes [Algo]</a>.
  */
 final class SwapNodesAlgo {
     public static void main(String[] args) {

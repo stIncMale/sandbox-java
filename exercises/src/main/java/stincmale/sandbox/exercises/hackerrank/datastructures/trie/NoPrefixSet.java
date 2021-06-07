@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 /**
- * <a href="https://www.hackerrank.com/challenges/no-prefix-set">No Prefix Set</a>
+ * <a href="https://www.hackerrank.com/challenges/no-prefix-set">No Prefix Set</a>.
  */
 final class NoPrefixSet {
     public static void main(String[] args) {

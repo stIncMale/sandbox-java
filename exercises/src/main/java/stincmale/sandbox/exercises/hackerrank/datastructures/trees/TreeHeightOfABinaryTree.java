@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 /**
  * <a href="https://www.hackerrank.com/challenges/tree-height-of-a-binary-tree">
- * Tree: Height of a Binary Tree</a>
+ * Tree: Height of a Binary Tree</a>.
  */
 final class TreeHeightOfABinaryTree {
     public static void main(String[] args) {

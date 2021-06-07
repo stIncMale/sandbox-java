@@ -230,6 +230,8 @@ final class JdbcTimestampItTest {
     }
 
     /**
+     * Obtains a {@link Connection}.
+     *
      * @return A {@link Connection} with {@linkplain Connection#getAutoCommit() auto-commit}
      * disabled.
      */

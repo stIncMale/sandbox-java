@@ -7,7 +7,7 @@ import java.util.Scanner;
 
 /**
  * <a href="https://www.hackerrank.com/challenges/find-the-running-median">
- * Find the Running Median</a>
+ * Find the Running Median</a>.
  */
 final class FindTheRunningMedian {
     public static void main(String[] args) {

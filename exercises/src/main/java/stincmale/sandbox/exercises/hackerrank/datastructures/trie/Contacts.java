@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 /**
- * <a href="https://www.hackerrank.com/challenges/contacts">Contacts</a>
+ * <a href="https://www.hackerrank.com/challenges/contacts">Contacts</a>.
  */
 final class Contacts {
     public static void main(String[] args) {

@@ -28,9 +28,7 @@
   <module name="NewlineAtEndOfFile">
     <property name="lineSeparator" value="lf"/>
   </module>
-  <module name="JavadocPackage">
-    <property name="allowLegacy" value="false"/>
-  </module>
+  <module name="JavadocPackage"/>
   <module name="TreeWalker">
     <module name="MissingDeprecated"/>
     <module name="MissingOverride"/>
@@ -93,5 +91,18 @@
     <module name="InterfaceIsType"/>
     <module name="MutableException"/>
     <module name="OneTopLevelClass"/>
+    <module name="AtclauseOrder"/>
+    <module name="InvalidJavadocPosition"/>
+    <module name="JavadocBlockTagLocation"/>
+    <module name="JavadocContentLocation"/>
+    <module name="JavadocMissingLeadingAsterisk"/>
+    <module name="JavadocMissingWhitespaceAfterAsterisk"/>
+    <module name="JavadocType">
+      <property name="allowMissingParamTags" value="true"/>
+    </module>
+    <module name="NonEmptyAtclauseDescription"/>
+    <module name="RequireEmptyLineBeforeBlockTagGroup"/>
+    <module name="SingleLineJavadoc"/>
+    <module name="SummaryJavadoc"/>
   </module>
 </module>

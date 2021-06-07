@@ -5,7 +5,7 @@ import java.util.Deque;
 import java.util.Scanner;
 
 /**
- * <a href="https://www.hackerrank.com/challenges/largest-rectangle">Largest Rectangle</a>
+ * <a href="https://www.hackerrank.com/challenges/largest-rectangle">Largest Rectangle</a>.
  */
 final class LargestRectangle {
     public static void main(String[] args) {

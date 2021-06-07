@@ -446,7 +446,7 @@ public final class AppStoreReceiptUtil {
     /**
      * See
      * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
-     * https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html</a>
+     * https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html</a>.
      */
     public enum ReceiptAttributeType {
         BUNDLE_IDENTIFIER(2, "bundle_id"),
@@ -505,7 +505,7 @@ public final class AppStoreReceiptUtil {
     /**
      * See
      * <a href="https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html">
-     * https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html</a>
+     * https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html</a>.
      */
     public enum InAppReceiptAttributeType {
         QUANTITY(1701, "quantity"),

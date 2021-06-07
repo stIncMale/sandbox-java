@@ -5,7 +5,7 @@ import java.util.Deque;
 import java.util.Scanner;
 
 /**
- * <a href="https://www.hackerrank.com/challenges/balanced-brackets">Balanced Brackets</a>
+ * <a href="https://www.hackerrank.com/challenges/balanced-brackets">Balanced Brackets</a>.
  */
 final class BalancedBrackets {
     static String isBalanced(String s) {

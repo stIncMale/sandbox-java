@@ -3,7 +3,7 @@ package stincmale.sandbox.exercises.hackerrank.datastructures.stacks;
 import java.util.Scanner;
 
 /**
- * <a href="https://www.hackerrank.com/challenges/and-xor-or">AND xor OR</a>
+ * <a href="https://www.hackerrank.com/challenges/and-xor-or">AND xor OR</a>.
  */
 final class AndXorOr {
     public static void main(String[] args) {

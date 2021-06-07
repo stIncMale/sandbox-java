@@ -7,7 +7,7 @@ import java.util.Scanner;
 
 /**
  * <a href="https://www.hackerrank.com/challenges/tree-level-order-traversal">
- * Tree: Level Order Traversal</a>
+ * Tree: Level Order Traversal</a>.
  */
 final class TreeLevelOrderTraversal {
     public static void main(String[] args) {
