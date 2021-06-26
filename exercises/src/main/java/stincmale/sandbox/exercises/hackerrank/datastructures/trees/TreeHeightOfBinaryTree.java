@@ -6,26 +6,26 @@ import java.util.Scanner;
  * <a href="https://www.hackerrank.com/challenges/tree-height-of-a-binary-tree">
  * Tree: Height of a Binary Tree</a>.
  */
-final class TreeHeightOfABinaryTree {
-    public static void main(String[] args) {
+final class TreeHeightOfBinaryTree {
+    public static void main(final String[] args) {
         try (Scanner in = new Scanner(System.in)) {
             int t = in.nextInt();
             Node root = null;
             while (t-- > 0) {
-                int data = in.nextInt();
+                final int data = in.nextInt();
                 root = insert(root, data);
             }
             assert root != null;
-            int height = Solution.height(root);
+            final int height = Solution.height(root);
             System.out.println(height);
         }
     }
 
-    static Node insert(Node root, int data) {
+    static Node insert(final Node root, final int data) {
         if (root == null) {
             return new Node(data);
         } else {
-            Node cur;
+            final Node cur;
             if (data <= root.data) {
                 cur = insert(root.left, data);
                 root.left = cur;
@@ -37,21 +37,26 @@ final class TreeHeightOfABinaryTree {
         }
     }
 
-    private TreeHeightOfABinaryTree() {
+    private TreeHeightOfBinaryTree() {
         throw new AssertionError();
     }
 
-    static class Solution {
-        static int height(Node root) {
-            int result;
-            if (root.left == null && root.right == null) {// leaf
+    static final class Solution {
+        static int height(final Node root) {
+            final int result;
+            if (root.left == null && root.right == null) {
+                // leaf
                 result = 0;
             } else {
-                int lh = root.left == null ? 0 : height(root.left);
-                int rh = root.right == null ? 0 : height(root.right);
+                final int lh = root.left == null ? 0 : height(root.left);
+                final int rh = root.right == null ? 0 : height(root.right);
                 result = 1 + Math.max(lh, rh);
             }
             return result;
+        }
+
+        private Solution() {
+            throw new AssertionError();
         }
     }
 
@@ -60,7 +65,7 @@ final class TreeHeightOfABinaryTree {
         Node right;
         int data;
 
-        Node(int data) {
+        Node(final int data) {
             this.data = data;
             left = null;
             right = null;

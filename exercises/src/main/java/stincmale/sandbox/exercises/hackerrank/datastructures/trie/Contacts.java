@@ -10,18 +10,21 @@ import java.util.Scanner;
  * <a href="https://www.hackerrank.com/challenges/contacts">Contacts</a>.
  */
 final class Contacts {
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         try (Scanner in = new Scanner(System.in)) {
-            int numberOfOps = in.nextInt();
-            Node trie = new Node();
+            final int numberOfOps = in.nextInt();
+            final Node trie = new Node();
             for (int i = 0; i < numberOfOps; i++) {
-                String opName = in.next();
-                String opArgument = in.next();
-                if (opName.length() == 3) {// add opName
+                final String opName = in.next();
+                final String opArgument = in.next();
+                if (opName.length() == 3) {
+                    // add opName
                     add(opArgument, trie);
-                } else {// find opName
+                } else {
+                    // find opName
                     final int opResult = find(opArgument, trie);
-                    if (i == numberOfOps - 1) {// last operation
+                    if (i == numberOfOps - 1) {
+                        // last operation
                         System.out.print(opResult);
                     } else {
                         System.out.println(opResult);
@@ -31,11 +34,11 @@ final class Contacts {
         }
     }
 
-    static void add(String name, Node trie) {
-        List<Node> path = new ArrayList<>();
+    static void add(final String name, final Node trie) {
+        final List<Node> path = new ArrayList<>();
         Node node = trie;
         for (int i = 0; i < name.length(); i++) {
-            char c = name.charAt(i);
+            final char c = name.charAt(i);
             Node child = node.children.get(c);
             if (child == null) {
                 child = new Node(c);
@@ -50,15 +53,16 @@ final class Contacts {
         }
     }
 
-    static int find(String partial, Node trie) {
+    static int find(final String partial, final Node trie) {
         int result = 0;
         Node node = trie;
         for (int i = 0; i < partial.length(); i++) {
-            char c = partial.charAt(i);
-            Node current;
+            final char c = partial.charAt(i);
+            final Node current;
             if (node != null) {
                 current = node.children.get(c);
-            } else {// partial has not been found
+            } else {
+                // partial has not been found
                 current = null;
             }
             if (current != null) {
@@ -85,7 +89,7 @@ final class Contacts {
             this('-');
         }
 
-        Node(char c) {
+        Node(final char c) {
             this.c = c;
             children = new HashMap<>();
             this.count = 0;

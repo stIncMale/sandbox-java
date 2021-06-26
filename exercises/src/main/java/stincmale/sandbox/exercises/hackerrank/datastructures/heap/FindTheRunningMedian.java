@@ -10,17 +10,17 @@ import java.util.Scanner;
  * Find the Running Median</a>.
  */
 final class FindTheRunningMedian {
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         try (Scanner in = new Scanner(System.in)) {
-            int numberOfNumbers = in.nextInt();
-            List<Integer> numbers = new ArrayList<>();
+            final int numberOfNumbers = in.nextInt();
+            final List<Integer> numbers = new ArrayList<>();
             for (int i = 0; i < numberOfNumbers; i++) {
-                int number = in.nextInt();
+                final int number = in.nextInt();
                 add(numbers, number);
-                double median = numbers.size() == 1
+                final double median = numbers.size() == 1
                         ? numbers.get(0)
                         : numbers.size() % 2 == 0
-                                ? (double)(numbers.get((numbers.size() - 1) / 2)
+                                ? (double) (numbers.get((numbers.size() - 1) / 2)
                                 + numbers.get(1 + (numbers.size() - 1) / 2)) / 2
                                 : numbers.get(numbers.size() / 2);
                 if (i < numberOfNumbers - 1) {
@@ -36,7 +36,7 @@ final class FindTheRunningMedian {
         throw new AssertionError();
     }
 
-    static void add(List<Integer> list, int v) {
+    static void add(final List<Integer> list, final int v) {
         if (list.isEmpty()) {
             list.add(v);
         } else if (v >= list.get(list.size() - 1)) {
@@ -47,12 +47,13 @@ final class FindTheRunningMedian {
             int l = 0;
             int r = list.size() - 1;
             while (true) {
-                int anchorIdx = l + (r - l) / 2;
+                final int anchorIdx = l + (r - l) / 2;
                 if (v < list.get(anchorIdx)) {
                     r = anchorIdx;
                 } else if (v > list.get(anchorIdx)) {
                     l = anchorIdx;
-                } else {// v == list.get(anchorIdx)
+                } else {
+                    // v == list.get(anchorIdx)
                     list.add(anchorIdx + 1, v);
                     break;
                 }

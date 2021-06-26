@@ -33,27 +33,28 @@ import org.opentest4j.AssertionFailedError;
  * You may see that regardless of the {@link TimeZone} craziness happening,
  * storing and reading data of type {@link JDBCType#TIMESTAMP_WITH_TIMEZONE} never has issues,
  * while {@link JDBCType#TIMESTAMP} does (see {@link Assertions#assertThrows(Class, Executable)}).
+ * </p>
  */
 @TestInstance(Lifecycle.PER_CLASS)
 final class JdbcTimestampItTest {
-    private static final TimeZone originalTz = TimeZone.getDefault();
-    private static final TimeZone tz1 =
+    private static final TimeZone ORIGINAL_TZ = TimeZone.getDefault();
+    private static final TimeZone TZ_1 =
             TimeZone.getTimeZone(ZoneId.from(ZoneOffset.ofHoursMinutes(0, 1)));
-    private static final TimeZone tz2 =
+    private static final TimeZone TZ_2 =
             TimeZone.getTimeZone(ZoneId.from(ZoneOffset.ofHoursMinutes(0, 2)));
-    private static final TimeZone tz3 =
+    private static final TimeZone TZ_3 =
             TimeZone.getTimeZone(ZoneId.from(ZoneOffset.ofHoursMinutes(0, 3)));
-    private static final TimeZone tz4 =
+    private static final TimeZone TZ_4 =
             TimeZone.getTimeZone(ZoneId.from(ZoneOffset.ofHoursMinutes(0, 4)));
-    private static final Timestamp ts = new Timestamp(1000_000_000_000L);
-    private static final Instant it = ts.toInstant();
+    private static final Timestamp TIMESTAMP = new Timestamp(1000_000_000_000L);
+    private static final Instant INSTANT = TIMESTAMP.toInstant();
 
     private JdbcTimestampItTest() {
     }
 
     @AfterAll
     static final void afterClass() {
-        TimeZone.setDefault(originalTz);
+        TimeZone.setDefault(ORIGINAL_TZ);
     }
 
     @BeforeEach
@@ -81,71 +82,73 @@ final class JdbcTimestampItTest {
 
     @Test
     final void insertSelect_sameTzImplicit_preJdbc42() {
-        insert_preJdbc42(ts, null);
+        insert_preJdbc42(TIMESTAMP, null);
         final Timestamps read = select_preJdbc42(null);
-        assertEquals(ts, read.tsz);
-        assertEquals(ts, read.ts);
+        assertEquals(TIMESTAMP, read.tsz);
+        assertEquals(TIMESTAMP, read.ts);
     }
 
     @Test
     final void insertSelect_sameTzExplicit_preJdbc42() {
-        TimeZone.setDefault(tz1);
-        insert_preJdbc42(ts, tz3);
-        TimeZone.setDefault(tz2);
-        final Timestamps read = select_preJdbc42(tz3);
-        assertEquals(ts, read.tsz);
-        assertEquals(ts, read.ts);
+        TimeZone.setDefault(TZ_1);
+        insert_preJdbc42(TIMESTAMP, TZ_3);
+        TimeZone.setDefault(TZ_2);
+        final Timestamps read = select_preJdbc42(TZ_3);
+        assertEquals(TIMESTAMP, read.tsz);
+        assertEquals(TIMESTAMP, read.ts);
     }
 
     @Test
     final void insertSelect_differentTzImplicit_preJdbc42() {
-        TimeZone.setDefault(tz1);
-        insert_preJdbc42(ts, null);
-        TimeZone.setDefault(tz2);
+        TimeZone.setDefault(TZ_1);
+        insert_preJdbc42(TIMESTAMP, null);
+        TimeZone.setDefault(TZ_2);
         final Timestamps read = select_preJdbc42(null);
-        assertEquals(ts, read.tsz);
-        assertThrows(AssertionFailedError.class, () -> assertEquals(ts, read.ts));
+        assertEquals(TIMESTAMP, read.tsz);
+        assertThrows(AssertionFailedError.class, () -> assertEquals(TIMESTAMP, read.ts));
     }
 
     @Test
     final void insertSelect_differentTzExplicit_preJdbc42() {
-        TimeZone.setDefault(tz3);
-        insert_preJdbc42(ts, tz1);
-        TimeZone.setDefault(tz4);
-        final Timestamps read = select_preJdbc42(tz2);
-        assertEquals(ts, read.tsz);
-        assertThrows(AssertionFailedError.class, () -> assertEquals(ts, read.ts));
+        TimeZone.setDefault(TZ_3);
+        insert_preJdbc42(TIMESTAMP, TZ_1);
+        TimeZone.setDefault(TZ_4);
+        final Timestamps read = select_preJdbc42(TZ_2);
+        assertEquals(TIMESTAMP, read.tsz);
+        assertThrows(AssertionFailedError.class, () -> assertEquals(TIMESTAMP, read.ts));
     }
 
     @Test
     final void insertSelect_sameTzExplicit_postJdbc42() {
-        TimeZone.setDefault(tz1);
-        insert_postJdbc42(it, tz3);
-        TimeZone.setDefault(tz2);
-        final Instants read = select_postJdbc42(tz3);
-        assertEquals(it, read.itz);
-        assertEquals(it, read.it);
+        TimeZone.setDefault(TZ_1);
+        insert_postJdbc42(INSTANT, TZ_3);
+        TimeZone.setDefault(TZ_2);
+        final Instants read = select_postJdbc42(TZ_3);
+        assertEquals(INSTANT, read.itz);
+        assertEquals(INSTANT, read.it);
     }
 
     @Test
     final void insertSelect_differentTzExplicit_postJdbc42() {
-        TimeZone.setDefault(tz3);
-        insert_postJdbc42(it, tz1);
-        TimeZone.setDefault(tz4);
-        final Instants read = select_postJdbc42(tz2);
-        assertEquals(it, read.itz);
-        assertThrows(AssertionFailedError.class, () -> assertEquals(it, read.it));
+        TimeZone.setDefault(TZ_3);
+        insert_postJdbc42(INSTANT, TZ_1);
+        TimeZone.setDefault(TZ_4);
+        final Instants read = select_postJdbc42(TZ_2);
+        assertEquals(INSTANT, read.itz);
+        assertThrows(AssertionFailedError.class, () -> assertEquals(INSTANT, read.it));
     }
 
     private final void insert_preJdbc42(final Timestamp timestamp, @Nullable final TimeZone tz) {
         doWithConnection(connection -> {
             try (var statement = connection.prepareStatement(
                     "insert into ts_test (tsz, ts) values (?, ?)")) {
-                if (tz == null) {// do not store timestamps like this
+                if (tz == null) {
+                    // do not store timestamps like this
                     statement.setObject(1, timestamp);
                     statement.setObject(2, timestamp);
-                } else {// better do this
-                    Calendar calendar = Calendar.getInstance(tz);
+                } else {
+                    // better do this
+                    final Calendar calendar = Calendar.getInstance(tz);
                     statement.setTimestamp(1, timestamp, calendar);
                     statement.setTimestamp(2, timestamp, calendar);
                 }
@@ -179,10 +182,12 @@ final class JdbcTimestampItTest {
                 rs.next();
                 final Timestamp tsz;
                 final Timestamp ts;
-                if (tz == null) {// do not read timestamps like this
+                if (tz == null) {
+                    // do not read timestamps like this
                     tsz = rs.getTimestamp(1);
                     ts = rs.getTimestamp(2);
-                } else {// better do this
+                } else {
+                    // better do this
                     final Calendar calendar = Calendar.getInstance(tz);
                     tsz = rs.getTimestamp(1, calendar);
                     ts = rs.getTimestamp(2, calendar);

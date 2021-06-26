@@ -10,12 +10,12 @@ import java.util.Scanner;
  * Tree: Level Order Traversal</a>.
  */
 final class TreeLevelOrderTraversal {
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         try (Scanner in = new Scanner(System.in)) {
             int t = in.nextInt();
             Node root = null;
             while (t-- > 0) {
-                int data = in.nextInt();
+                final int data = in.nextInt();
                 root = insert(root, data);
             }
             assert root != null;
@@ -23,11 +23,11 @@ final class TreeLevelOrderTraversal {
         }
     }
 
-    static Node insert(Node root, int data) {
+    static Node insert(final Node root, final int data) {
         if (root == null) {
             return new Node(data);
         } else {
-            Node cur;
+            final Node cur;
             if (data <= root.data) {
                 cur = insert(root.left, data);
                 root.left = cur;
@@ -43,13 +43,13 @@ final class TreeLevelOrderTraversal {
         throw new AssertionError();
     }
 
-    static class Solution {
-        static void levelOrder(Node root) {
-            StringBuilder s = new StringBuilder();
+    static final class Solution {
+        static void levelOrder(final Node root) {
+            final StringBuilder s = new StringBuilder();
             s.append(root.data);
             List<Node> prevLevel = Collections.singletonList(root);
             while (!prevLevel.isEmpty()) {
-                List<Node> level = new ArrayList<>();
+                final List<Node> level = new ArrayList<>();
                 prevLevel.forEach(node -> {
                     if (node.left != null) {
                         level.add(node.left);
@@ -66,6 +66,10 @@ final class TreeLevelOrderTraversal {
             }
             System.out.println(s);
         }
+
+        private Solution() {
+            throw new AssertionError();
+        }
     }
 
     static class Node {
@@ -73,7 +77,7 @@ final class TreeLevelOrderTraversal {
         Node right;
         int data;
 
-        Node(int data) {
+        Node(final int data) {
             this.data = data;
             left = null;
             right = null;

@@ -19,7 +19,7 @@ import com.beanit.asn1bean.ber.types.BerInteger;
 import com.beanit.asn1bean.ber.types.BerOctetString;
 import com.beanit.asn1bean.ber.types.string.BerIA5String;
 import com.beanit.asn1bean.ber.types.string.BerUTF8String;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Preconditions;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSTypedData;
@@ -42,7 +42,7 @@ import stincmale.sandbox.examples.decodeappleappstorereceipt.asn1.receiptmodule.
  * receipts issued by Apple App Store</a>.
  * <p>
  * Note that upon initialization this class {@linkplain Security#addProvider(Provider) adds}
- * a new {@link BouncyCastleProvider}.
+ * a new {@link BouncyCastleProvider}.</p>
  */
 public final class AppStoreReceiptUtil {
     static {
@@ -56,7 +56,7 @@ public final class AppStoreReceiptUtil {
      * encoded with Base64 encoding.
      */
     public static final Payload decodeReceiptFromBase64(final String receiptBase64) {
-        checkNotNull(receiptBase64, "The argument %s must not be null", receiptBase64);
+        checkNotNull(receiptBase64, "receiptBase64");
         return decodeReceipt(Base64.getDecoder()
                 .decode(receiptBase64.getBytes(StandardCharsets.UTF_8)));
     }
@@ -68,7 +68,7 @@ public final class AppStoreReceiptUtil {
      * encoded with Base64 encoding.
      */
     public static final Payload decodeReceiptFromBase64(final byte[] receiptBase64) {
-        checkNotNull(receiptBase64, "The argument %s must not be null", receiptBase64);
+        checkNotNull(receiptBase64, "receiptBase64");
         return decodeReceipt(Base64.getDecoder().decode(receiptBase64));
     }
 
@@ -84,7 +84,7 @@ public final class AppStoreReceiptUtil {
      * "is composed of a set of receipt attributes"</a>.
      */
     public static final Payload decodeReceipt(final byte[] receipt) {
-        checkNotNull(receipt, "The argument %s must not be null", "receipt");
+        checkNotNull(receipt, "receipt");
         final Payload payload;
         try {
             final CMSSignedData signedData = new CMSSignedData(receipt);
@@ -112,8 +112,8 @@ public final class AppStoreReceiptUtil {
      */
     public static final Optional<InAppReceipt> inAppReceiptByTransactionId(
             final Payload payload, final String transactionId) {
-        checkNotNull(payload, "The argument %s must not be null", "payload");
-        checkNotNull(transactionId, "The argument %s must not be null", "transactionId");
+        checkNotNull(payload, "payload");
+        checkNotNull(transactionId, "transactionId");
         return receiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
                 .stream()
                 .map(receiptAttribute -> receiptAttribute.getValue().value)
@@ -121,7 +121,7 @@ public final class AppStoreReceiptUtil {
                     final InAppReceipt result = new InAppReceipt();
                     try {
                         result.decode(new ByteArrayInputStream(bytes));
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(e);
                     }
                     return result;
@@ -143,8 +143,8 @@ public final class AppStoreReceiptUtil {
      */
     public static final Optional<InAppReceipt> inAppReceiptByProductId(
             final Payload payload, final String productId) {
-        checkNotNull(payload, "The argument %s must not be null", "payload");
-        checkNotNull(productId, "The argument %s must not be null", "productId");
+        checkNotNull(payload, "payload");
+        checkNotNull(productId, "productId");
         return receiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
                 .stream()
                 .map(receiptAttribute -> receiptAttribute.getValue().value)
@@ -152,7 +152,7 @@ public final class AppStoreReceiptUtil {
                     final InAppReceipt result = new InAppReceipt();
                     try {
                         result.decode(new ByteArrayInputStream(bytes));
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(e);
                     }
                     return result;
@@ -173,8 +173,8 @@ public final class AppStoreReceiptUtil {
      */
     public static final Optional<InAppReceipt> inAppReceiptBySubscriptionProductId(
             final Payload payload, final String productId) {
-        checkNotNull(payload, "The argument %s must not be null", "payload");
-        checkNotNull(productId, "The argument %s must not be null", "productId");
+        checkNotNull(payload, "payload");
+        checkNotNull(productId, "productId");
         return receiptAttributes(payload, IN_APP_PURCHASE_RECEIPT)
                 .stream()
                 .map(receiptAttribute -> receiptAttribute.getValue().value)
@@ -182,7 +182,7 @@ public final class AppStoreReceiptUtil {
                     final InAppReceipt result = new InAppReceipt();
                     try {
                         result.decode(new ByteArrayInputStream(bytes));
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(e);
                     }
                     return result;
@@ -196,9 +196,9 @@ public final class AppStoreReceiptUtil {
      * for the attribute of type {@link ReceiptAttributeType#BUNDLE_IDENTIFIER}.
      */
     public static final String bundleId(final Payload payload) {
-        checkNotNull(payload, "The argument %s must not be null", "payload");
+        checkNotNull(payload, "payload");
         return receiptAttribute(payload, BUNDLE_IDENTIFIER)
-                .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
+                .map(inAppAttribute -> decodeAsn1Utf8String(inAppAttribute.getValue()))
                 .orElseThrow();
     }
 
@@ -207,9 +207,9 @@ public final class AppStoreReceiptUtil {
      * for the attribute of type {@link InAppReceiptAttributeType#TRANSACTION_IDENTIFIER}.
      */
     public static final String transactionId(final InAppReceipt inAppReceipt) {
-        checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
+        checkNotNull(inAppReceipt, "inAppReceipt");
         return inAppAttribute(inAppReceipt, TRANSACTION_IDENTIFIER)
-                .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
+                .map(inAppAttribute -> decodeAsn1Utf8String(inAppAttribute.getValue()))
                 .orElseThrow();
     }
 
@@ -218,9 +218,9 @@ public final class AppStoreReceiptUtil {
      * for the attribute of type {@link InAppReceiptAttributeType#ORIGINAL_TRANSACTION_IDENTIFIER}.
      */
     public static final String originalTransactionId(final InAppReceipt inAppReceipt) {
-        checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
+        checkNotNull(inAppReceipt, "inAppReceipt");
         return inAppAttribute(inAppReceipt, ORIGINAL_TRANSACTION_IDENTIFIER)
-                .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
+                .map(inAppAttribute -> decodeAsn1Utf8String(inAppAttribute.getValue()))
                 .orElseThrow();
     }
 
@@ -229,9 +229,9 @@ public final class AppStoreReceiptUtil {
      * for the attribute of type {@link InAppReceiptAttributeType#PRODUCT_IDENTIFIER}.
      */
     public static final String productId(final InAppReceipt inAppReceipt) {
-        checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
+        checkNotNull(inAppReceipt, "inAppReceipt");
         return inAppAttribute(inAppReceipt, PRODUCT_IDENTIFIER)
-                .map(inAppAttribute -> decodeAsn1UTF8String(inAppAttribute.getValue()))
+                .map(inAppAttribute -> decodeAsn1Utf8String(inAppAttribute.getValue()))
                 .orElseThrow();
     }
 
@@ -240,7 +240,7 @@ public final class AppStoreReceiptUtil {
      * for the attribute of type {@link InAppReceiptAttributeType#PURCHASE_DATE}.
      */
     public static final Instant purchaseDate(final InAppReceipt inAppReceipt) {
-        checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
+        checkNotNull(inAppReceipt, "inAppReceipt");
         return inAppAttribute(inAppReceipt, PURCHASE_DATE)
                 .map(inAppAttribute -> decodeInstant(inAppAttribute.getValue()))
                 .orElseThrow();
@@ -251,7 +251,7 @@ public final class AppStoreReceiptUtil {
      * for the attribute of type {@link InAppReceiptAttributeType#SUBSCRIPTION_EXPIRATION_DATE}.
      */
     public static final Instant subscriptionExpirationDate(final InAppReceipt inAppReceipt) {
-        checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
+        checkNotNull(inAppReceipt, "inAppReceipt");
         return inAppAttribute(inAppReceipt, SUBSCRIPTION_EXPIRATION_DATE)
                 .map(inAppAttribute -> {
                     @Nullable
@@ -278,8 +278,8 @@ public final class AppStoreReceiptUtil {
      */
     public static final Optional<InAppAttribute> inAppAttribute(
             final InAppReceipt inAppReceipt, final InAppReceiptAttributeType attributeType) {
-        checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
-        checkNotNull(attributeType, "The argument %s must not be null", "attributeType");
+        checkNotNull(inAppReceipt, "inAppReceipt");
+        checkNotNull(attributeType, "attributeType");
         return inAppReceipt.getInAppAttribute()
                 .stream()
                 .filter(inAppAttribute ->
@@ -302,8 +302,8 @@ public final class AppStoreReceiptUtil {
      */
     public static final Optional<ReceiptAttribute> receiptAttribute(
             final Payload payload, final ReceiptAttributeType attributeType) {
-        checkNotNull(payload, "The argument %s must not be null", "payload");
-        checkNotNull(attributeType, "The argument %s must not be null", "attributeType");
+        checkNotNull(payload, "payload");
+        checkNotNull(attributeType, "attributeType");
         return payload.getReceiptAttribute()
                 .stream()
                 .filter(receiptAttribute ->
@@ -326,8 +326,8 @@ public final class AppStoreReceiptUtil {
      */
     public static final Collection<ReceiptAttribute> receiptAttributes(
             final Payload payload, final ReceiptAttributeType attributeType) {
-        checkNotNull(payload, "The argument %s must not be null", "payload");
-        checkNotNull(attributeType, "The argument %s must not be null", "attributeType");
+        checkNotNull(payload, "payload");
+        checkNotNull(attributeType, "attributeType");
         return payload.getReceiptAttribute()
                 .stream()
                 .filter(receiptAttribute ->
@@ -337,7 +337,7 @@ public final class AppStoreReceiptUtil {
 
     public static final String toString(
             final Payload payload, final boolean omitUnsupportedAttributes) {
-        checkNotNull(payload, "The argument %s must not be null", "payload");
+        checkNotNull(payload, "payload");
         return Payload.class.getSimpleName()
                 + "(\n"
                 + payload.getReceiptAttribute()
@@ -354,7 +354,7 @@ public final class AppStoreReceiptUtil {
 
     public static final String toString(
             final InAppReceipt inAppReceipt, final boolean omitUnsupportedAttributes) {
-        checkNotNull(inAppReceipt, "The argument %s must not be null", "inAppReceipt");
+        checkNotNull(inAppReceipt, "inAppReceipt");
         return InAppReceipt.class.getSimpleName()
                 + "(\n"
                 + inAppReceipt.getInAppAttribute()
@@ -370,7 +370,7 @@ public final class AppStoreReceiptUtil {
 
     public static final String toString(
             final ReceiptAttribute receiptAttribute, final boolean omitUnsupportedAttributes) {
-        checkNotNull(receiptAttribute, "The argument %s must not be null", "receiptAttribute");
+        checkNotNull(receiptAttribute, "receiptAttribute");
         final ReceiptAttributeType type =
                 ReceiptAttributeType.of(receiptAttribute.getType().intValue());
         return ReceiptAttribute.class.getSimpleName()
@@ -381,7 +381,7 @@ public final class AppStoreReceiptUtil {
     }
 
     public static final String toString(final InAppAttribute inAppAttribute) {
-        checkNotNull(inAppAttribute, "The argument %s must not be null", "inAppAttribute");
+        checkNotNull(inAppAttribute, "inAppAttribute");
         final InAppReceiptAttributeType type = InAppReceiptAttributeType.of(
                 inAppAttribute.getType().intValue());
         return InAppAttribute.class.getSimpleName()
@@ -391,7 +391,7 @@ public final class AppStoreReceiptUtil {
                 + ')';
     }
 
-    private static final String decodeAsn1UTF8String(final BerOctetString v) {
+    private static final String decodeAsn1Utf8String(final BerOctetString v) {
         final BerUTF8String result = new BerUTF8String();
         try {
             result.decode(new ByteArrayInputStream(v.value));
@@ -401,7 +401,7 @@ public final class AppStoreReceiptUtil {
         return result.toString();
     }
 
-    private static final String decodeAsn1IA5String(final BerOctetString v) {
+    private static final String decodeAsn1Ia5String(final BerOctetString v) {
         final BerIA5String result = new BerIA5String();
         try {
             result.decode(new ByteArrayInputStream(v.value));
@@ -423,11 +423,11 @@ public final class AppStoreReceiptUtil {
 
     @Nullable
     private static final Instant decodeInstant(final BerOctetString v) {
-        final String stringV = decodeAsn1IA5String(v);
+        final String stringV = decodeAsn1Ia5String(v);
         return stringV.isEmpty()
                 // one-off subscriptions do not have SUBSCRIPTION_EXPIRATION_DATE value
                 ? null
-                : Instant.parse(decodeAsn1IA5String(v));
+                : Instant.parse(decodeAsn1Ia5String(v));
     }
 
     private static final InAppReceipt decodeInAppReceipt(final BerOctetString v) {
@@ -495,8 +495,8 @@ public final class AppStoreReceiptUtil {
                 case IN_APP_PURCHASE_RECEIPT -> AppStoreReceiptUtil.toString(
                         decodeInAppReceipt(v), omitUnsupportedAttributes);
                 case BUNDLE_IDENTIFIER, APP_VERSION, ORIGINAL_APPLICATION_VERSION ->
-                        decodeAsn1UTF8String(v);
-                case RECEIPT_CREATION_DATE, RECEIPT_EXPIRATION_DATE -> decodeAsn1IA5String(v);
+                        decodeAsn1Utf8String(v);
+                case RECEIPT_CREATION_DATE, RECEIPT_EXPIRATION_DATE -> decodeAsn1Ia5String(v);
                 default -> v.toString();
             };
         }
@@ -553,14 +553,19 @@ public final class AppStoreReceiptUtil {
         private final String asString(final BerOctetString v) {
             return switch (this) {
                 case QUANTITY, WEB_ORDER_LINE_ITEM_ID -> decodeAsn1Integer(v).toString();
-                case PRODUCT_IDENTIFIER, TRANSACTION_IDENTIFIER, ORIGINAL_TRANSACTION_IDENTIFIER ->
-                        decodeAsn1UTF8String(v);
+                case PRODUCT_IDENTIFIER, TRANSACTION_IDENTIFIER, ORIGINAL_TRANSACTION_IDENTIFIER
+                        -> decodeAsn1Utf8String(v);
                 case PURCHASE_DATE,
                         ORIGINAL_PURCHASE_DATE,
                         SUBSCRIPTION_EXPIRATION_DATE,
-                        CANCELLATION_DATE -> decodeAsn1IA5String(v);
+                        CANCELLATION_DATE
+                        -> decodeAsn1Ia5String(v);
                 default -> v.toString();
             };
         }
+    }
+
+    private static final void checkNotNull(final Object paramValue, final String paramName) {
+        Preconditions.checkNotNull(paramValue, "The parameter %s must not be null", "paramName");
     }
 }

@@ -101,8 +101,8 @@ public class ListPerformanceBenchmark {
 
     @State(Scope.Thread)
     public static class ThreadStateForIterating {
-        private static final Map<Integer, ArrayList<Object>> arrayLists;
-        private static final Map<Integer, LinkedList<Object>> linkedLists;
+        private static final Map<Integer, ArrayList<Object>> ARRAY_LISTS;
+        private static final Map<Integer, LinkedList<Object>> LINKED_LISTS;
 
         static {
             final int[] sizes;
@@ -115,11 +115,11 @@ public class ListPerformanceBenchmark {
             } catch (final NoSuchFieldException e) {
                 throw new RuntimeException(e);
             }
-            arrayLists = stream(sizes)
+            ARRAY_LISTS = stream(sizes)
                     .mapToObj(size -> new SimpleImmutableEntry<>(
                             size, createList(size, ArrayList::new)))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            linkedLists = stream(sizes)
+            LINKED_LISTS = stream(sizes)
                     .mapToObj(size -> new SimpleImmutableEntry<>(
                             size, createList(size, LinkedList::new)))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -141,8 +141,8 @@ public class ListPerformanceBenchmark {
         }
 
         public enum ListDescriptor {
-            ARRAY_LIST(arrayLists::get),
-            LINKED_LIST(linkedLists::get);
+            ARRAY_LIST(ARRAY_LISTS::get),
+            LINKED_LIST(LINKED_LISTS::get);
 
             private final Function<Integer, List<Object>> supplierOfPreconstructed;
 

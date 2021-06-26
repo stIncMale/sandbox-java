@@ -8,28 +8,31 @@ import java.util.Scanner;
  * <a href="https://www.hackerrank.com/challenges/balanced-brackets">Balanced Brackets</a>.
  */
 final class BalancedBrackets {
-    static String isBalanced(String s) {
+    static String isBalanced(final String s) {
         String result = "YES";
+        final String no = "NO";
         if (s == null || s.length() == 0) {
             // nothing to do
         } else if (s.length() % 2 != 0) {
-            result = "NO";
+            result = no;
         } else {
-            Deque<Character> stack = new ArrayDeque<>();
+            final Deque<Character> stack = new ArrayDeque<>();
             for (int j = 0; j < s.length(); j++) {
-                char c = s.charAt(j);
-                if (c == '{' || c == '[' || c == '(') {// opening
+                final char c = s.charAt(j);
+                if (c == '{' || c == '[' || c == '(') {
+                    // opening
                     stack.push(c);
-                } else {// closing
+                } else {
+                    // closing
                     if (stack.isEmpty()) {
-                        result = "NO";
+                        result = no;
                         break;
                     } else {
-                        char top = stack.peek();
+                        final char top = stack.peek();
                         if ((top == '{' && c != '}')
                                 || (top == '[' && c != ']')
                                 || (top == '(' && c != ')')) {
-                            result = "NO";
+                            result = no;
                             break;
                         } else {
                             stack.pop();
@@ -38,7 +41,7 @@ final class BalancedBrackets {
                 }
             }
             if (!stack.isEmpty()) {
-                result = "NO";
+                result = no;
             }
         }
         return result;
@@ -48,11 +51,11 @@ final class BalancedBrackets {
         throw new AssertionError();
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         try (Scanner in = new Scanner(System.in)) {
-            int t = in.nextInt();
+            final int t = in.nextInt();
             for (int a0 = 0; a0 < t; a0++) {
-                String s = in.next();
+                final String s = in.next();
                 System.out.println(isBalanced(s));
             }
         }

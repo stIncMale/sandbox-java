@@ -85,17 +85,21 @@ import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
  *     This way we prevent accumulation of sockets in the TIME-WAIT state on the server side.
  *   </li>
  * </ul>
+ * </p>
  */
 final class Server {
-    private static final byte HELLO = (byte)0x68;// U+0068, LATIN SMALL LETTER H
-    static final byte BYE = (byte)0x62;// U+0062, LATIN SMALL LETTER B
+    // U+0068, LATIN SMALL LETTER H
+    private static final byte HELLO = (byte) 0x68;
+    // U+0062, LATIN SMALL LETTER B
+    static final byte BYE = (byte) 0x62;
     static final int TCP_KEEP_ALIVE_IDLE_SECONDS = 5;
     static final int SO_READ_TIMEOUT_MILLIS =
             Math.toIntExact(TimeUnit.SECONDS.toMillis(5 * TCP_KEEP_ALIVE_IDLE_SECONDS));
 
     public static final void main(final String... args) throws IOException {
         final InetSocketAddress serverSocketAddress = parseCliArgs(args);
-        final int acceptTimeoutMillis = 0;// infinitely wait for new incoming connections
+        // infinitely wait for new incoming connections
+        final int acceptTimeoutMillis = 0;
         final ExecutorService executor =
                 Executors.newCachedThreadPool(new NamingThreadFactory("server"));
         log("Starting listening on " + serverSocketAddress);
@@ -136,7 +140,8 @@ final class Server {
     private static final void abort(final Socket socket) {
         try (socket) {
             log("Forcefully closing " + socket);
-            socket.setSoLinger(true, 0);// close forcefully with TCP RST
+            // close forcefully with TCP RST
+            socket.setSoLinger(true, 0);
         } catch (final RuntimeException | IOException e) {
             log(printStackTraceToString(e));
         } finally {
@@ -196,7 +201,7 @@ final class Server {
             final byte[] inData = new byte[1];
             byte inMessage;
             do {
-                int receivedLength = in.read(inData);
+                final int receivedLength = in.read(inData);
                 if (receivedLength > 0) {
                     inMessage = inData[0];
                     if (wellBehavedClient == null) {
@@ -280,7 +285,7 @@ final class Server {
         }
 
         @Override
-        public Thread newThread(Runnable r) {
+        public Thread newThread(final Runnable r) {
             final Thread t = Executors.defaultThreadFactory().newThread(r);
             t.setName(name + "-" + counter.getAndIncrement());
             return t;

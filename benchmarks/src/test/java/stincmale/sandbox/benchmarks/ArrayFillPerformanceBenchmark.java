@@ -90,7 +90,8 @@ public class ArrayFillPerformanceBenchmark {
 
     @State(Scope.Thread)
     public static class ThreadState {
-        @Param({"10", "100", "1000", "10000", "100000"})// must not be bigger than ARRAY_SIZE
+        // must not be bigger than ARRAY_SIZE
+        @Param({"10", "100", "1000", "10000", "100000"})
         private int length;
         private long[] arr;
 

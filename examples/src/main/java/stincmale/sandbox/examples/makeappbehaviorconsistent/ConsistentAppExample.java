@@ -11,8 +11,9 @@ import java.util.stream.Collectors;
 
 final class ConsistentAppExample {
     static {
-        { /* Do the application-wide setup in order to render the behavior consistent
-         * in different environments. */
+        {
+            /* Do the application-wide setup in order to render the behavior consistent
+             * in different environments. */
             TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC)));
             Locale.setDefault(Locale.ENGLISH);
             /* Set UTF-8 charset for the stdout/stderr PrintStreams.

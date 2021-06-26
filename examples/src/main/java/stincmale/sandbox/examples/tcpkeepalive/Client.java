@@ -26,7 +26,7 @@ final class Client {
         // may also be smaller or larger than the server's read timeout, it does not matter
         final int readTimeoutMillis = Server.SO_READ_TIMEOUT_MILLIS;
         boolean serverDisconnected = false;
-        Socket socket = new Socket();
+        final Socket socket = new Socket();
         socket.setKeepAlive(true);
         try {
             log("Connecting to " + serverSocketAddress
@@ -81,7 +81,7 @@ final class Client {
             // noinspection InfiniteLoopStatement
             while (true) {
                 final byte[] userInput = userInput(userInputScanner);
-                for (byte outMessage : userInput) {
+                for (final byte outMessage : userInput) {
                     sendOutMessage(outMessage, out, connectionDescription);
                 }
                 try {

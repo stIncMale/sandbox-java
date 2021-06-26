@@ -19,7 +19,7 @@
   <properties>
     <jmh.version>1.31</jmh.version>
   </properties>
-  <dependencyManagement>
+  <dependencyManagement><!-- VAKOTODO use maven-enforcer-plugin -->
     <dependencies>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>

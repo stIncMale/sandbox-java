@@ -86,7 +86,7 @@ public class TmpBenchmark {
         private ReentrantReadWriteLock rwLock;
         private LongAdder opsBeginCounter;
         private LongAdder opsEndCounter;
-        private long startNanos;// JMH probably registers a later instant as the start time
+        private long startNanos;
 
         public BenchmarkState() {
         }
@@ -97,6 +97,7 @@ public class TmpBenchmark {
             rwLock = new ReentrantReadWriteLock();
             opsBeginCounter = new LongAdder();
             opsEndCounter = new LongAdder();
+            // JMH probably registers a later instant as the start time
             startNanos = System.nanoTime();
         }
 
@@ -106,7 +107,7 @@ public class TmpBenchmark {
             final long stopNanos = System.nanoTime();
             // JMH probably registers a smaller duration
             final double durationSeconds =
-                    ((double)(stopNanos - startNanos)) / TimeUnit.SECONDS.toNanos(1);
+                    ((double) (stopNanos - startNanos)) / TimeUnit.SECONDS.toNanos(1);
             final long opsBeginCount = opsBeginCounter.sum();
             final double throughputBegin = opsBeginCount / durationSeconds;
             final long opsEndCount = opsEndCounter.sum();

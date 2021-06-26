@@ -8,10 +8,10 @@ import java.util.Scanner;
  * <a href="https://www.hackerrank.com/challenges/largest-rectangle">Largest Rectangle</a>.
  */
 final class LargestRectangle {
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         try (Scanner in = new Scanner(System.in)) {
-            int n = in.nextInt();
-            int[] a = new int[n];
+            final int n = in.nextInt();
+            final int[] a = new int[n];
             for (int i = 0; i < n; i++) {
                 a[i] = in.nextInt();
             }
@@ -19,23 +19,24 @@ final class LargestRectangle {
         }
     }
 
-    static long largestRectangle(int[] a) {
+    static long largestRectangle(final int[] a) {
         int i = 0;
         long maxArea = 0;
-        Deque<Element> stack = new ArrayDeque<>();
+        final Deque<Element> stack = new ArrayDeque<>();
         for (; i < a.length; i++) {
-            int h = a[i];
-            Element rightmost = stack.peek();
+            final int h = a[i];
+            final Element rightmost = stack.peek();
             if (rightmost == null || h > rightmost.h) {
                 stack.push(new Element(i, h));
             } else if (h < rightmost.h) {
-                long localMaxArea = shrinkPushAndFindMaxArea(stack, new Element(i, h));
+                final long localMaxArea = shrinkPushAndFindMaxArea(stack, new Element(i, h));
                 maxArea = Math.max(maxArea, localMaxArea);
-            } else {// h == rightmost.h
+            } else {
+                // h == rightmost.h
                 // nothing to do
             }
         }
-        long localMaxArea = shrinkPushAndFindMaxArea(stack, new Element(i, 0));
+        final long localMaxArea = shrinkPushAndFindMaxArea(stack, new Element(i, 0));
         maxArea = Math.max(maxArea, localMaxArea);
         return maxArea;
     }
@@ -44,12 +45,12 @@ final class LargestRectangle {
         throw new AssertionError();
     }
 
-    static int shrinkPushAndFindMaxArea(Deque<Element> stack, Element newElement) {
+    static int shrinkPushAndFindMaxArea(final Deque<Element> stack, final Element newElement) {
         int localMaxArea = 0;
         boolean pushNewElement = true;
         int newLeftmostIdx = -1;
         while (!stack.isEmpty()) {
-            Element rightmost = stack.peek();
+            final Element rightmost = stack.peek();
             if (rightmost.h < newElement.h) {
                 break;
             } else if (rightmost.h == newElement.h) {
@@ -58,7 +59,7 @@ final class LargestRectangle {
             } else {
                 stack.pop();
                 newLeftmostIdx = rightmost.leftmostIdx;
-                int area = rightmost.h * (newElement.leftmostIdx - rightmost.leftmostIdx);
+                final int area = rightmost.h * (newElement.leftmostIdx - rightmost.leftmostIdx);
                 localMaxArea = Math.max(localMaxArea, area);
             }
         }
@@ -77,7 +78,7 @@ final class LargestRectangle {
         int leftmostIdx;
         int h;
 
-        Element(int leftmostIdx, int h) {
+        Element(final int leftmostIdx, final int h) {
             this.leftmostIdx = leftmostIdx;
             this.h = h;
         }
