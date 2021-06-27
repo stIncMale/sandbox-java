@@ -35,10 +35,9 @@
             <debuglevel>lines,vars,source</debuglevel>
             <showWarnings>true</showWarnings>
             <showDeprecation>true</showDeprecation>
-            <compilerArgs><!-- VAKOTODO use module-specific config? -->
+            <compilerArgs>
               <arg>-Werror</arg>
-              <arg>-Xlint:all,-processing,-requires-automatic</arg>
-              <arg>-implicit:none</arg>
+              <arg>-Xlint:all</arg>
             </compilerArgs>
           </configuration>
         </plugin>
