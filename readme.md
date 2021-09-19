@@ -11,7 +11,7 @@
 
 A repository with examples,
 e.g., for my [DEAD`<code/>` tech blog](https://www.kovalenko.link/blog/tech/),
-temporary, test and research Java projects.
+temporary, test and research projects.
 
 ## [Contributor Guide](https://github.com/stIncMale/sandbox/blob/master/contributing.md)
 

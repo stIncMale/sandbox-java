@@ -17,7 +17,7 @@
     <relativePath>root.xml</relativePath>
   </parent>
   <properties>
-    <jmh.version>1.31</jmh.version>
+    <jmh.version>1.33</jmh.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -34,7 +34,7 @@
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-engine</artifactId>
-        <version>5.7.2</version>
+        <version>5.8.0</version>
       </dependency>
       <dependency>
         <groupId>org.openjdk.jmh</groupId>
@@ -49,17 +49,17 @@
       <dependency>
         <groupId>com.beanit</groupId>
         <artifactId>asn1bean</artifactId>
-        <version>1.12.0</version>
+        <version>1.13.0</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
         <artifactId>bcpkix-jdk15on</artifactId>
-        <version>1.68</version>
+        <version>1.69</version>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.2.20</version>
+        <version>42.2.23</version>
         <exclusions>
           <exclusion>
             <groupId>org.checkerframework</groupId>
@@ -125,7 +125,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>8.42</version>
+              <version>9.0</version>
             </dependency>
           </dependencies>
         </plugin>
