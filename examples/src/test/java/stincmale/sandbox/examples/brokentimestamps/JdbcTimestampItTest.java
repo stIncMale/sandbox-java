@@ -32,8 +32,8 @@ import org.opentest4j.AssertionFailedError;
  * <p>
  * You may see that regardless of the {@link TimeZone} craziness happening,
  * storing and reading data of type {@link JDBCType#TIMESTAMP_WITH_TIMEZONE} never has issues,
- * while {@link JDBCType#TIMESTAMP} does (see {@link Assertions#assertThrows(Class, Executable)}).
- * </p>
+ * while {@link JDBCType#TIMESTAMP} does
+ * (see {@link Assertions#assertThrows(Class, Executable)}).</p>
  */
 @TestInstance(Lifecycle.PER_CLASS)
 final class JdbcTimestampItTest {

@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import static jdk.net.ExtendedSocketOptions.TCP_KEEPCOUNT;
 import static jdk.net.ExtendedSocketOptions.TCP_KEEPIDLE;
 import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
 
@@ -113,7 +114,7 @@ final class Server {
                 boolean successfullyAccepted = false;
                 try {
                     log("Accepted a new connection " + clientSocket);
-                    enableTcpKeepAlive(clientSocket, TCP_KEEP_ALIVE_IDLE_SECONDS);
+                    enableTcpKeepAlive(clientSocket, TCP_KEEP_ALIVE_IDLE_SECONDS, 8);
                     executor.submit(() -> {
                         try {
                             serve(clientSocket, SO_READ_TIMEOUT_MILLIS);
@@ -167,25 +168,27 @@ final class Server {
     }
 
     private static final void enableTcpKeepAlive(
-            final Socket socket, final int tcpKeepAliveIdleSeconds) throws IOException {
+            final Socket socket, final int idleSeconds, final int count) throws IOException {
         socket.setKeepAlive(true);
-        final long tcpKeepAliveIdleMillis = TimeUnit.SECONDS.toMillis(tcpKeepAliveIdleSeconds);
+        final long idleMillis = TimeUnit.SECONDS.toMillis(idleSeconds);
         final Set<SocketOption<?>> supportedOptions = socket.supportedOptions();
         if (supportedOptions.contains(TCP_KEEPIDLE)) {
-            socket.setOption(TCP_KEEPIDLE, tcpKeepAliveIdleSeconds);
-            log("Set " + TCP_KEEPIDLE + " " + tcpKeepAliveIdleMillis + " ms for " + socket);
+            socket.setOption(TCP_KEEPIDLE, idleSeconds);
+            log("Set " + TCP_KEEPIDLE + " " + idleMillis + " ms for " + socket);
         } else {
             log(TCP_KEEPIDLE + " is not supported for " + socket);
         }
-        /* The documentation of TCP_KEEPINTERVAL does not seem to match the actual behavior.
-         * At least in Linux it specifies the interval between all probes but the first one.
-         * This actual behavior matches the one specified for TCP_KEEPINTVL
-         * (see https://man7.org/linux/man-pages/man7/tcp.7.html). */
         if (supportedOptions.contains(TCP_KEEPINTERVAL)) {
-            socket.setOption(TCP_KEEPINTERVAL, tcpKeepAliveIdleSeconds);
-            log("Set " + TCP_KEEPINTERVAL + " " + tcpKeepAliveIdleMillis + " ms for " + socket);
+            socket.setOption(TCP_KEEPINTERVAL, idleSeconds);
+            log("Set " + TCP_KEEPINTERVAL + " " + idleMillis + " ms for " + socket);
         } else {
             log(TCP_KEEPINTERVAL + " is not supported for " + socket);
+        }
+        if (supportedOptions.contains(TCP_KEEPCOUNT)) {
+            socket.setOption(TCP_KEEPCOUNT, count);
+            log("Set " + TCP_KEEPCOUNT + " " + count + " for " + socket);
+        } else {
+            log(TCP_KEEPCOUNT + " is not supported for " + socket);
         }
     }
 

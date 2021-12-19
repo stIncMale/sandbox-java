@@ -1,5 +1,7 @@
 package stincmale.sandbox.examples.makeappbehaviorconsistent;
 
+import java.io.Console;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -39,17 +41,25 @@ final class ConsistentAppExample {
      * See <a href="https://www.gnu.org/software/bash/manual/bash.html#ANSI_002dC-Quoting">
      * Bash ANSI-C Quoting</a> for the details about the {@code $'\n'} syntax.</li>
      * <li>{@code file.encoding} is not a standard Java system property,
-     * but it is used by some parts of OpenJDK JDK, see
-     * <a href="https://openjdk.java.net/jeps/8187041">JEP draft: Use UTF-8 as default Charset</a>
-     * for more details.</li>
+     * but it is used by OpenJDK JDK, see
+     * <a href="https://openjdk.java.net/jeps/400">JEP 400: UTF-8 by Default</a>
+     * for more details. As of Java SE 18 there is no need to specify
+     * {@code file.encoding=UTF-8} as that is the default.</li>
      * </ul>
      * Be careful when starting this application from an IDE,
      * it most likely does not understand the syntax {@code $'\n'}.
      */
-    public static final void main(final String... args) {
-        System.out.printf(Locale.ROOT,
-                "JVM-wide defaults: charset=%s, locale=%s, time zone=%s, line separator={%s}",
+    public static final void main(final String... args) throws IOException {
+        final Console console = System.console();
+        System.out.printf("charset=%s"
+                        + ", console charset=%s"
+                        + ", native charset=%s"
+                        + ", locale=%s"
+                        + ", time zone=%s"
+                        + ", line separator={%s}",
                 Charset.defaultCharset(),
+                console == null ? "console unavailable" : console.charset(),
+                System.getProperty("native.encoding"),
                 Locale.getDefault().toLanguageTag(),
                 TimeZone.getDefault().getID(),
                 System.lineSeparator().codePoints().mapToObj(Character::getName)

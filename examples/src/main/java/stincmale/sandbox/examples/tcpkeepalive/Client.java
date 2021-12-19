@@ -27,7 +27,6 @@ final class Client {
         final int readTimeoutMillis = Server.SO_READ_TIMEOUT_MILLIS;
         boolean serverDisconnected = false;
         final Socket socket = new Socket();
-        socket.setKeepAlive(true);
         try {
             log("Connecting to " + serverSocketAddress
                     + " with timeout " + SO_CONNECT_TIMEOUT_MILLIS + " ms");
