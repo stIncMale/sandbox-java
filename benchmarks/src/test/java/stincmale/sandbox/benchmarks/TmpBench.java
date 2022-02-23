@@ -16,8 +16,8 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 
-public class TmpBenchmark {
-    public TmpBenchmark() {
+public class TmpBench {
+    public TmpBench() {
     }
 
     public final void runThroughputBenchmarks(final int numberOfThreads) throws RunnerException {
@@ -76,7 +76,7 @@ public class TmpBenchmark {
 
     public static final void main(final String... args) throws RunnerException {
         final int numberOfThreads = 2;
-        final TmpBenchmark test = new TmpBenchmark();
+        final TmpBench test = new TmpBench();
         test.runThroughputBenchmarks(numberOfThreads);
     }
 

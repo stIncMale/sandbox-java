@@ -20,8 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.function.Executable;
 import org.opentest4j.AssertionFailedError;
 
@@ -35,7 +33,6 @@ import org.opentest4j.AssertionFailedError;
  * while {@link JDBCType#TIMESTAMP} does
  * (see {@link Assertions#assertThrows(Class, Executable)}).</p>
  */
-@TestInstance(Lifecycle.PER_CLASS)
 final class JdbcTimestampItTest {
     private static final TimeZone ORIGINAL_TZ = TimeZone.getDefault();
     private static final TimeZone TZ_1 =

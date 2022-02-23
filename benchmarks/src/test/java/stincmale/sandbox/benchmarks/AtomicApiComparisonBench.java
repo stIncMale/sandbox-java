@@ -12,8 +12,6 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import static java.lang.Math.min;
 import static java.util.concurrent.locks.LockSupport.parkNanos;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
@@ -26,9 +24,8 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
-@TestInstance(Lifecycle.PER_CLASS)
-public class AtomicApiComparisonBenchmark {
-    public AtomicApiComparisonBenchmark() {
+public class AtomicApiComparisonBench {
+    public AtomicApiComparisonBench() {
     }
 
     public final void runThroughputBenchmarks(final int numberOfThreads) throws RunnerException {

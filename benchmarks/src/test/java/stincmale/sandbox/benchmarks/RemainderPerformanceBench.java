@@ -2,8 +2,6 @@ package stincmale.sandbox.benchmarks;
 
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
@@ -17,14 +15,13 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.jvmArgsDisableGc;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
-@TestInstance(Lifecycle.PER_CLASS)
-public class RemainderPerformanceBenchmark {
+public class RemainderPerformanceBench {
     // 2^10, must be a power of 2
     private static final long DENOMINATOR_POW2 = 1024;
     private static final long BITWISE_DENOMINATOR_POW2 = DENOMINATOR_POW2 - 1;
     private static final long DENOMINATOR = DENOMINATOR_POW2 - 1;
 
-    public RemainderPerformanceBenchmark() {
+    public RemainderPerformanceBench() {
     }
 
     @Test

@@ -12,8 +12,6 @@ import java.util.stream.Collectors;
 import static java.util.Arrays.stream;
 import static java.util.stream.IntStream.range;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Param;
@@ -25,9 +23,8 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
-@TestInstance(Lifecycle.PER_CLASS)
-public class ListPerformanceBenchmark {
-    public ListPerformanceBenchmark() {
+public class ListPerformanceBench {
+    public ListPerformanceBench() {
     }
 
     @Test

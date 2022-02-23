@@ -46,6 +46,7 @@
         <configuration>
           <compilerArgs combine.children="append">
             <arg>-Xlint:-processing</arg>
+            <arg>-Xlint:-requires-automatic</arg>
             <arg>-implicit:none</arg>
           </compilerArgs>
         </configuration>

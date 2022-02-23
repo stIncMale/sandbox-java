@@ -3,8 +3,6 @@ package stincmale.sandbox.benchmarks;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
@@ -18,8 +16,7 @@ import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.jvmArgsDisableGc;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
-@TestInstance(Lifecycle.PER_CLASS)
-public class PrimitiveDataTypeMathPerformanceBenchmark {
+public class PrimitiveDataTypeMathPerformanceBench {
     // 2^6, must be a power of 2
     private static final int NUMBER_OF_VALUES = 64;
     private static final int[] OPERANDS_INT;
@@ -75,7 +72,7 @@ public class PrimitiveDataTypeMathPerformanceBenchmark {
         }
     }
 
-    public PrimitiveDataTypeMathPerformanceBenchmark() {
+    public PrimitiveDataTypeMathPerformanceBench() {
     }
 
     @Test

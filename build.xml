@@ -71,7 +71,7 @@
               </include>
               <include>
                 <![CDATA[
-                  %regex[.*(?<!It)Benchmark\..*]
+                  %regex[.*(?<!It)Bench\..*]
                 ]]>
               </include>
             </includes>
@@ -94,7 +94,7 @@
                 <argLine>${sandbox.test.argLine}</argLine>
                 <includes>
                   <include>**/*ItTest.java</include>
-                  <include>**/*ItBenchmark.java</include>
+                  <include>**/*ItBench.java</include>
                 </includes>
               </configuration>
             </execution>

@@ -2,8 +2,6 @@ package stincmale.sandbox.benchmarks;
 
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
@@ -17,8 +15,7 @@ import static org.openjdk.jmh.runner.options.TimeValue.milliseconds;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.includeBenchmarks;
 import static stincmale.sandbox.benchmarks.util.JmhOptions.newOptionsBuilder;
 
-@TestInstance(Lifecycle.PER_CLASS)
-public class ArrayFillPerformanceBenchmark {
+public class ArrayFillPerformanceBench {
     private static final int ARRAY_SIZE = 100_000;
     private static final long[] ARR_FILLED_WITH_ZEROS;
     private static final long[] ARR_FILLED_WITH_ONES;
@@ -34,7 +31,7 @@ public class ArrayFillPerformanceBenchmark {
         }
     }
 
-    public ArrayFillPerformanceBenchmark() {
+    public ArrayFillPerformanceBench() {
     }
 
     @Test

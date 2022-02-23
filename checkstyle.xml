@@ -76,7 +76,9 @@
   <module name="TreeWalker">
     <!-- Annotations -->
     <module name="AnnotationLocation"/>
-    <module name="AnnotationUseStyle"/>
+    <module name="AnnotationUseStyle">
+      <property name="elementStyle" value="compact"/>
+    </module>
     <module name="MissingDeprecated"/>
     <module name="MissingOverride"/>
 
@@ -196,7 +198,9 @@
 
     <!-- Miscellaneous -->
     <module name="ArrayTypeStyle"/>
-    <module name="CommentsIndentation"/>
+    <module name="CommentsIndentation">
+      <property name="tokens" value="BLOCK_COMMENT_BEGIN"/>
+    </module>
     <module name="FinalParameters">
       <property name="tokens" value="METHOD_DEF, CTOR_DEF, LITERAL_CATCH, FOR_EACH_CLAUSE"/>
     </module>
