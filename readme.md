@@ -1,8 +1,8 @@
 # sandbox
 
 <p align="right">
-  <a href="https://docs.oracle.com/en/java/javase/17/index.html">
-    <img src="https://img.shields.io/badge/Java_SE-17-ED8B00.svg?labelColor=007396"
+  <a href="https://docs.oracle.com/en/java/javase/18/index.html">
+    <img src="https://img.shields.io/badge/Java_SE-18-ED8B00.svg?labelColor=007396"
         alt="Java requirement">
   </a>
 </p>
