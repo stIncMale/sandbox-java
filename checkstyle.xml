@@ -5,7 +5,7 @@
 <module name="Checker">
   <property name="charset" value="UTF-8"/>
   <property name="fileExtensions" value=""/>
-  <property name="localeCountry" value="001"/> <!-- World; see https://cr.openjdk.java.net/~iris/se/16/spec/fr/java-se-16-fr-spec/api/java.base/java/util/Locale.html#def_region -->
+  <property name="localeCountry" value="001"/> <!-- World; see https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Locale.html#def_region -->
   <property name="localeLanguage" value="en"/>
   <module name="BeforeExecutionExclusionFileFilter">
     <!-- Using "|\n|" to express the regex pattern as multiple lines.
@@ -15,6 +15,11 @@
   </module>
   <module name="SuppressionFilter">
     <property name="file" value="checkstyle-suppressions.xml" />
+  </module>
+  <module name="SuppressWithPlainTextCommentFilter">
+    <property name="offCommentFormat" value="@CheckstyleOff ([\w\|]+)"/>
+    <property name="onCommentFormat" value="@CheckstyleOn ([\w\|]+)"/>
+    <property name="checkFormat" value="$1"/>
   </module>
 
   <!-- Javadoc Comments -->
@@ -74,6 +79,12 @@
   <module name="FileTabCharacter"/>
 
   <module name="TreeWalker">
+    <module name="SuppressWithNearbyCommentFilter">
+      <property name="commentFormat" value="@CheckstyleOff ([\w\|]+) for (\d+) lines"/>
+      <property name="checkFormat" value="$1"/>
+      <property name="influenceFormat" value="$2"/>
+    </module>
+
     <!-- Annotations -->
     <module name="AnnotationLocation"/>
     <module name="AnnotationUseStyle">

@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+// @CheckstyleOff IllegalImport for 3 lines
 import static jdk.net.ExtendedSocketOptions.TCP_KEEPCOUNT;
 import static jdk.net.ExtendedSocketOptions.TCP_KEEPIDLE;
 import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;

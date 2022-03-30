@@ -17,12 +17,11 @@
     <relativePath>version.xml</relativePath>
   </parent>
   <properties>
-      <sandbox.test.argLine>
-        -Xverify:all
-        -Xshare:auto
-        -Xmx1000m
-      </sandbox.test.argLine>
-    </properties>
+    <sandbox.test.argLine>
+      -Xverify:all
+      -Xshare:auto
+    </sandbox.test.argLine>
+  </properties>
   <build>
     <pluginManagement>
       <plugins>
