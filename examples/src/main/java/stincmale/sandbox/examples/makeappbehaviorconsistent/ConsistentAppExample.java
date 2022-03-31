@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
 final class ConsistentAppExample {
     static {
         {
-            /* Do the application-wide setup in order to render the behavior consistent
-             * in different environments. */
+            // Do the application-wide setup in order to render the behavior consistent
+            // in different environments.
             TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC)));
             Locale.setDefault(Locale.ENGLISH);
-            /* Set UTF-8 charset for the stdout/stderr PrintStreams.
-             * The stdin is an InputStream and the concept of charset
-             * is not directly applicable to it. */
+            // Set UTF-8 charset for the stdout/stderr PrintStreams.
+            // The stdin is an InputStream and the concept of charset
+            // is not directly applicable to it.
             System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
             System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
         }

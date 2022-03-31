@@ -161,10 +161,10 @@ final class JdbcTimestampItTest {
                 final ZoneId zoneId = tz.toZoneId();
                 final OffsetDateTime offsetDateTime = OffsetDateTime.ofInstant(instant, zoneId);
                 final LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, zoneId);
-                /* JDBC 4.2 (see https://jcp.org/en/jsr/detail?id=221,
-                 * https://jcp.org/aboutJava/communityprocess/mrel/jsr221/index2.html)
-                 * maps LocalDateTime to JDBCType.TIMESTAMP
-                 * and OffsetDateTime to JDBCType.TIMESTAMP_WITH_TIMEZONE. */
+                // JDBC 4.2 (see https://jcp.org/en/jsr/detail?id=221,
+                // https://jcp.org/aboutJava/communityprocess/mrel/jsr221/index2.html)
+                // maps LocalDateTime to JDBCType.TIMESTAMP
+                // and OffsetDateTime to JDBCType.TIMESTAMP_WITH_TIMEZONE.
                 statement.setObject(1, offsetDateTime);
                 statement.setObject(2, localDateTime);
                 statement.executeUpdate();

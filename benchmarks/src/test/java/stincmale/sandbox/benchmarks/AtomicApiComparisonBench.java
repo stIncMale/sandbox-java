@@ -468,8 +468,8 @@ public class AtomicApiComparisonBench {
         // 2^7, must be a power of 2
         private static final int DISTINCT_VALUES_PER_THREAD = 128;
 
-        /* All values are distinct for a given thread, but some may be equal (highly unlikely)
-         * among threads. */
+        // All values are distinct for a given thread,
+        // but some may be equal (highly unlikely) among threads.
         private long[] longs;
         private Long[] referenceLongs;
         private int idx;

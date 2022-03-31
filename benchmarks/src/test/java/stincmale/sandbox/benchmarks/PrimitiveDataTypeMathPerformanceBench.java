@@ -37,12 +37,12 @@ public class PrimitiveDataTypeMathPerformanceBench {
                 if (rndInt > Integer.MIN_VALUE / 2 && rndInt < Integer.MAX_VALUE / 2) {
                     rndInt *= 2;
                 }
-                /* The index for operandsInt/operandsFloat is i * 2
-                 * to make sure that the number of both int/float and long/double array elements
-                 * is about the same for each cache line. This of course only works if the
-                 * underlying software and hardware actually uses two times as much memory for
-                 * long/double comparing to int/float and allocates all array elements
-                 * contiguously in memory. */
+                // The index for operandsInt/operandsFloat is i * 2
+                // to make sure that the number of both int/float and long/double array elements
+                // is about the same for each cache line. This of course only works if the
+                // underlying software and hardware actually uses two times as much memory for
+                // long/double comparing to int/float and allocates all array elements
+                // contiguously in memory.
                 OPERANDS_INT[i * 2] = rndInt;
             }
             {
