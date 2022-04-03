@@ -46,9 +46,6 @@ final class JdbcTimestampItTest {
     private static final Timestamp TIMESTAMP = new Timestamp(1000_000_000_000L);
     private static final Instant INSTANT = TIMESTAMP.toInstant();
 
-    private JdbcTimestampItTest() {
-    }
-
     @AfterAll
     static final void afterClass() {
         TimeZone.setDefault(ORIGINAL_TZ);
@@ -246,6 +243,9 @@ final class JdbcTimestampItTest {
         } catch (final SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private JdbcTimestampItTest() {
     }
 
     private interface JdbcAction<R> {

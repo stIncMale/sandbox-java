@@ -1,20 +1,20 @@
 package stincmale.sandbox.examples.self;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import org.junit.jupiter.api.Test;
 
-final class CloneableExampleTest {
+final class AutoCloneableExampleTest {
     @Test
     final void copy() {
-        final CloneableExample original = new CloneableExample("value");
-        final CloneableExample copy = original.clone();
+        final AutoCloneableExample original = new AutoCloneableExample(List.of("a", "b"));
+        final AutoCloneableExample copy = original.clone();
         assertNotSame(original, copy);
         assertSame(original.getClass(), copy.getClass());
-        assertEquals(original.value, copy.value);
+        assertSame(original.value, copy.value);
     }
 
-    private CloneableExampleTest() {
+    private AutoCloneableExampleTest() {
     }
 }

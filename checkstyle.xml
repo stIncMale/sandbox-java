@@ -237,10 +237,12 @@
 
     <!-- Naming Conventions -->
     <module name="AbbreviationAsWordInName">
-      <property name="allowedAbbreviationLength" value="0"/>
+      <property name="allowedAbbreviationLength" value="2"/>
       <property name="ignoreFinal" value="false"/>
     </module>
-    <module name="AbstractClassName"/>
+    <module name="AbstractClassName">
+      <property name="ignoreName" value="true"/>
+    </module>
     <module name="ConstantName"/>
     <module name="PackageName"/>
 
