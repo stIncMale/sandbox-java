@@ -59,7 +59,6 @@ import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
  *     TCP CLOSE user command</a>) the connection.
  *   </li>
  * </ol>
- * <p>
  * Server-side connection termination:
  * <ul>
  *   <li>
@@ -87,7 +86,6 @@ import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
  *     This way we prevent accumulation of sockets in the TIME-WAIT state on the server side.
  *   </li>
  * </ul>
- * </p>
  */
 final class Server {
     // U+0068, LATIN SMALL LETTER H

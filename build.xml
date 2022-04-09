@@ -42,6 +42,53 @@
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <detectJavaApiLink>false</detectJavaApiLink>
+            <doctitle>${custom.project.name} ${project.version} Java API Documentation</doctitle>
+            <author>false</author>
+            <show>private</show>
+            <linksource>false</linksource>
+            <bottom><![CDATA[]]></bottom>
+            <encoding>${project.build.sourceEncoding}</encoding>
+            <header>
+              <![CDATA[
+								<a href="${custom.project.uri}">${custom.project.name}</a><br>
+								Java API Documentation
+							]]>
+            </header>
+            <locale>en</locale>
+            <windowtitle>${custom.project.name} Java API Documentation</windowtitle>
+            <groups>
+              <group>
+                <title>All</title>
+                <packages>
+                  stincmale:stincmale.*
+                </packages>
+              </group>
+            </groups>
+            <excludePackageNames>internal:*.internal:*.internal.*</excludePackageNames>
+            <links>
+              <link>https://docs.oracle.com/en/java/javase/17/docs/api</link>
+            </links>
+            <validateLinks>true</validateLinks>
+            <includeDependencySources>false</includeDependencySources>
+            <includeTransitiveDependencySources>false</includeTransitiveDependencySources>
+            <serialwarn>true</serialwarn>
+            <doclint>all,-missing</doclint>
+          </configuration>
+          <executions>
+            <execution>
+              <id>javadoc</id>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>aggregate</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <configuration>
             <archive>
@@ -112,7 +159,7 @@
           </configuration>
           <executions>
             <execution>
-              <id>validate</id>
+              <id>check</id>
               <phase>validate</phase>
               <goals>
                 <goal>check</goal>
@@ -161,6 +208,10 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-enforcer-plugin</artifactId>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
           </plugin>
         </plugins>
       </build>

@@ -12,11 +12,11 @@
   <version>0.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>sandbox-root</name>
-  <url>https://github.com/stIncMale/sandbox-java</url>
+  <url>${custom.project.uri}</url>
   <licenses>
     <license>
-      <name>WTFPL</name>
-      <url>http://www.wtfpl.net/</url>
+      <name>${custom.project.licenseName}</name>
+      <url>${custom.project.licenseUri}</url>
     </license>
   </licenses>
   <inceptionYear>2015</inceptionYear>
@@ -31,5 +31,9 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
+    <custom.project.name>Sandbox</custom.project.name>
+    <custom.project.uri>https://github.com/stIncMale/sandbox-java</custom.project.uri>
+    <custom.project.licenseName>WTFPL</custom.project.licenseName>
+    <custom.project.licenseUri>http://www.wtfpl.net/</custom.project.licenseUri>
   </properties>
 </project>
