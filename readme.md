@@ -1,4 +1,4 @@
-# sandbox
+# sandbox-java
 
 <p align="right">
   <a href="https://docs.oracle.com/en/java/javase/18/index.html">
