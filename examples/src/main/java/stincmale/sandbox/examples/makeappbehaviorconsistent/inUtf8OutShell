@@ -1,4 +1,4 @@
-#! /usr/bin/env -S java --source 16
+#! /usr/bin/env -S java --source 18
 package stincmale.sandbox.examples.makeappbehaviorconsistent;
 
 import java.io.IOException;
