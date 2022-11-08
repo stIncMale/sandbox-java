@@ -31,7 +31,7 @@ import org.opentest4j.AssertionFailedError;
  * You may see that regardless of the {@link TimeZone} craziness happening,
  * storing and reading data of type {@link JDBCType#TIMESTAMP_WITH_TIMEZONE} never has issues,
  * while {@link JDBCType#TIMESTAMP} does
- * (see {@link Assertions#assertThrows(Class, Executable)}).</p>
+ * (look for {@link Assertions#assertThrows(Class, Executable)} in the test code).</p>
  */
 final class JdbcTimestampItTest {
     private static final TimeZone ORIGINAL_TZ = TimeZone.getDefault();
@@ -137,13 +137,13 @@ final class JdbcTimestampItTest {
             try (var statement = connection.prepareStatement(
                     "insert into ts_test (tsz, ts) values (?, ?)")) {
                 if (tz == null) {
-                    // do not store timestamps like this
                     statement.setObject(1, timestamp);
+                    // do not store like this when `timestamp [without time zone]` is used
                     statement.setObject(2, timestamp);
                 } else {
+                    statement.setTimestamp(1, timestamp);
                     // better do this
                     final Calendar calendar = Calendar.getInstance(tz);
-                    statement.setTimestamp(1, timestamp, calendar);
                     statement.setTimestamp(2, timestamp, calendar);
                 }
                 statement.executeUpdate();
@@ -177,13 +177,13 @@ final class JdbcTimestampItTest {
                 final Timestamp tsz;
                 final Timestamp ts;
                 if (tz == null) {
-                    // do not read timestamps like this
                     tsz = rs.getTimestamp(1);
+                    // do not read like this when `timestamp [without time zone]` is used
                     ts = rs.getTimestamp(2);
                 } else {
+                    tsz = rs.getTimestamp(1);
                     // better do this
                     final Calendar calendar = Calendar.getInstance(tz);
-                    tsz = rs.getTimestamp(1, calendar);
                     ts = rs.getTimestamp(2, calendar);
                 }
                 return new Timestamps(tsz, ts);
@@ -236,8 +236,9 @@ final class JdbcTimestampItTest {
      */
     private final Connection connection() {
         try {
+            // this URI assumes the `trust` method in `pg_hba.conf`
             final Connection connection = DriverManager.getConnection(
-                    "jdbc:postgresql://localhost/postgres?user=postgres&password=");
+                    "jdbc:postgresql://localhost:5432/postgres?user=postgres&password=");
             connection.setAutoCommit(false);
             return connection;
         } catch (final SQLException e) {
