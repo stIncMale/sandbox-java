@@ -1,8 +1,16 @@
 # Contributor Guide
 
-## Build-related commands
+## Prepare the development environment
+
+### Install a JDK
+
+If you do not know how, start with <https://dev.java/download/>.
+
+### Install Maven
 
 This project uses [Maven](https://maven.apache.org/) for build automation.
+
+## Build-related commands
 
 Run from the project root directory:
 
